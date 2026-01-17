@@ -1,0 +1,17 @@
+from randomdude/gcc-cross-x86_64-elf
+
+run apt-get update
+run apt-get upgrade -y
+
+run apt-get install -y nasm
+run apt-get install -y xorriso
+run apt-get install -y grub-pc-bin
+run apt-get install -y grub-common
+
+volume /root/env
+workdir /root/env
+
+#запуск контейнера
+#docker run --rm -it -v D:\Progects\C++\TOS:/root/env tos
+# запуск ядра
+# qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
