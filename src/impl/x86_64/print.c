@@ -76,3 +76,64 @@ void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
   Column = column;
   Line = row;
 }
+
+uint8_t CursorLine() { return Line; }
+uint8_t CursorColumn() { return Column; }
+
+void print(uint64_t value) {
+  if (value == 0) {
+    PrintChar('0');
+    return;
+  }
+
+  char buffer[20];
+  int i = 0;
+
+  while (value > 0) {
+    buffer[i++] = (value % 10) + '0';
+    value /= 10;
+  }
+
+  while (i-- > 0) {
+    PrintChar(buffer[i]);
+  }
+}
+
+void PrintHex64(uint64_t value) {
+  if (value == 0) {
+    PrintChar('0');
+    return;
+  }
+
+  char buffer[16];
+  int i = 0;
+
+  while (value > 0) {
+    uint8_t digit = value & 0xF;
+
+    if (digit < 10) {
+      buffer[i++] = digit + '0';
+    } else {
+      buffer[i++] = digit - 10 + 'A';
+    }
+
+    value >>= 4;
+  }
+
+  while (i-- > 0) {
+    PrintChar(buffer[i]);
+  }
+}
+
+void Print64Bin(uint64_t value) {
+  char buffer[64];
+
+  for (size_t i = 0; i < 64; i++) {
+    buffer[i] = (value & 1) + '0';
+    value >>= 1;
+  }
+
+  for (size_t i = 64; i > 0; i--) {
+    PrintChar(buffer[i - 1]);
+  }
+}

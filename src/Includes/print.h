@@ -3,6 +3,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define PrintString(x) printSTR(x)
+#define PrintDEC(x) printDEC(x)
+#define print(x) _Generic((x), *char: PrintString, uint64_t: PrintDEC)(x)
+
 enum {
   CONSOLE_COLOR_BLACK = 0,
   CONSOLE_COLOR_BLUE = 1,
@@ -24,6 +28,15 @@ enum {
 
 void ConsoleClear();
 void PrintChar(char character);
-void print(char *string); // с маленькой буквы для удобствa
+void printSTR(char *string); // с маленькой буквы для удобствa
+void printDEC(uint64_t value);
+void PrintHex64(uint64_t value);
+void Print64Bin(uint64_t value);
+
+// Цвет
 void ConsoleColor(uint8_t foreground, uint8_t background);
+
+// Курсор
 void ConsoleSetCursorPos(uint8_t column, uint8_t row);
+uint8_t CursorColumn();
+uint8_t CursorLine();

@@ -7,5 +7,6 @@ void kernel_main() {
   ConsoleSetCursorPos(9, 14);
   print("ara");
   ConsoleSetCursorPos(50, 10);
-  print("ara \ndouble");
+  print("ara \ndouble\n");
+  print_uint64_dec(CursorColumn());
 }
