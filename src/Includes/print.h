@@ -24,5 +24,6 @@ enum {
 
 void ConsoleClear();
 void PrintChar(char character);
-void print(char *string); // с маленькой буквы для удобства
+void print(char *string); // с маленькой буквы для удобствa
 void ConsoleColor(uint8_t foreground, uint8_t background);
+void ConsoleSetCursorPos(uint8_t column, uint8_t row);

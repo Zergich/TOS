@@ -9,8 +9,8 @@ struct Char {
 };
 
 struct Char *buffer = (struct Char *)0xb8000;
-size_t col = 0;
-size_t row = 0;
+size_t Column = 0;
+size_t Line = 0;
 uint8_t color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
 
 void ClearRow(size_t row) {
@@ -28,10 +28,11 @@ void ConsoleClear() {
   }
 }
 
-void PrintNewLine() {
-  col = 0;
-  if (row < NUM_ROWS - 1) {
-    row++;
+void ConsoleRePrintDown() { // переписывает буффер консоли (строка дошла до
+                            // конца). пролистывает вниз
+  Column = 0;
+  if (Line < NUM_ROWS - 1) {
+    Line++;
     return;
   }
   for (size_t row = 1; row < NUM_ROWS; row++) {
@@ -45,17 +46,17 @@ void PrintNewLine() {
 
 void PrintChar(char character) {
   if (character == '\n') {
-    PrintNewLine();
+    ConsoleRePrintDown();
     return;
   }
-  if (col > NUM_COLS) {
-    PrintNewLine();
+  if (Column > NUM_COLS) {
+    ConsoleRePrintDown();
   }
-  buffer[col + NUM_ROWS * row] = (struct Char){
+  buffer[Column + NUM_COLS * Line] = (struct Char){
     character : (uint8_t)character,
     color : color,
   };
-  col++;
+  Column++;
 }
 
 void print(char *string) {
@@ -70,4 +71,8 @@ void print(char *string) {
 
 void ConsoleColor(uint8_t foreground, uint8_t background) {
   color = foreground + (background << 4);
+}
+void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
+  Column = column;
+  Line = row;
 }
