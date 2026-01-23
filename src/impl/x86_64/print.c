@@ -1,4 +1,6 @@
 #include <print.h>
+#include <stdarg.h>
+#include <stdint.h>
 
 const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;
@@ -8,10 +10,12 @@ struct Char {
   uint8_t color;
 };
 
-struct Char *buffer = (struct Char *)0xb8000;
+struct Char *buffer = (struct Char *)0xb8000; // VGA память
 size_t Column = 0;
 size_t Line = 0;
 uint8_t color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
+uint8_t SaveColor =
+    0; // 0 == NULL //  сохранить цвет при его изменгением в функции ошибки
 
 void ClearRow(size_t row) {
   struct Char EmptySymbol = (struct Char){
@@ -59,7 +63,7 @@ void PrintChar(char character) {
   Column++;
 }
 
-void print(char *string) {
+void print(char *string) { // это для базового ввода
   for (size_t i = 0; 1; i++) {
     char character = (uint8_t)string[i];
     if (character == '\0')
@@ -67,6 +71,45 @@ void print(char *string) {
 
     PrintChar(character);
   }
+}
+void printf(char *string, ...) { // а это уже тяжелая артилерия
+  va_list args;
+  va_start(args, string);
+
+  for (size_t i = 0; string[i] != '\0'; i++) {
+    if (string[i] == '%') {
+      i++; // следующий символ после '%'
+
+      switch (string[i]) {
+      case 'u': {
+        int val = va_arg(args, unsigned); // Читаем int из аргументов
+        if (val < 0) {
+          PrintError("Get received a number less than zero in unsigned!");
+          return;
+        }
+        printDEC((uint64_t)val); // Выводим через printDEC
+        break;
+      case 's':
+        char *str = va_arg(args, char *);
+        print(str);
+        break;
+      case 'i':
+        int num = va_arg(args, int);
+        printINT(num);
+        break;
+      }
+      // Можно добавить другие спецификаторы, например 's', 'c' и т.д.
+      default:
+        PrintChar('%');
+        PrintChar(string[i]);
+        break;
+      }
+    } else {
+      PrintChar(string[i]); // Просто печатаем символ
+    }
+  }
+
+  va_end(args);
 }
 
 void ConsoleColor(uint8_t foreground, uint8_t background) {
@@ -80,7 +123,7 @@ void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
 uint8_t CursorLine() { return Line; }
 uint8_t CursorColumn() { return Column; }
 
-void print(uint64_t value) {
+void printDEC(uint64_t value) {
   if (value == 0) {
     PrintChar('0');
     return;
@@ -99,7 +142,7 @@ void print(uint64_t value) {
   }
 }
 
-void PrintHex64(uint64_t value) {
+void PrintHex64(uint64_t value) { // мб ужалить потому что не используется
   if (value == 0) {
     PrintChar('0');
     return;
@@ -125,7 +168,7 @@ void PrintHex64(uint64_t value) {
   }
 }
 
-void Print64Bin(uint64_t value) {
+void Print64Bin(uint64_t value) { // мб ужалить потому что не используется
   char buffer[64];
 
   for (size_t i = 0; i < 64; i++) {
@@ -135,5 +178,36 @@ void Print64Bin(uint64_t value) {
 
   for (size_t i = 64; i > 0; i--) {
     PrintChar(buffer[i - 1]);
+  }
+}
+
+void PrintError(char *string) {
+  SaveColor = color;
+  ConsoleColor(CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK);
+  print("ERROR:\n");
+  print(string);
+  color = SaveColor;
+}
+
+void printINT(int value) {
+  if (value == 0) {
+    PrintChar('0');
+    return;
+  }
+  if (value < 0) {
+    PrintChar('-');
+    // Преобразуем в положительное для удобства
+    value = -value;
+  }
+  char buffer[20];
+  int i = 0;
+
+  while (value > 0) {
+    buffer[i++] = (value % 10) + '0';
+    value /= 10;
+  }
+
+  while (i-- > 0) {
+    PrintChar(buffer[i]);
   }
 }

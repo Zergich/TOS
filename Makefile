@@ -1,4 +1,4 @@
-CC := x86_64-elf-gcc
+CC := x86_64-elf-gcc 
 LD := x86_64-elf-ld
 
 kernel_source_files := $(shell find src/impl/kernel -name *.c)
