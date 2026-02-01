@@ -27,13 +27,16 @@ void ConsoleClear();
 void PrintChar(char character);
 void print(char *string); // с маленькой буквы для удобствa
 void printf(char *string, ...);
-void printDEC(uint64_t value);
+void PrintDEC(uint64_t value);
 void PrintHex64(uint64_t value);
 void Print64Bin(uint64_t value);
 void PrintINT(int value);
 
 // Цвет
 void ConsoleColor(uint8_t foreground, uint8_t background);
+void ConsoleResetColor();
+void ConsoleForeground(uint8_t foreground);
+void ConsoleBackground(uint8_t background);
 
 // Курсор
 void ConsoleSetCursorPos(uint8_t column, uint8_t row);

@@ -1,9 +1,12 @@
 #include <print.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <sysinfo.h>
 
-const static size_t NUM_COLS = 80;
-const static size_t NUM_ROWS = 25;
+// const static size_t NUM_COLS = 80;
+// const static size_t NUM_ROWS = 25;
+const size_t NUM_COLUMS = 80;
+const size_t NUM_ROWS = 25;
 
 struct Char {
   uint8_t character;
@@ -13,6 +16,10 @@ struct Char {
 struct Char *buffer = (struct Char *)0xb8000; // VGA память
 size_t Column = 0;
 size_t Line = 0;
+
+// Цвета
+uint8_t Foreground = CONSOLE_COLOR_WHITE;
+uint8_t Background = CONSOLE_COLOR_BLACK;
 uint8_t color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
 uint8_t SaveColor =
     0; // 0 == NULL //  сохранить цвет при его изменгением в функции ошибки
@@ -22,8 +29,8 @@ void ClearRow(size_t row) {
     character : ' ',
     color : color,
   };
-  for (size_t col = 0; col < NUM_COLS; col++) {
-    buffer[col + NUM_COLS * row] = EmptySymbol;
+  for (size_t col = 0; col < NUM_COLUMS; col++) {
+    buffer[col + NUM_COLUMS * row] = EmptySymbol;
   }
 }
 void ConsoleClear() {
@@ -40,12 +47,12 @@ void ConsoleRePrintDown() { // переписывает буффер консо�
     return;
   }
   for (size_t row = 1; row < NUM_ROWS; row++) {
-    for (size_t col = 0; col < NUM_COLS; col++) {
-      struct Char character = buffer[col + NUM_COLS * row];
-      buffer[col + NUM_COLS * (row - 1)] = character;
+    for (size_t col = 0; col < NUM_COLUMS; col++) {
+      struct Char character = buffer[col + NUM_COLUMS * row];
+      buffer[col + NUM_COLUMS * (row - 1)] = character;
     }
   }
-  ClearRow(NUM_COLS - 1);
+  ClearRow(NUM_COLUMS - 1);
 }
 
 void PrintChar(char character) {
@@ -53,10 +60,10 @@ void PrintChar(char character) {
     ConsoleRePrintDown();
     return;
   }
-  if (Column > NUM_COLS) {
+  if (Column > NUM_COLUMS) {
     ConsoleRePrintDown();
   }
-  buffer[Column + NUM_COLS * Line] = (struct Char){
+  buffer[Column + NUM_COLUMS * Line] = (struct Char){
     character : (uint8_t)character,
     color : color,
   };
@@ -87,7 +94,7 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
           PrintError("Get received a number less than zero in unsigned!");
           return;
         }
-        printDEC((uint64_t)val); // Выводим через printDEC
+        PrintDEC((uint64_t)val); // Выводим через printDEC
         break;
       case 's':
         char *str = va_arg(args, char *);
@@ -95,7 +102,7 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         break;
       case 'i':
         int num = va_arg(args, int);
-        printINT(num);
+        PrintINT(num);
         break;
       }
       // Можно добавить другие спецификаторы, например 's', 'c' и т.д.
@@ -123,7 +130,7 @@ void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
 uint8_t CursorLine() { return Line; }
 uint8_t CursorColumn() { return Column; }
 
-void printDEC(uint64_t value) {
+void PrintDEC(uint64_t value) {
   if (value == 0) {
     PrintChar('0');
     return;
@@ -189,7 +196,7 @@ void PrintError(char *string) {
   color = SaveColor;
 }
 
-void printINT(int value) {
+void PrintINT(int value) {
   if (value == 0) {
     PrintChar('0');
     return;
@@ -210,4 +217,22 @@ void printINT(int value) {
   while (i-- > 0) {
     PrintChar(buffer[i]);
   }
+}
+void ConsoleResetColor() {
+  Foreground = CONSOLE_COLOR_WHITE; // синхронизация цвета
+  Background = CONSOLE_COLOR_BLACK;
+  color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
+}
+
+// тут проблема в том что изначально мо человечески это сделать не получаеься
+// потому что компилятор хочет чтоб переменные которые задействуюся в цвете
+// (передний|задний) были константнымих
+void ConsoleForeground(uint8_t foreground) {
+  Foreground = foreground; // сохранение цвета для его синхронизации
+  color = foreground | Background << 4;
+}
+
+void ConsoleBackground(uint8_t background) {
+  Background = background; // сохранение цвета для его синхронизации
+  color = Foreground | background << 4;
 }

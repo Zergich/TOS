@@ -5,7 +5,7 @@ section .text
 bits 32
 start:
 	mov esp, stack_top
-
+  
 	call check_multiboot
 	call check_cpuid
 	call check_long_mode ; проверяет достпуна ли x64 а потом переводит 
