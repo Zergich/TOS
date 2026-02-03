@@ -34,6 +34,9 @@ void PrintINT(int value);
 
 // Цвет
 void ConsoleColor(uint8_t foreground, uint8_t background);
+void ConsoleResetColor();
+void ConsoleForeground(uint8_t foreground);
+void ConsoleBackground(uint8_t background);
 
 // Курсор
 void ConsoleSetCursorPos(uint8_t column, uint8_t row);
