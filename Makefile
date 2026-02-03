@@ -16,9 +16,13 @@ build/kernel/%.o: src/impl/kernel/%.c
 	mkdir -p $(dir $@)
 	$(CC) -c -I src/Includes -ffreestanding $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
 
-build/x86_64/%.o: src/impl/x86_64/%.c
+build/x86_64/OSFunc/%.o: src/impl/x86_64/OSFunc/%.c
 	mkdir -p $(dir $@)
 	$(CC) -c -I src/Includes -ffreestanding $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+
+build/x86_64/Interrupt/%.o: src/impl/x86_64/Interrupt/%.c
+	mkdir -p $(dir $@)
+	$(CC) -c -I src/Includes -ffreestanding -mno-mmx -mno-sse -mno-80387 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
 
 build/x86_64/%.o: src/impl/x86_64/%.asm
 	mkdir -p $(dir $@)
@@ -34,3 +38,5 @@ build-x86_64: $(kernel_object_files) $(x86_64_object_files)
 .PHONY: clean
 clean:
 	rm -rf build dist
+
+# -mno-mmx -mno-sse -mno-80387 флаги для компиляции с прерываниями 
