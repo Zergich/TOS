@@ -43,8 +43,8 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel,
                   unsigned char flags);
 void pic_init(void);
 void pic_ack(unsigned int irq);
-// extern void outb(unsigned short port, unsigned char val);
-// extern unsigned char inb(unsigned short port);
+void outb(unsigned short port, unsigned char val);
+unsigned char inb(unsigned short port);
 void interrupt_handler_keyboard(void);
 void exception_handler(unsigned int interrupt_no, unsigned int error_code);
 

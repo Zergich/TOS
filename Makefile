@@ -34,3 +34,27 @@ build-x86_64: $(kernel_object_files) $(x86_64_object_files)
 .PHONY: clean
 clean:
 	rm -rf build dist
+
+
+CFLAGS := -g -O0 -ffreestanding -Wall -Wextra -I src/Includes
+LDFLAGS := -n -g -T targets/x86_64/linker.ld
+
+build/kernel/%.o: src/impl/kernel/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/x86_64/%.o: src/impl/x86_64/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/x86_64/%.o: src/impl/x86_64/%.asm
+	mkdir -p $(dir $@)
+	nasm -f elf64 $< -o $@
+
+.PHONY: debug-x86_64
+debug-x86_64: $(kernel_object_files) $(x86_64_object_files)
+	mkdir -p dist/x86_64
+	$(LD) $(LDFLAGS) -o dist/x86_64/kernel.bin $(kernel_object_files) $(x86_64_object_files)
+	cp dist/x86_64/kernel.bin targets/x86_64/iso/boot/kernel.bin
+	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
+

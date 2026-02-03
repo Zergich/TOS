@@ -229,7 +229,7 @@ void toggle_cursor(void) {
     video[pos] = ' ';
   } else {
     /* Draw an underscore when cursor is "on" */
-    video[pos] = '_';
+    video[pos] = '|';
   }
 
   cursor_visible = !cursor_visible;
