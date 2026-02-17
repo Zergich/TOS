@@ -37,5 +37,4 @@ void DivideZero() {
   ConsoleSetCursorPos(16, 7);
   print("Processor error. Division by zero."); // Ошибка процессора. Деление на
                                                // ноль.
-  asm volatile("hlt");
 }

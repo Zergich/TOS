@@ -1,5 +1,6 @@
 
 #include <io.h>
+#include <keyboard.h>
 #include <print.h>
 #include <rsod.h>
 #include <stdint.h>
@@ -69,7 +70,6 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
 
   asm volatile("hlt");
 }
-
 #define KBD_DATA_PORT 0x60
 #define PIC1_COMMAND 0x20
 #define PIC1_ACK 0x20
@@ -77,29 +77,10 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
 volatile int key_pressed = 0;
 volatile char last_char = 0;
 
-// Простой маппинг кода клавиши на ASCII для букв и цифр
-char scancode_to_ascii(uint8_t sc) {
-  // Минимальный набор (коды без расширенных, без Shift)
-  static const char map[256] = {
-      [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c', [0x20] = 'd', [0x12] = 'e',
-      [0x21] = 'f', [0x22] = 'g',  [0x23] = 'h', [0x17] = 'i', [0x24] = 'j',
-      [0x25] = 'k', [0x26] = 'l',  [0x32] = 'm', [0x31] = 'n', [0x18] = 'o',
-      [0x19] = 'p', [0x10] = 'q',  [0x13] = 'r', [0x1F] = 's', [0x14] = 't',
-      [0x16] = 'u', [0x2F] = 'v',  [0x11] = 'w', [0x2D] = 'x', [0x15] = 'y',
-      [0x2C] = 'z', [0x0B] = '0',  [0x02] = '1', [0x03] = '2', [0x04] = '3',
-      [0x05] = '4', [0x06] = '5',  [0x07] = '6', [0x08] = '7', [0x09] = '8',
-      [0x0A] = '9', [0x1C] = '\n', [0x39] = ' ',
-      // Можно расширить таблицу при необходимости
-  };
-  if (sc & 0x80)
-    return 0; // отпускание клавиши - игнорируем
-  return map[sc];
-}
-
 __attribute__((interrupt)) void
 keyboard_handler(struct interrupt_frame *frame) {
   uint8_t scancode = inb(KBD_DATA_PORT);
-  char c = scancode_to_ascii(scancode);
+  char c = ReturnCharKeyboard(scancode);
   if (c) {
     last_char = c;
     key_pressed = 1;
@@ -125,11 +106,15 @@ void pic_remap() {
   outb(0x21, a1); // Восстановить маску
   outb(0xA1, a2);
 }
+__attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
+  asm volatile("iretq");
+}
 // Инициализация IDT – назначаем обработчики
 void idt_init() {
 
   for (int i = 0; i < 256; i++) {
-    set_idt_gate(i, 0); // нулевой указатель - может быть заменён на заглушку
+    set_idt_gate(i, (void *)empty_handler); // нулевой указатель - может быть
+                                            // заменён на заглушку
   }
   pic_remap();
   // Устанавливаем обработчик деления на ноль в вектор 0

@@ -2,6 +2,8 @@
 #include <bool.h>
 #include <interrupts.h>
 #include <print.h>
+#include <vgacursor.h>
+
 void kernel_main() {
   ConsoleClear();
   WelcomeMessage();

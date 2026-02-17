@@ -1,4 +1,15 @@
+#pragma once
+#include <stdint.h>
+
 void set_idt_gate(int n, void (*handler)(void));
+
+struct interrupt_frame {
+  uint64_t rip;
+  uint64_t cs;
+  uint64_t rflags;
+  uint64_t rsp;
+  uint64_t ss;
+};
 void divide_by_zero_handler(struct interrupt_frame *frame);
 void idt_init();
 void load_idt();
