@@ -103,22 +103,39 @@ keyboard_handler(struct interrupt_frame *frame) {
   if (c) {
     last_char = c;
     key_pressed = 1;
+    PrintChar(c);
   }
   // Отправляем EOI (End of Interrupt) контроллеру PIC
   outb(PIC1_COMMAND, PIC1_ACK);
 }
+void pic_remap() {
+  uint8_t a1, a2;
 
+  a1 = inb(0x21); // Сохрани маски
+  a2 = inb(0xA1);
+
+  outb(0x20, 0x11); // Начало инициализации master PIC
+  outb(0xA0, 0x11); // Начало инициализации slave PIC
+  outb(0x21, 0x20); // Вектор прерывания master = 32
+  outb(0xA1, 0x28); // Вектор прерывания slave = 40
+  outb(0x21, 0x04); // Настройка связи master-slave
+  outb(0xA1, 0x02);
+  outb(0x21, 0x01); // Режим 8086
+  outb(0xA1, 0x01);
+  outb(0x21, a1); // Восстановить маску
+  outb(0xA1, a2);
+}
 // Инициализация IDT – назначаем обработчики
 void idt_init() {
-  outb(0x21, 0x00);
-  outb(0xA1, 0x00);
-  // Обнуляем таблицу
+
   for (int i = 0; i < 256; i++) {
     set_idt_gate(i, 0); // нулевой указатель - может быть заменён на заглушку
   }
-
+  pic_remap();
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
+  outb(0x21, 0xFD); // Маска: разрешаем только IRQ1 (с клавиатуры)
+  outb(0xA1, 0xFF); // Все на slave PIC запрещено
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
   // set_idt_gate(33, (void *)keyboard_handler);
