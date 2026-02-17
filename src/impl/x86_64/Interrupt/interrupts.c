@@ -1,5 +1,7 @@
 
+#include <io.h>
 #include <print.h>
+#include <rsod.h>
 #include <stdint.h>
 
 // Структура, описывающая фрейм прерывания (x86_64)
@@ -58,20 +60,68 @@ __attribute__((interrupt)) void
 divide_by_zero_handler(struct interrupt_frame *frame) {
   // Тут можно обработать ошибку, вывести сообщение, логгировать и т.п.
   // Для примера — бесконечный цикл, чтобы остановиться
-  printf("%u", frame->rflags);
-  print("pede");
+  // printf("%u\n", frame->rflags);
+  // printf("%u\n", frame->cs);
+  // printf("%u\n", frame->rip);
+  // printf("%u\n", frame->rsp);
+  // printf("%u\n", frame->ss);
+  DivideZero();
+
   asm volatile("hlt");
+}
+
+#define KBD_DATA_PORT 0x60
+#define PIC1_COMMAND 0x20
+#define PIC1_ACK 0x20
+
+volatile int key_pressed = 0;
+volatile char last_char = 0;
+
+// Простой маппинг кода клавиши на ASCII для букв и цифр
+char scancode_to_ascii(uint8_t sc) {
+  // Минимальный набор (коды без расширенных, без Shift)
+  static const char map[256] = {
+      [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c', [0x20] = 'd', [0x12] = 'e',
+      [0x21] = 'f', [0x22] = 'g',  [0x23] = 'h', [0x17] = 'i', [0x24] = 'j',
+      [0x25] = 'k', [0x26] = 'l',  [0x32] = 'm', [0x31] = 'n', [0x18] = 'o',
+      [0x19] = 'p', [0x10] = 'q',  [0x13] = 'r', [0x1F] = 's', [0x14] = 't',
+      [0x16] = 'u', [0x2F] = 'v',  [0x11] = 'w', [0x2D] = 'x', [0x15] = 'y',
+      [0x2C] = 'z', [0x0B] = '0',  [0x02] = '1', [0x03] = '2', [0x04] = '3',
+      [0x05] = '4', [0x06] = '5',  [0x07] = '6', [0x08] = '7', [0x09] = '8',
+      [0x0A] = '9', [0x1C] = '\n', [0x39] = ' ',
+      // Можно расширить таблицу при необходимости
+  };
+  if (sc & 0x80)
+    return 0; // отпускание клавиши - игнорируем
+  return map[sc];
+}
+
+__attribute__((interrupt)) void
+keyboard_handler(struct interrupt_frame *frame) {
+  uint8_t scancode = inb(KBD_DATA_PORT);
+  char c = scancode_to_ascii(scancode);
+  if (c) {
+    last_char = c;
+    key_pressed = 1;
+  }
+  // Отправляем EOI (End of Interrupt) контроллеру PIC
+  outb(PIC1_COMMAND, PIC1_ACK);
 }
 
 // Инициализация IDT – назначаем обработчики
 void idt_init() {
+  outb(0x21, 0x00);
+  outb(0xA1, 0x00);
   // Обнуляем таблицу
   for (int i = 0; i < 256; i++) {
     set_idt_gate(i, 0); // нулевой указатель - может быть заменён на заглушку
   }
 
   // Устанавливаем обработчик деления на ноль в вектор 0
+  set_idt_gate(33, (void *)keyboard_handler);
+
   set_idt_gate(0, (void *)divide_by_zero_handler);
+  // set_idt_gate(33, (void *)keyboard_handler);
 
   // Загружаем таблицу
   load_idt();
