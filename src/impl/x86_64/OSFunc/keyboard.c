@@ -1,4 +1,8 @@
 #include <keyboard.h>
+#include <stdint.h>
+// стартовые позиции курсора
+uint16_t CursorPosCol = 7;
+uint16_t CursorPosRow = 3;
 
 // Простой маппинг кода клавиши на ASCII для букв и цифр
 char ReturnCharKeyboard(uint8_t sc) {

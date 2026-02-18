@@ -10,6 +10,9 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
+static uint16_t CursorPosRow = 0;
+static uint16_t CursorPosCol = 0;
+
 void CursoreSize(uint8_t end_line) {
   outb(0x3D4, 0x0A);     // регистр start
   outb(0x3D5, 0x00);     // включаем бит 5
@@ -17,8 +20,8 @@ void CursoreSize(uint8_t end_line) {
   outb(0x3D5, end_line); // сканлиния - это слои пикселей символа макс 16 больше
                          // 16 ошибки нет 0 не отключает курсор
 }
-void CursorPos(uint16_t Row, uint16_t Column) {
-  uint16_t pos = Column * VGA_WIDTH + Row;
+void CursorPos(uint16_t Column, uint16_t Row) {
+  uint16_t pos = Row * VGA_WIDTH + Column;
   // старший байт
   outb(VGA_CTRL, CURSOR_HIGH);
   outb(VGA_DATA, (pos >> 8) & 0xFF);

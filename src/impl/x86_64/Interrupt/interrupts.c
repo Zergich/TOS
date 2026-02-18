@@ -4,6 +4,7 @@
 #include <print.h>
 #include <rsod.h>
 #include <stdint.h>
+#include <vgacursor.h>
 
 // Структура, описывающая фрейм прерывания (x86_64)
 struct interrupt_frame {

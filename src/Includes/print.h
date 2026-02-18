@@ -27,7 +27,7 @@ void ConsoleClear();
 void PrintChar(char character);
 void print(char *string); // с маленькой буквы для удобствa
 void printf(char *string, ...);
-void printDEC(uint64_t value);
+void PrintDEC(uint64_t value);
 void PrintHex64(uint64_t value);
 void Print64Bin(uint64_t value);
 void PrintINT(int value);

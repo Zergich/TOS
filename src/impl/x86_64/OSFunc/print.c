@@ -2,6 +2,10 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <sysinfo.h>
+#include <vgacursor.h>
+
+extern uint16_t CursorPosCol;
+extern uint16_t CursorPosRow;
 
 // const static size_t NUM_COLS = 80;
 // const static size_t NUM_ROWS = 25;
@@ -14,15 +18,15 @@ struct Char {
 };
 
 struct Char *buffer = (struct Char *)0xb8000; // VGA память
-size_t Column = 0;
-size_t Line = 0;
+size_t VGA_Column = 0;
+size_t VGA_Line = 0;
 
 // Цвета
 uint8_t Foreground = CONSOLE_COLOR_WHITE;
 uint8_t Background = CONSOLE_COLOR_BLACK;
 uint8_t color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
-uint8_t SaveColor =
-    0; // 0 == NULL //  сохранить цвет при его изменгением в функции ошибки
+uint8_t SaveColor = 0;
+//  сохранить цвет при его изменгением в функции ошибки
 
 void ClearRow(size_t row) {
   struct Char EmptySymbol = (struct Char){
@@ -41,9 +45,9 @@ void ConsoleClear() {
 
 void ConsoleRePrintDown() { // переписывает буффер консоли (строка дошла до
                             // конца). пролистывает вниз
-  Column = 0;
-  if (Line < NUM_ROWS - 1) {
-    Line++;
+  VGA_Column = 0;
+  if (VGA_Line < NUM_ROWS - 1) {
+    VGA_Line++;
     return;
   }
   for (size_t row = 1; row < NUM_ROWS; row++) {
@@ -58,16 +62,34 @@ void ConsoleRePrintDown() { // переписывает буффер консо�
 void PrintChar(char character) {
   if (character == '\n') {
     ConsoleRePrintDown();
+    CursorPosCol = 0;
+    // тут дело в суфиксах и постфиксах потому что если Х++ то сначала
+    // передается значение в функции, функция отрабатывает с этим значением а
+    // потом только увеличивает его а если ++Х то сначала увеличивает а потом
+    // работает
+    CursorPos(CursorPosCol, ++CursorPosRow);
     return;
   }
-  if (Column > NUM_COLUMS) {
+  if (VGA_Column > NUM_COLUMS) {
     ConsoleRePrintDown();
   }
-  buffer[Column + NUM_COLUMS * Line] = (struct Char){
+  buffer[VGA_Column + NUM_COLUMS * VGA_Line] = (struct Char){
     character : (uint8_t)character,
     color : color,
   };
-  Column++;
+  VGA_Column++;
+  if (VGA_Column ==
+      NUM_COLUMS) { // херня от самопроизвольного инкремента позиции колонны
+    // тоесть одна полностью заполненная строка дает + к позиции Х на следующей
+    // строке и курсор опережает текст
+    // CursorPosCol--; // так тоже работает но пулучается проблемы с новой
+    // строкой
+    CursorPosCol = 0;
+    CursorPosRow++;
+    CursorPos(CursorPosCol, CursorPosRow);
+    return;
+  }
+  CursorPos(++CursorPosCol, CursorPosRow);
 }
 
 void print(char *string) { // это для базового ввода
@@ -123,12 +145,12 @@ void ConsoleColor(uint8_t foreground, uint8_t background) {
   color = foreground + (background << 4);
 }
 void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
-  Column = column;
-  Line = row;
+  VGA_Column = column;
+  VGA_Line = row;
 }
 
-uint8_t CursorLine() { return Line; }
-uint8_t CursorColumn() { return Column; }
+uint8_t CursorLine() { return VGA_Line; }
+uint8_t CursorColumn() { return VGA_Column; }
 
 void PrintDEC(uint64_t value) {
   if (value == 0) {
