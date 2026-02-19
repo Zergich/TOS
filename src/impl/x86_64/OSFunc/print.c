@@ -72,23 +72,22 @@ void PrintChar(char character) {
   }
   if (VGA_Column > NUM_COLUMS) {
     ConsoleRePrintDown();
+    CursorPosCol =
+        1; // из за какойто херни когда автоматически переходит на новую строку
+           // при заполнении пердыдущей печатается первый символ в позиции 0 а
+           // следующий символ встает на эту же позицию таким образом скпивая 1
+           // символ по этому переменная равна 1 а не 0 и в конце тела колона
+           // инкрементируется
+    CursorPosRow++;
+    CursorPos(CursorPosCol, CursorPosRow);
+    VGA_Column++;
   }
   buffer[VGA_Column + NUM_COLUMS * VGA_Line] = (struct Char){
     character : (uint8_t)character,
     color : color,
   };
   VGA_Column++;
-  if (VGA_Column ==
-      NUM_COLUMS) { // херня от самопроизвольного инкремента позиции колонны
-    // тоесть одна полностью заполненная строка дает + к позиции Х на следующей
-    // строке и курсор опережает текст
-    // CursorPosCol--; // так тоже работает но пулучается проблемы с новой
-    // строкой
-    CursorPosCol = 0;
-    CursorPosRow++;
-    CursorPos(CursorPosCol, CursorPosRow);
-    return;
-  }
+
   CursorPos(++CursorPosCol, CursorPosRow);
 }
 

@@ -1,8 +1,8 @@
 #include <OSInit.h>
-#include <bool.h>
 #include <interrupts.h>
 #include <print.h>
 #include <stdint.h>
+#include <types.h>
 #include <vgacursor.h>
 
 extern uint16_t CursorPosCol;
@@ -16,10 +16,11 @@ void kernel_main() {
   CursorPosCol = 7;
   CursorPosRow = 3;
   CursorPos(CursorPosCol, CursorPosRow);
+
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
-  while (1) {
+  while (true) {
     // Бесконечный цикл ядра
   }
 }
