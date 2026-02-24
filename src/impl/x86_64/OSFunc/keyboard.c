@@ -27,16 +27,16 @@ char ReturnCharKeyboard(uint8_t sc) {
       CapsEnabled = false;
     else
       CapsEnabled = true;
-    return 0;
+    return sc;
   }
 
   if (sc == Key_LShift || sc == Key_RShift) {
     ShiftEnabled = true;
-    return 0;
+    return sc;
   } else if (sc == (Key_LShift | Key_Realising) ||
              sc == (Key_RShift | Key_Realising)) {
     ShiftEnabled = false;
-    return 0;
+    return sc;
   } else {
     static const char MapLow[256] = {
         [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c', [0x20] = 'd', [0x12] = 'e',

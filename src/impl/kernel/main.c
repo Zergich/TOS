@@ -1,4 +1,5 @@
 #include <OSInit.h>
+#include <console.h>
 #include <interrupts.h>
 #include <print.h>
 #include <stdint.h>

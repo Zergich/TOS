@@ -1,10 +1,13 @@
 
+#include <datastruct.h>
 #include <io.h>
 #include <keyboard.h>
 #include <print.h>
 #include <rsod.h>
 #include <stdint.h>
 #include <vgacursor.h>
+
+extern RoundBufferObgect RoundBuff;
 
 // Структура, описывающая фрейм прерывания (x86_64)
 struct interrupt_frame {
@@ -85,7 +88,9 @@ keyboard_handler(struct interrupt_frame *frame) {
   if (c) {
     last_char = c;
     key_pressed = 1;
-    PrintChar(c);
+    // PrintChar(c);
+    RoundBuff.put(c);
+    PrintChar(ReadKey());
   }
   // Отправляем EOI (End of Interrupt) контроллеру PIC
   outb(PIC1_COMMAND, PIC1_ACK);
