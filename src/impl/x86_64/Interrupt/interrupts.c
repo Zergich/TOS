@@ -88,9 +88,7 @@ keyboard_handler(struct interrupt_frame *frame) {
   if (c) {
     last_char = c;
     key_pressed = 1;
-    // PrintChar(c);
     RoundBuff.put(c);
-    PrintChar(ReadKey());
   }
   // Отправляем EOI (End of Interrupt) контроллеру PIC
   outb(PIC1_COMMAND, PIC1_ACK);

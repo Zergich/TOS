@@ -2,9 +2,9 @@
 #include <types.h>
 
 typedef struct {
-  char *(*ReadLine)(void);
+  int (*ReadLine)(char *string);
   char (*ReadKey)(void);
 } ConsoleInput;
 
-char *ConsoleRead();
+int ConsoleRead(char *string);
 char ReadKey();

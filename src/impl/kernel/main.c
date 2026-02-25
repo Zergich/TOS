@@ -21,7 +21,10 @@ void kernel_main() {
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
+  char pede[100];
   while (true) {
+    ConsoleRead(pede);
+    print("> ");
     // Бесконечный цикл ядра
   }
 }
