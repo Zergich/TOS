@@ -2,7 +2,6 @@
 #include <types.h>
 
 typedef struct {
-  u16 position;
   int (*put)(char character);
   int (*get)(char *linkchar);
   char buffer[8192];

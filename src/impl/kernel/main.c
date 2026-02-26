@@ -24,7 +24,7 @@ void kernel_main() {
   char pede[100];
   while (true) {
     ConsoleRead(pede);
-    print("> ");
+    printf("Shell> ");
     // Бесконечный цикл ядра
   }
 }

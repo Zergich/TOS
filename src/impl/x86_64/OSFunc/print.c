@@ -50,13 +50,18 @@ void ConsoleRePrintDown() { // переписывает буффер консо�
     VGA_Line++;
     return;
   }
-  for (size_t row = 1; row < NUM_ROWS; row++) {
+  // здесь + 1 один потому что без него функция копирует последнюю
+  // строку и втасляет ее заново. то есть на новой строке у тебя
+  // было то что на пердыдущей
+  for (size_t row = 1; row < NUM_ROWS + 1; row++) {
     for (size_t col = 0; col < NUM_COLUMS; col++) {
       struct Char character = buffer[col + NUM_COLUMS * row];
       buffer[col + NUM_COLUMS * (row - 1)] = character;
     }
   }
   ClearRow(NUM_COLUMS - 1);
+  CursorPosCol = 0;
+  CursorPosRow = NUM_ROWS - 2; // курсор просто пропадает без этой штуки
 }
 
 void PrintChar(char character) {
