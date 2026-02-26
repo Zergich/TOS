@@ -3,6 +3,7 @@
 #include <interrupts.h>
 #include <print.h>
 #include <stdint.h>
+#include <string.h>
 #include <types.h>
 #include <vgacursor.h>
 
@@ -24,6 +25,8 @@ void kernel_main() {
   char pede[100];
   while (true) {
     ConsoleRead(pede);
+    if (strcmp(pede, "pede") == 0)
+      print("pede123");
     printf("Shell> ");
     // Бесконечный цикл ядра
   }
