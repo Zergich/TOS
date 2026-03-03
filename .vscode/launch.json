@@ -1,0 +1,32 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Kernel",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/dist/x86_64/kernel.elf",
+            "miDebuggerPath": "gdb.exe", 
+            "miDebuggerServerAddress": "localhost:1234",
+            "MIMode": "gdb",
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Загрузить символы",
+                    "text": "file ${workspaceFolder}/dist/x86_64/kernel.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Подключиться к QEMU",
+                    "text": "target remote localhost:1234",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Игнорировать ошибку libstdcxx",
+                    "text": "set osabi none",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

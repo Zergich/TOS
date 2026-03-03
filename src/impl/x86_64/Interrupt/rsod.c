@@ -22,8 +22,7 @@ void PrintBaner() // из за того что если строку запис�
   print(Baner5);
   // какой позор а что поделать
 }
-
-void DivideZero() {
+void ErrorFone() {
   ConsoleClear();
   ConsoleColor(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_RED);
   ConsoleSetCursorPos(0, 0);
@@ -35,6 +34,15 @@ void DivideZero() {
   }
   PrintBaner();
   ConsoleSetCursorPos(16, 7);
-  print("Processor error. Division by zero."); // Ошибка процессора. Деление на
-                                               // ноль.
+}
+
+void DivideZero() {
+  ErrorFone();
+  print("INT 0. Processor error. Division by zero."); // Ошибка процессора.
+                                                      // Деление на ноль.
+}
+
+void MappingError() {
+  ErrorFone();
+  print("INT 14. Mapping memory error.");
 }

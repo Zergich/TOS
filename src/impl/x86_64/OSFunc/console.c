@@ -1,5 +1,6 @@
 #include <console.h>
 #include <datastruct.h>
+#include <keyboard.h>
 #include <print.h>
 #include <types.h>
 
@@ -9,13 +10,31 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
 
+bool CheckSpecKeys(u8 SpecKey) {
+  switch (SpecKey) {
+  case Key_Backspace:
+  case Key_Tab:
+  case Key_Enter:
+  case Key_LShift:
+  case Key_RShift:
+  case Key_Ctrl:
+  case Key_Alt:
+  case Key_CapsLock:
+  case Key_Realising:
+    return false;
+  }
+  return true;
+}
+
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
   uint16_t i = 0;
   char c = 0;
-  int max_len = 100;
+  static int max_len =
+      StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
+                    // нужны аллокаторы но где ты их блять возьмешь
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
       // Буфер пуст (клавишу еще не нажали)
@@ -31,8 +50,10 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       PrintChar('\n'); // Перевести строку на экране для красоты
       break;
     }
-    string[i++] = c;
-    PrintChar(c);
+    if (CheckSpecKeys(c)) {
+      string[i++] = c;
+      PrintChar(c);
+    }
   }
 
   string[i] = '\0'; // для корректного завершения строки

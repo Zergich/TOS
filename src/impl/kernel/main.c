@@ -10,6 +10,8 @@
 extern uint16_t CursorPosCol;
 extern uint16_t CursorPosRow;
 
+extern ConsoleInput Console;
+
 void kernel_main() {
   ConsoleClear();
   WelcomeMessage();
@@ -22,9 +24,9 @@ void kernel_main() {
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
-  char pede[100];
+  static string pede;
   while (true) {
-    ConsoleRead(pede);
+    Console.ReadLine(pede);
     if (strcmp(pede, "pede") == 0)
       print("pede123");
     printf("Shell> ");

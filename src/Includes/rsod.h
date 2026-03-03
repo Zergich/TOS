@@ -1,2 +1,3 @@
 
 void DivideZero();
+void MappingError();

@@ -74,6 +74,12 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
 
   asm volatile("hlt");
 }
+__attribute__((interrupt)) void
+page_fault_handler(struct interrupt_frame *frame) {
+  MappingError();
+
+  asm volatile("hlt");
+}
 #define KBD_DATA_PORT 0x60
 #define PIC1_COMMAND 0x20
 #define PIC1_ACK 0x20
@@ -127,6 +133,7 @@ void idt_init() {
   outb(0xA1, 0xFF); // Все на slave PIC запрещено
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
+  set_idt_gate(14, (void *)page_fault_handler);
   // set_idt_gate(33, (void *)keyboard_handler);
 
   // Загружаем таблицу

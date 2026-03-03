@@ -5,18 +5,6 @@
 uint16_t CursorPosCol = 7;
 uint16_t CursorPosRow = 3;
 
-enum SpecKodes {
-  Key_Backspace = 0x0E,
-  Key_Tab = 0x0F,
-  Key_Enter = 0x1C,
-  Key_LShift = 0x2A,
-  Key_RShift = 0x36,
-  Key_Ctrl = 0x1D,
-  Key_Alt = 0x38,
-  Key_CapsLock = 0x3A,
-  Key_Realising = 0x80, // отпускание клавиши
-};
-
 // Простой маппинг кода клавиши на ASCII для букв и цифр
 bool ShiftEnabled = false;
 bool CapsEnabled = false;
@@ -36,7 +24,7 @@ char ReturnCharKeyboard(uint8_t sc) {
   } else if (sc == (Key_LShift | Key_Realising) ||
              sc == (Key_RShift | Key_Realising)) {
     ShiftEnabled = false;
-    return sc;
+    return 0;
   } else {
     static const char MapLow[256] = {
         [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c', [0x20] = 'd', [0x12] = 'e',
