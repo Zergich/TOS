@@ -85,12 +85,12 @@ page_fault_handler(struct interrupt_frame *frame) {
 #define PIC1_ACK 0x20
 
 volatile int key_pressed = 0;
-volatile char last_char = 0;
+volatile u8 last_char = 0;
 
 __attribute__((interrupt)) void
 keyboard_handler(struct interrupt_frame *frame) {
   uint8_t scancode = inb(KBD_DATA_PORT);
-  char c = ReturnCharKeyboard(scancode);
+  u8 c = ReturnCharKeyboard(scancode);
   if (c) {
     last_char = c;
     key_pressed = 1;

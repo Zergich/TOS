@@ -15,15 +15,15 @@ bool CheckSpecKeys(u8 SpecKey) {
   case Key_Backspace:
   case Key_Tab:
   case Key_Enter:
-  case Key_LShift:
-  case Key_RShift:
+  case KEY_MASK_SHIFT:
   case Key_Ctrl:
-  case Key_Alt:
-  case Key_CapsLock:
+  case KEY_MASK_ALT:
+  case KEY_MASK_CAPS:
   case Key_Realising:
     return false;
+  default:
+    return true;
   }
-  return true;
 }
 
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
@@ -31,7 +31,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
   uint16_t i = 0;
-  char c = 0;
+  u8 c = 0;
   static int max_len =
       StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                     // нужны аллокаторы но где ты их блять возьмешь
@@ -44,7 +44,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       asm volatile("hlt");
       continue;
     }
-
+    // printf("%u", c);
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') {
       PrintChar('\n'); // Перевести строку на экране для красоты
