@@ -99,6 +99,7 @@ keyboard_handler(struct interrupt_frame *frame) {
   // Отправляем EOI (End of Interrupt) контроллеру PIC
   outb(PIC1_COMMAND, PIC1_ACK);
 }
+
 void pic_remap() {
   uint8_t a1, a2;
 
@@ -115,11 +116,38 @@ void pic_remap() {
   outb(0xA1, 0x01);
   outb(0x21, a1); // Восстановить маску
   outb(0xA1, a2);
+  uint8_t current_mask = inb(0x21);
+  // Сбрасываем биты 0 и 1 (0 = enable, 1 = disable)
+  // разрешает и таймер (0/32) и клавиатуру (1/33х)
+  outb(0x21, current_mask & ~(1 << 1) & ~(1 << 0));
 }
 __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
   asm volatile("iretq");
 }
-// Инициализация IDT – назначаем обработчики
+int timer_ticks = 0;
+// Порты PIT
+#define PIT_CMD 0x43 // Командный порт
+#define PIT_CH0 0x40 // Канал 0 (таймер)
+__attribute__((interrupt)) void pit(struct interrupt_frame *frame) {
+  timer_ticks++;
+
+  if (timer_ticks % 18 == 0) {
+    print("pede");
+  }
+  outb(PIC1_COMMAND, PIC1_ACK);
+}
+void pit_init(int hz) {
+  int divisor = 1193180 / hz; /* Рассчитываем делитель */
+                              // выбор канала (нулевой канал)
+  outb(PIT_CMD, 0x36);
+
+  // отправка делителей сначала младший потом старший
+  uint8_t low = (uint8_t)(divisor & 0xFF);
+  uint8_t high = (uint8_t)((divisor >> 8) & 0xFF);
+
+  outb(PIT_CH0, low);
+  outb(PIT_CH0, high);
+} // Инициализация IDT – назначаем обработчики
 void idt_init() {
 
   for (int i = 0; i < 256; i++) {
@@ -127,10 +155,10 @@ void idt_init() {
                                             // заменён на заглушку
   }
   pic_remap();
+  pit_init(100); // самый оптимальный делитель
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
-  outb(0x21, 0xFD); // Маска: разрешаем только IRQ1 (с клавиатуры)
-  outb(0xA1, 0xFF); // Все на slave PIC запрещено
+  set_idt_gate(32, (void *)pit);
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
   set_idt_gate(14, (void *)page_fault_handler);

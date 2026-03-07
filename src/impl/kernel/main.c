@@ -7,7 +7,6 @@ void kernel_main() {
   WelcomeMessage();
 
   idt_init();
-
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
