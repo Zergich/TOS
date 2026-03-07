@@ -1,5 +1,6 @@
 
 #include <datastruct.h>
+#include <interrupts.h>
 #include <io.h>
 #include <keyboard.h>
 #include <print.h>
@@ -58,35 +59,36 @@ void load_idt() {
   asm volatile("lidt %0" : : "m"(idtr));
 }
 
-// Пример обработчика деления на ноль
-// __attribute__((interrupt)) дает правильный calling convention
-// void divide_by_zero_handler(struct interrupt_frame *frame)
+// зарезервированные ошибки
 __attribute__((interrupt)) void
 divide_by_zero_handler(struct interrupt_frame *frame) {
-  // Тут можно обработать ошибку, вывести сообщение, логгировать и т.п.
-  // Для примера — бесконечный цикл, чтобы остановиться
-  // printf("%u\n", frame->rflags);
-  // printf("%u\n", frame->cs);
-  // printf("%u\n", frame->rip);
-  // printf("%u\n", frame->rsp);
-  // printf("%u\n", frame->ss);
   DivideZero();
-
   asm volatile("hlt");
 }
 __attribute__((interrupt)) void
 page_fault_handler(struct interrupt_frame *frame) {
   MappingError();
-
   asm volatile("hlt");
 }
-#define KBD_DATA_PORT 0x60
-#define PIC1_COMMAND 0x20
-#define PIC1_ACK 0x20
+__attribute__((interrupt)) void
+invalide_opcode_handler(struct interrupt_frame *frame) {
+  OpcodeError();
+  asm volatile("hlt");
+}
+__attribute__((interrupt)) void
+double_fault_handler(struct interrupt_frame *frame) {
+  OpcodeError();
+  asm volatile("hlt");
+}
+__attribute__((interrupt)) void
+general_protection_handler(struct interrupt_frame *frame) {
+  OpcodeError();
+  asm volatile("hlt");
+}
 
+#define KBD_DATA_PORT 0x60
 volatile int key_pressed = 0;
 volatile u8 last_char = 0;
-
 __attribute__((interrupt)) void
 keyboard_handler(struct interrupt_frame *frame) {
   uint8_t scancode = inb(KBD_DATA_PORT);
@@ -97,7 +99,7 @@ keyboard_handler(struct interrupt_frame *frame) {
     RoundBuff.put(c);
   }
   // Отправляем EOI (End of Interrupt) контроллеру PIC
-  outb(PIC1_COMMAND, PIC1_ACK);
+  outb(PIC1_COMMAND, PIC_EOI);
 }
 
 void pic_remap() {
@@ -124,17 +126,18 @@ void pic_remap() {
 __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
   asm volatile("iretq");
 }
+
+// переписать
+//=============================================
 int timer_ticks = 0;
-// Порты PIT
-#define PIT_CMD 0x43 // Командный порт
-#define PIT_CH0 0x40 // Канал 0 (таймер)
+
 __attribute__((interrupt)) void pit(struct interrupt_frame *frame) {
   timer_ticks++;
 
-  if (timer_ticks % 18 == 0) {
+  if (timer_ticks % 100 == 0) {
     print("pede");
   }
-  outb(PIC1_COMMAND, PIC1_ACK);
+  outb(PIC1_COMMAND, PIC_EOI);
 }
 void pit_init(int hz) {
   int divisor = 1193180 / hz; /* Рассчитываем делитель */
@@ -147,7 +150,9 @@ void pit_init(int hz) {
 
   outb(PIT_CH0, low);
   outb(PIT_CH0, high);
-} // Инициализация IDT – назначаем обработчики
+} // ============================================
+//
+// Инициализация IDT – назначаем обработчики
 void idt_init() {
 
   for (int i = 0; i < 256; i++) {
@@ -161,6 +166,9 @@ void idt_init() {
   set_idt_gate(32, (void *)pit);
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
+  set_idt_gate(6, (void *)invalide_opcode_handler);
+  set_idt_gate(8, (void *)double_fault_handler);
+  set_idt_gate(13, (void *)general_protection_handler);
   set_idt_gate(14, (void *)page_fault_handler);
   // set_idt_gate(33, (void *)keyboard_handler);
 

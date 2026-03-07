@@ -3,19 +3,8 @@
 
 void set_idt_gate(int n, void (*handler)(void));
 
-struct interrupt_frame {
-  uint64_t rip;
-  uint64_t cs;
-  uint64_t rflags;
-  uint64_t rsp;
-  uint64_t ss;
-};
-void divide_by_zero_handler(struct interrupt_frame *frame);
 void idt_init();
 void load_idt();
-
-#ifndef INTERRUPTS_H
-#define INTERRUPTS_H
 
 /*
  * IDT - таблица прерываний
@@ -24,20 +13,9 @@ void load_idt();
  *
  */
 
-// IDT струутура
-struct idt_entry {
-  unsigned short base_lo;
-  unsigned short sel;
-  unsigned char always0;
-  unsigned char flags;
-  unsigned short base_hi;
-} __attribute__((packed));
-
-// IDT указатели
-struct idt_ptr {
-  unsigned short limit;
-  unsigned int base;
-} __attribute__((packed));
+// Порты PIT
+#define PIT_CMD 0x43 // Командный порт
+#define PIT_CH0 0x40 // Канал 0 (таймер)
 
 // Флаги
 #define IDT_FLAG_PRESENT 0x80
@@ -60,42 +38,3 @@ void pic_init(void);
 void pic_ack(unsigned int irq);
 // void outb(unsigned short port, unsigned char val);
 // char inb(unsigned short port);
-void interrupt_handler_keyboard(void);
-void exception_handler(unsigned int interrupt_no, unsigned int error_code);
-
-// Прерывания
-extern void isr0(void);
-extern void isr1(void);
-extern void isr2(void);
-extern void isr3(void);
-extern void isr4(void);
-extern void isr5(void);
-extern void isr6(void);
-extern void isr7(void);
-extern void isr8(void);
-extern void isr9(void);
-extern void isr10(void);
-extern void isr11(void);
-extern void isr12(void);
-extern void isr13(void);
-extern void isr14(void);
-extern void isr15(void);
-extern void isr16(void);
-extern void isr17(void);
-extern void isr18(void);
-extern void isr19(void);
-extern void isr20(void);
-extern void isr21(void);
-extern void isr22(void);
-extern void isr23(void);
-extern void isr24(void);
-extern void isr25(void);
-extern void isr26(void);
-extern void isr27(void);
-extern void isr28(void);
-extern void isr29(void);
-extern void isr30(void);
-extern void isr31(void);
-extern void isr33(void);
-
-#endif

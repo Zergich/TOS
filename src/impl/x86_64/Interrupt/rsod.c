@@ -46,3 +46,16 @@ void MappingError() {
   ErrorFone();
   print("INT 14. Mapping memory error.");
 }
+void OpcodeError() {
+  ErrorFone();
+  print("INT 6. Invalid Opcode");
+}
+void DoubleFaultError() {
+  ErrorFone();
+  print("INT 8. Double Fault");
+}
+void GeneralProtectionError() {
+  ErrorFone();
+  print("INT 13. Null pointer or writing in read-only memory, or violation of "
+        "privileges");
+}
