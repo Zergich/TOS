@@ -130,7 +130,7 @@ __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
 // переписать
 //=============================================
 extern TimePit Timepit;
-volatile u32 PitTicks = 0;
+volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
 __attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
   PitTicks++;
   if (PitTicks % 100 == 0)

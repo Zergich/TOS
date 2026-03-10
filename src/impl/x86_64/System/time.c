@@ -5,7 +5,6 @@
 TimePit Timepit = {
     .UpTime = UpTime,
     .Sleep = Sleep,
-    .TickEvent = PitTickEvent,
     .PitTimerSecondsUp = 0,
 };
 // пока временныый вариант. Надо чтоб возвращала значение в виде строки!!!!!
@@ -14,5 +13,3 @@ void UpTime() {
 }
 
 void Sleep(u32 TimeToSleep) {}
-
-int PitTickEvent() {}
