@@ -6,7 +6,7 @@
 #include <print.h>
 #include <rsod.h>
 #include <stdint.h>
-#include <vgacursor.h>
+#include <time.h>
 
 extern RoundBufferObgect RoundBuff;
 
@@ -82,7 +82,7 @@ double_fault_handler(struct interrupt_frame *frame) {
 }
 __attribute__((interrupt)) void
 general_protection_handler(struct interrupt_frame *frame) {
-  OpcodeError();
+  GeneralProtectionError();
   asm volatile("hlt");
 }
 
@@ -129,14 +129,12 @@ __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
 
 // переписать
 //=============================================
-int timer_ticks = 0;
-
-__attribute__((interrupt)) void pit(struct interrupt_frame *frame) {
-  timer_ticks++;
-
-  if (timer_ticks % 100 == 0) {
-    print("pede");
-  }
+extern TimePit Timepit;
+volatile u32 PitTicks = 0;
+__attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
+  PitTicks++;
+  if (PitTicks % 100 == 0)
+    Timepit.PitTimerSecondsUp++;
   outb(PIC1_COMMAND, PIC_EOI);
 }
 void pit_init(int hz) {
@@ -163,7 +161,7 @@ void idt_init() {
   pit_init(100); // самый оптимальный делитель
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
-  set_idt_gate(32, (void *)pit);
+  set_idt_gate(32, (void *)pit_hendler);
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
   set_idt_gate(6, (void *)invalide_opcode_handler);
