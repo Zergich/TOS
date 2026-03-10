@@ -21,20 +21,27 @@ x86_64_asm_debug_object_files := $(patsubst src/impl/x86_64/%.asm, build-debug/x
 x86_64_debug_object_files := $(x86_64_c_debug_object_files) $(x86_64_asm_debug_object_files)
 
 
-CFLAGS_DEBUG   := -I src/Includes -ffreestanding -g -O0 -DDEBUG
+CFLAGS_DEBUG   := -I src/Includes -I src/Includes/System -I src/Includes/VGA  -ffreestanding -g -O0 -DDEBUG
 ASMFLAGS      := -f elf64
+
+GCC_REALISE := -c -I src/Includes -I src/Includes/System -I src/Includes/VGA  -ffreestanding
 
 build/kernel/%.o: src/impl/kernel/%.c
 	mkdir -p $(dir $@)
-	$(CC) -c -I src/Includes -ffreestanding $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
+	$(CC) $(GCC_REALISE) $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
 
-build/x86_64/OSFunc/%.o: src/impl/x86_64/OSFunc/%.c
+build/x86_64/VGA/OSFunc/%.o: src/impl/x86_64/VGA/OSFunc/%.c
 	mkdir -p $(dir $@)
-	$(CC) -c -I src/Includes -ffreestanding $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+	$(CC) $(GCC_REALISE) $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+
+build/x86_64/System/%.o: src/impl/x86_64/System/%.c
+	mkdir -p $(dir $@)
+	$(CC) $(GCC_REALISE) $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+
 
 build/x86_64/Interrupt/%.o: src/impl/x86_64/Interrupt/%.c
 	mkdir -p $(dir $@)
-	$(CC) -c -I src/Includes -ffreestanding -mno-mmx -mno-sse -mno-80387 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+	$(CC) $(GCC_REALISE) -mno-mmx -mno-sse -mno-80387 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
 
 build/x86_64/%.o: src/impl/x86_64/%.asm
 	mkdir -p $(dir $@)
@@ -47,7 +54,11 @@ build-debug/kernel/%.o: src/impl/kernel/%.c
 	mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
 
-build-debug/x86_64/OSFunc/%.o: src/impl/x86_64/OSFunc/%.c
+build-debug/x86_64/VGA/OSFunc/%.o: src/impl/x86_64/VGA/OSFunc/%.c
+	mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+
+build-debug/x86_64/System/%.o: src/impl/x86_64/System/%.c
 	mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
 
