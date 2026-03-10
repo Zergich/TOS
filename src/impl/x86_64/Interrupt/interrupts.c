@@ -133,23 +133,12 @@ extern TimePit Timepit;
 volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
 __attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
   PitTicks++;
-  if (PitTicks % 100 == 0)
+  if (PitTicks % 1000 == 0)
     Timepit.PitTimerSecondsUp++;
+  Timepit.PitTimerMiliSecondsUp++;
   outb(PIC1_COMMAND, PIC_EOI);
 }
-void pit_init(int hz) {
-  int divisor = 1193180 / hz; /* Рассчитываем делитель */
-                              // выбор канала (нулевой канал)
-  outb(PIT_CMD, 0x36);
 
-  // отправка делителей сначала младший потом старший
-  uint8_t low = (uint8_t)(divisor & 0xFF);
-  uint8_t high = (uint8_t)((divisor >> 8) & 0xFF);
-
-  outb(PIT_CH0, low);
-  outb(PIT_CH0, high);
-} // ============================================
-//
 // Инициализация IDT – назначаем обработчики
 void idt_init() {
 
@@ -158,7 +147,7 @@ void idt_init() {
                                             // заменён на заглушку
   }
   pic_remap();
-  pit_init(100); // самый оптимальный делитель
+
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
   set_idt_gate(32, (void *)pit_hendler);

@@ -13,10 +13,12 @@ void kernel_main() {
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
+  pit_init(1000);
   static string pede;
   while (true) {
     Shell();
     Timepit.UpTime();
+    Timepit.Sleep(4000);
     // Бесконечный цикл ядра
   }
 }
