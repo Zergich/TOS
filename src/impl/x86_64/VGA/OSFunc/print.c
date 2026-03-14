@@ -134,6 +134,17 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         uint64_t hex = va_arg(args, uint64_t);
         PrintHex64(hex);
         break;
+      case 'F': // так же если убрать break и добавить следом парметр ансигнед
+                // то можно получить цвета которых нет в изначальной палитре
+        // или просто в параметр цвета передать число какое нибудь но есть
+        // вариант что оно модет сработать и на цвет заднего фона и на оборот
+        uint64_t foreground = va_arg(args, uint64_t);
+        ConsoleForeground(foreground);
+        break;
+      case 'B':
+        uint64_t background = va_arg(args, uint64_t);
+        ConsoleBackground(background);
+        break;
       }
       // Можно добавить другие спецификаторы, например 's', 'c' и т.д.
       default:

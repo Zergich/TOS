@@ -11,16 +11,21 @@ TimePit Timepit = {
 };
 // пока временныый вариант. Надо чтоб возвращала значение в виде строки!!!!!
 void UpTime() {
-  printf("\nIt's already working: %u Seconds\n", Timepit.PitTimerSecondsUp);
+  printf("\nSystem already working: %u Seconds\n", Timepit.PitTimerSecondsUp);
 }
 
+u64 GetTick() { // без этой функции все идет по пизде потому что компилятор
+                // пидорас
+  // это защита от кэширования и грубый барьер памяти
+  return Timepit.PitTimerMiliSecondsUp;
+}
 void Sleep(u32 TimeToSleep) {
-  uint64_t start_time = Timepit.PitTimerMiliSecondsUp;
+  u64 StartTime = GetTick(); // Обновление данных и защита от кэширования путем
+                             // вызова функции
+  // аля барьер памяти
 
-  while ((int64_t)(Timepit.PitTimerMiliSecondsUp - start_time) <
-         (int64_t)TimeToSleep) {
-    // hlt заставит процессор спать и потреблять 0% ресурсов,
-    // пока не придет прерывание таймера, чтобы обновить условие цикла.
+  // Использует разницу это безопасно при переполнении
+  while ((int64_t)(GetTick() - StartTime) < (int64_t)TimeToSleep) {
     asm volatile("hlt");
   }
 }
