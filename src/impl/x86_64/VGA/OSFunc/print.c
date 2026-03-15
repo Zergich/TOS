@@ -134,6 +134,12 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         uint64_t hex = va_arg(args, uint64_t);
         PrintHex64(hex);
         break;
+      case 'c':
+        char character = va_arg(
+            args, int); // char преобразуется в int при переводе с параметрами
+                        // ... так char нежелательно использлвать на прямуюх
+        PrintChar(character);
+        break;
       case 'F': // так же если убрать break и добавить следом парметр ансигнед
                 // то можно получить цвета которых нет в изначальной палитре
         // или просто в параметр цвета передать число какое нибудь но есть
@@ -163,10 +169,12 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
 void ConsoleColor(uint8_t foreground, uint8_t background) {
   color = foreground + (background << 4);
 }
-void ConsoleSetCursorPos(uint8_t column, uint8_t row) {
+void ConsoleSetCarretPos(uint8_t column, uint8_t row) {
   VGA_Column = column;
   VGA_Line = row;
 }
+void CursorSetLinePos(uint8_t row) { VGA_Line = row; }
+void CursorSetColumn(uint8_t column) { VGA_Column = column; }
 
 uint8_t CursorLine() { return VGA_Line; }
 uint8_t CursorColumn() { return VGA_Column; }

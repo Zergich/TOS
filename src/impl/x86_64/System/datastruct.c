@@ -1,4 +1,5 @@
 #include <datastruct.h>
+#include <print.h>
 #include <types.h>
 
 /*
@@ -11,8 +12,9 @@
 u8 RoundBuffChar[8192];
 
 RoundBufferObgect RoundBuff = {
-    .put = PutIntoBuffer, .get = GetgFromBuffer, .buffer = {0}
-
+    .put = PutIntoBuffer,
+    .get = GetgFromBuffer,
+    .buffer = {0},
 };
 volatile int head = 0;
 volatile int tail = 0;
@@ -24,7 +26,6 @@ int PutIntoBuffer(u8 character) {
   RoundBuff.buffer[head] = character;
   int next_pos =
       (head + 1) % 8192; // перезаписывает самые старые участки в буфере
-
   if (next_pos == head) {
     // Буфер полон, сдвигаем хвост (потеряем самый старый символ)
     head = (head + 1) % 8192;
@@ -43,6 +44,7 @@ int GetgFromBuffer(u8 *linkchar) {
 
   *linkchar = RoundBuff.buffer[tail];
   tail = (tail + 1) % 8192; // та же самая перезапись
+
   return OK;
 }
 

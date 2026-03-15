@@ -10,22 +10,22 @@ void PrintBaner() // из за того что если строку запис�
   char *Baner3 = "  (\n";
   char *Baner4 = "O (\n";
   char *Baner5 = "   (\n";
-  ConsoleSetCursorPos(10, 5);
+  ConsoleSetCarretPos(10, 5);
   print(Baner);
-  ConsoleSetCursorPos(10, 6);
+  ConsoleSetCarretPos(10, 6);
   print(Baner2);
-  ConsoleSetCursorPos(10, 7);
+  ConsoleSetCarretPos(10, 7);
   print(Baner3);
-  ConsoleSetCursorPos(10, 8);
+  ConsoleSetCarretPos(10, 8);
   print(Baner4);
-  ConsoleSetCursorPos(10, 9);
+  ConsoleSetCarretPos(10, 9);
   print(Baner5);
   // какой позор а что поделать
 }
 void ErrorFone() {
   ConsoleClear();
   ConsoleColor(CONSOLE_COLOR_BLACK, CONSOLE_COLOR_RED);
-  ConsoleSetCursorPos(0, 0);
+  ConsoleSetCarretPos(0, 0);
   for (uint8_t i = 0; i < 25; i++) {
     for (uint8_t j = 0; j < 80; j++) {
       print(" ");
@@ -33,7 +33,7 @@ void ErrorFone() {
     print("\n");
   }
   PrintBaner();
-  ConsoleSetCursorPos(16, 7);
+  ConsoleSetCarretPos(16, 7);
 }
 
 void DivideZero() {

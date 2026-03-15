@@ -3,23 +3,41 @@
 #include <keyboard.h>
 #include <print.h>
 #include <types.h>
+#include <vgacursor.h>
 
 extern RoundBufferObgect RoundBuff;
+
+extern size_t NUM_COLUMS;
+extern size_t NUM_ROWS;
+
+extern u16 CursorPosCol;
+extern u16 CursorPosRow;
 
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
+u8 LimitXRow = 7;
+void BackSpaceHandle(char *string, u16 lastindex) {
+  // лимит по X
+  if (CursorColumn() == LimitXRow)
+    return;
+  CursorSetColumn(CursorColumn() - 1);
+  print(" ");
+  CursorSetColumn(CursorColumn() - 1);
+  CursorPosCol -= 2; // из за того что функция принт тоже двигает курсор
+  CursorPos(CursorPosCol, CursorPosRow);
+  string[lastindex] = 0;
+}
 
 bool CheckSpecKeys(u8 SpecKey) {
-  switch (SpecKey) {
-  case Key_Backspace:
+  switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
   case Key_Tab:
-  case Key_Enter:
   case KEY_MASK_SHIFT:
   case Key_Ctrl:
   case KEY_MASK_ALT:
   case KEY_MASK_CAPS:
   case Key_Realising:
+  case Key_Backspace:
     return false;
   default:
     return true;
@@ -44,7 +62,12 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       asm volatile("hlt");
       continue;
     }
-    // printf("%u", c);
+    if (c == '\b') {
+      if (i == 0) // иначе цикл завершится
+        continue;
+      BackSpaceHandle(string, --i);
+      continue;
+    }
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') {
       PrintChar('\n'); // Перевести строку на экране для красоты

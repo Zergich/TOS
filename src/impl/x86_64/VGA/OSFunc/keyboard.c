@@ -10,7 +10,8 @@ uint16_t CursorPosRow = 3;
 bool ShiftEnabled = false;
 bool CapsEnabled = false;
 u8 ReturnCharKeyboard(u8 sc) {
-  // Минимальный набор (коды без расширенных, без Shift)
+  // эта пиздагрязь просто так не работает чтоб без этих
+  // костылей
   if (sc == Key_Alt)
     return KEY_MASK_ALT;
   if (sc == Key_CapsLock) {
@@ -40,7 +41,7 @@ u8 ReturnCharKeyboard(u8 sc) {
         [0x0A] = '9', [0x1C] = '\n', [0x39] = ' ',  [0x1A] = '[', [0x1B] = ']',
         [0x33] = ',', [0x34] = '.',  [0x35] = '/',  [0x27] = ';', [0x28] = '\'',
         [0x29] = '`', [0x2B] = '\\', [0x0F] = '\t', [0x0C] = '-', [0x0D] = '=',
-    };
+        [0x0E] = '\b'};
     static const char MapShift[97] = {
         [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$',  [0x06] = '%',
         [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(',  [0x0B] = ')',

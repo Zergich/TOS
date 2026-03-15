@@ -11,5 +11,7 @@ void Shell() {
   Console.ReadLine(pede);
   if (strcmp(pede, "pede") == 0)
     print("pede123");
+  print(pede);
+  print("\n");
   printf("Shell> ");
 }

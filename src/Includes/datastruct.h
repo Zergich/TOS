@@ -8,5 +8,4 @@ typedef struct {
 } RoundBufferObgect;
 
 int PutIntoBuffer(u8 character);
-
 int GetgFromBuffer(u8 *linkchar);

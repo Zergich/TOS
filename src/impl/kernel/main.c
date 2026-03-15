@@ -17,8 +17,6 @@ void kernel_main() {
   static string pede;
   while (true) {
     Shell();
-    Timepit.UpTime();
-    Timepit.Sleep(4000);
     // Бесконечный цикл ядра
   }
 }

@@ -8,10 +8,10 @@ char *VersionOS = "0.0.1";
 
 void WelcomeMessage() {
   ConsoleClear();
-  ConsoleSetCursorPos(NUM_COLUMS / 3, 0); // центрирование
+  ConsoleSetCarretPos(NUM_COLUMS / 3, 0); // центрирование
   ConsoleColor(CONSOLE_COLOR_GREEN, CONSOLE_COLOR_BLACK);
   print("Welcome to TOS!\n");
-  ConsoleSetCursorPos(NUM_COLUMS / 3, 1);
+  ConsoleSetCarretPos(NUM_COLUMS / 3, 1);
   printf("OS Version: %s\n", VersionOS);
   ApperLine();
 }

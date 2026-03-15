@@ -10,3 +10,6 @@ typedef uint64_t u64;
 
 #define StringLenght 32768
 typedef char string[StringLenght];
+
+// вычисление длины статического массива
+#define statlen(arr) (sizeof(arr) / sizeof((arr)[0]))
