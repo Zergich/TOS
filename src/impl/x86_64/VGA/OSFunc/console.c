@@ -18,8 +18,6 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
 u8 LimitXRow = 7;
-// должен быть буффер но его надо читать из файла
-
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
   if (CursorColumn() == LimitXRow)
@@ -39,8 +37,21 @@ void ArrowHandle(u8 ArrowType) // пока только право лево
   CursorPos(--CursorPosCol, CursorPosRow);
 }
 
-bool CheckSpecKeys(u8 SpecKey) { // добавить обработку клавиш, Fфок и тп
-  switch (SpecKey) {             // enter обрабатывается отдельно в функции ниже
+bool SpecCodeConsoleRead = false;
+bool CheckSpecKeys(u8 SpecKey) {
+  switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
+  case Key_Tab:
+    print("pede");
+    break;
+  case Key_LShift:
+  case Key_RShift:
+  case Key_Ctrl:
+  case Key_Alt:
+  case Key_CapsLock:
+  case Key_Realising:
+  case Key_Backspace:
+    // printf(" |%u|%h|%c|", SpecKey, SpecKey, SpecKey);
+    return false;
   default:
     return true;
   }
@@ -76,10 +87,17 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       PrintChar('\n'); // Перевести строку на экране для красоты
       break;
     }
-    if (CheckSpecKeys(c)) {
-      string[i++] = c;
-      PrintChar(c);
+    if (SpecCodeConsoleRead) {
+      CheckSpecKeys(c);
+      SpecCodeConsoleRead = false;
+      continue;
     }
+    if (c == Code_MagickCode) {
+      SpecCodeConsoleRead = true;
+      continue;
+    }
+    string[i++] = c;
+    PrintChar(c);
   }
   string[i] = '\0'; // для корректного завершения строки
 

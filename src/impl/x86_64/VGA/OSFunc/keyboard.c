@@ -1,3 +1,4 @@
+#include <datastruct.h>
 #include <keyboard.h>
 #include <print.h>
 #include <stdint.h>
@@ -37,19 +38,21 @@ u8 ReturnSpecCodes(u8 ScanCode) {
             ? (Key_LShift | Key_Realising)
             : (Key_RShift | Key_Realising); // задел на будущие для хуков
     return ReturnCodeUnPress;
-
-  case 0:
-    return 0;
   }
-  // printf(" |%u|%h|%c|", ScanCode, ScanCode, ScanCode);
 
   return 0;
 }
-
+extern RoundBufferObgect RoundBuff;
+u8 LastKeyCode = 0;
 u8 ReturnCharKeyboard(u8 sc) {
   // эта пиздагрязь просто так не работает чтоб без этих
   // костылей
+  if (SpecCode) {
+    RoundBuff.put(LastKeyCode);
+    SpecCode = false;
+  }
   u8 GetSpecKeyCode = ReturnSpecCodes(sc);
+  LastKeyCode = GetSpecKeyCode;
 
   static const char MapLow[256] = {
       [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c',  [0x20] = 'd', [0x12] = 'e',
@@ -63,11 +66,11 @@ u8 ReturnCharKeyboard(u8 sc) {
       [0x33] = ',', [0x34] = '.',  [0x35] = '/',  [0x27] = ';', [0x28] = '\'',
       [0x29] = '`', [0x2B] = '\\', [0x0F] = '\t', [0x0C] = '-', [0x0D] = '=',
       [0x0E] = '\b'};
-  static const char MapShift[97] = {
-      [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$',  [0x06] = '%',
-      [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(',  [0x0B] = ')',
-      [0x0C] = '_', [0x0D] = '+', [0x1A] = '{', [0x01B] = '}', [0x2B] = '|',
-      [0x33] = '<', [0x34] = '>', [0x35] = '?', [0x29] = '~',  [0x27] = ':',
+  static const char MapShift[256] = {
+      [0x02] = '!', [0x03] = '@', [0x04] = '#', [0x05] = '$', [0x06] = '%',
+      [0x07] = '^', [0x08] = '&', [0x09] = '*', [0x0A] = '(', [0x0B] = ')',
+      [0x0C] = '_', [0x0D] = '+', [0x1A] = '{', [0x1B] = '}', [0x2B] = '|',
+      [0x33] = '<', [0x34] = '>', [0x35] = '?', [0x29] = '~', [0x27] = ':',
       [0x28] = '"'};
 
   char ch = MapLow[sc];
@@ -86,7 +89,10 @@ u8 ReturnCharKeyboard(u8 sc) {
   if (ShiftEnabled && ShiftKey != 0) {
     return ShiftKey;
   }
-  if (GetSpecKeyCode != 0)
-    return 0;
+  if (GetSpecKeyCode != 0) // чтоб не было коллизий
+  {
+    SpecCode = true;
+    return Code_MagickCode;
+  }
   return ch;
 }

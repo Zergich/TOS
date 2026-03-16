@@ -43,6 +43,7 @@ int GetgFromBuffer(u8 *linkchar) {
   }
 
   *linkchar = RoundBuff.buffer[tail];
+  // printf("%u", RoundBuff.buffer[tail]);
   tail = (tail + 1) % 8192; // та же самая перезапись
 
   return OK;
