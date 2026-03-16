@@ -2,6 +2,7 @@
 #include <datastruct.h>
 #include <keyboard.h>
 #include <print.h>
+#include <string.h>
 #include <types.h>
 #include <vgacursor.h>
 
@@ -17,6 +18,8 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
 u8 LimitXRow = 7;
+// должен быть буффер но его надо читать из файла
+
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
   if (CursorColumn() == LimitXRow)
@@ -28,17 +31,16 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorPos(CursorPosCol, CursorPosRow);
   string[lastindex] = 0;
 }
+void ArrowHandle(u8 ArrowType) // пока только право лево
+{
+  if (CursorColumn() == LimitXRow)
+    return;
+  CursorSetColumn(CursorColumn() - 1);
+  CursorPos(--CursorPosCol, CursorPosRow);
+}
 
-bool CheckSpecKeys(u8 SpecKey) {
-  switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
-  case Key_Tab:
-  case KEY_MASK_SHIFT:
-  case Key_Ctrl:
-  case KEY_MASK_ALT:
-  case KEY_MASK_CAPS:
-  case Key_Realising:
-  case Key_Backspace:
-    return false;
+bool CheckSpecKeys(u8 SpecKey) { // добавить обработку клавиш, Fфок и тп
+  switch (SpecKey) {             // enter обрабатывается отдельно в функции ниже
   default:
     return true;
   }
@@ -68,6 +70,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       BackSpaceHandle(string, --i);
       continue;
     }
+
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') {
       PrintChar('\n'); // Перевести строку на экране для красоты
@@ -78,7 +81,6 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       PrintChar(c);
     }
   }
-
   string[i] = '\0'; // для корректного завершения строки
 
   return 0;

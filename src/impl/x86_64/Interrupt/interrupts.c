@@ -127,8 +127,6 @@ __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
   asm volatile("iretq");
 }
 
-// переписать
-//=============================================
 extern TimePit Timepit;
 volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
 __attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
