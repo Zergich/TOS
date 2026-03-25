@@ -1,6 +1,6 @@
+#include <System/keyboard.h>
+#include <VGA/print.h>
 #include <datastruct.h>
-#include <keyboard.h>
-#include <print.h>
 #include <stdint.h>
 #include <types.h>
 // стартовые позиции курсора

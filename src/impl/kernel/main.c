@@ -1,11 +1,13 @@
-#include <OSInit.h>
-#include <interrupts.h>
-#include <shell.h>
+#include <System/OSInit.h>
+#include <System/interrupts.h>
+#include <VGA/shell.h>
 #include <types.h>
 
-#include <print.h>
-#include <time.h>
+#include <System/time.h>
+#include <VGA/print.h>
+
 extern TimePit Timepit;
+
 void kernel_main() {
   WelcomeMessage();
 

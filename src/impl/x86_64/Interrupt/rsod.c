@@ -1,5 +1,5 @@
-#include <print.h>
-#include <rsod.h>
+#include <VGA/print.h>
+#include <VGA/rsod.h>
 #include <stdint.h>
 
 void PrintBaner() // из за того что если строку записать как нормальный явный

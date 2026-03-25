@@ -1,0 +1,12 @@
+If:
+  PathMatch:
+    - ".*"
+  CompileFlags:
+    Add:
+      - -I./impl/kernel
+      - -I./impl/x86_64/boot
+      - -I./impl/x86_64/Interrupt
+      - -I./impl/x86_64/System
+      - -I./impl/x86_64/VGA/OSFunc
+      - -I./Includes/System
+      - -I./Includes/VGA

@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <stddef.h>
 
 extern char *VersionOS;
 extern const size_t NUM_COLUMS;

@@ -1,6 +1,6 @@
-#include <console.h>
-#include <print.h>
-#include <shell.h>
+#include <VGA/console.h>
+#include <VGA/print.h>
+#include <VGA/shell.h>
 #include <string.h>
 #include <types.h>
 

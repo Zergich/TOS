@@ -1,5 +1,5 @@
+#include <VGA/print.h>
 #include <datastruct.h>
-#include <print.h>
 #include <types.h>
 
 /*

@@ -1,12 +1,12 @@
 
+#include <System/interrupts.h>
+#include <System/io.h>
+#include <System/keyboard.h>
+#include <System/time.h>
+#include <VGA/print.h>
+#include <VGA/rsod.h>
 #include <datastruct.h>
-#include <interrupts.h>
-#include <io.h>
-#include <keyboard.h>
-#include <print.h>
-#include <rsod.h>
 #include <stdint.h>
-#include <time.h>
 
 extern RoundBufferObgect RoundBuff;
 

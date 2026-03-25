@@ -1,6 +1,6 @@
-#include <io.h>
+#include <System/io.h>
+#include <VGA/vgacursor.h>
 #include <stdint.h>
-#include <vgacursor.h>
 
 #define VGA_CTRL 0x3D4
 #define VGA_DATA 0x3D5

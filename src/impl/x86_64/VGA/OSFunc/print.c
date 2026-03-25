@@ -1,8 +1,8 @@
-#include <print.h>
+#include <System/sysinfo.h>
+#include <VGA/print.h>
+#include <VGA/vgacursor.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <sysinfo.h>
-#include <vgacursor.h>
 
 extern uint16_t CursorPosCol;
 extern uint16_t CursorPosRow;

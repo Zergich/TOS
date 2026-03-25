@@ -1,10 +1,10 @@
-#include <console.h>
+#include <System/keyboard.h>
+#include <VGA/console.h>
+#include <VGA/print.h>
+#include <VGA/vgacursor.h>
 #include <datastruct.h>
-#include <keyboard.h>
-#include <print.h>
 #include <string.h>
 #include <types.h>
-#include <vgacursor.h>
 
 extern RoundBufferObgect RoundBuff;
 
@@ -48,8 +48,6 @@ bool CheckSpecKeys(u8 SpecKey) {
   case Key_Ctrl:
   case Key_Alt:
   case Key_CapsLock:
-  case Key_Realising:
-  case Key_Backspace:
     // printf(" |%u|%h|%c|", SpecKey, SpecKey, SpecKey);
     return false;
   default:

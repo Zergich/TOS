@@ -1,8 +1,7 @@
-#include <OSInit.h>
-#include <print.h>
-#include <stdint.h>
-#include <sysinfo.h>
-#include <vgacursor.h>
+#include <System/OSInit.h>
+#include <System/sysinfo.h>
+#include <VGA/print.h>
+#include <VGA/vgacursor.h>
 
 char *VersionOS = "0.0.1";
 
