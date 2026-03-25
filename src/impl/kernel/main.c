@@ -4,7 +4,8 @@
 #include <types.h>
 
 #include <System/time.h>
-
+#include <VGA/print.h>
+#include <string.h>
 extern TimePit Timepit;
 
 void kernel_main() {
@@ -12,6 +13,9 @@ void kernel_main() {
   idt_init();
   // После полной настройки прерываний включаем их
   asm volatile("sti");
+
+  int i = Atoi("3d500");
+  printf("%i", i);
 
   pit_init(1000);
   static string pede;

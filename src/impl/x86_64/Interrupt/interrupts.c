@@ -8,6 +8,9 @@
 #include <datastruct.h>
 #include <stdint.h>
 
+#pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
+                                        // выключение регистров XMM/YMM
+
 extern RoundBufferObgect RoundBuff;
 // Структура, описывающая фрейм прерывания (x86_64)
 struct interrupt_frame {
