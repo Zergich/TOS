@@ -1,6 +1,7 @@
 #pragma once
+#include "types.h"
 #include <stddef.h>
 
 extern char *VersionOS;
-extern const size_t NUM_COLUMS;
-extern const size_t NUM_ROWS;
+extern const u8 NUM_COLUMS;
+extern const u8 NUM_ROWS;

@@ -1,26 +1,18 @@
 #include <VGA/print.h>
 #include <VGA/rsod.h>
-#include <stdint.h>
+
+#pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
+                                        // выключение регистров XMM/YMM
 
 void PrintBaner() // из за того что если строку записать как нормальный явный
                   // массив и потом по индексам брать то выводит хуйню
+// раньше тупо было 5 переменных
 {
-  char *Baner = "   (\n";
-  char *Baner2 = "O (\n";
-  char *Baner3 = "  (\n";
-  char *Baner4 = "O (\n";
-  char *Baner5 = "   (\n";
-  ConsoleSetCarretPos(10, 5);
-  print(Baner);
-  ConsoleSetCarretPos(10, 6);
-  print(Baner2);
-  ConsoleSetCarretPos(10, 7);
-  print(Baner3);
-  ConsoleSetCarretPos(10, 8);
-  print(Baner4);
-  ConsoleSetCarretPos(10, 9);
-  print(Baner5);
-  // какой позор а что поделать
+  char arr[5][10] = {"   (\n", "O (\n", "  (\n", "O (\n", "   (\n"};
+  for (uint8_t i = 0; i < 5; i++) {
+    ConsoleSetCarretPos(10, 5 + i);
+    print(arr[i]);
+  }
 }
 void ErrorFone() {
   ConsoleClear();

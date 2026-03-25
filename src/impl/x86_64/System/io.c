@@ -1,5 +1,7 @@
 #include <System/io.h>
-#include <stdint.h>
+
+#pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
+                                        // выключение регистров XMM/YMM
 uint8_t inb(uint16_t port) {
   uint8_t ret;
   asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));

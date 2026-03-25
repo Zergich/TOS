@@ -9,7 +9,6 @@
 #include <stdint.h>
 
 extern RoundBufferObgect RoundBuff;
-
 // Структура, описывающая фрейм прерывания (x86_64)
 struct interrupt_frame {
   uint64_t rip;

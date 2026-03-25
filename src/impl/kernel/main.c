@@ -4,13 +4,11 @@
 #include <types.h>
 
 #include <System/time.h>
-#include <VGA/print.h>
 
 extern TimePit Timepit;
 
 void kernel_main() {
   WelcomeMessage();
-
   idt_init();
   // После полной настройки прерываний включаем их
   asm volatile("sti");

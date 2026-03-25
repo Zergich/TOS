@@ -3,3 +3,4 @@ dist
 заметки
 build-debug
 *.exe
+.vscode

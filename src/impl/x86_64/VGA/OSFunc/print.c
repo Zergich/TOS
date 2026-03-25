@@ -9,8 +9,6 @@ extern uint16_t CursorPosRow;
 
 // const static size_t NUM_COLS = 80;
 // const static size_t NUM_ROWS = 25;
-const size_t NUM_COLUMS = 80;
-const size_t NUM_ROWS = 25;
 
 struct Char {
   uint8_t character;

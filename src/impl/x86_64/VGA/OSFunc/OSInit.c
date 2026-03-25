@@ -1,9 +1,12 @@
+#include "types.h"
 #include <System/OSInit.h>
 #include <System/sysinfo.h>
 #include <VGA/print.h>
 #include <VGA/vgacursor.h>
 
-char *VersionOS = "0.0.1";
+char *VersionOS = "ALPHA";
+const u8 NUM_COLUMS = 80;
+const u8 NUM_ROWS = 25;
 
 void WelcomeMessage() {
   ConsoleClear();
@@ -17,12 +20,12 @@ void WelcomeMessage() {
 
 // надо потому что иначе начальное значние убивается и после первого символа
 // ввода с клавы курсор улетает на хуйх
-extern uint16_t CursorPosCol;
-extern uint16_t CursorPosRow;
+extern u16 CursorPosCol;
+extern u16 CursorPosRow;
 
 void ApperLine() {
   ConsoleColor(CONSOLE_COLOR_LIGHT_GREEN, CONSOLE_COLOR_BLACK);
-  for (uint8_t i = 0; i < NUM_COLUMS; i++)
+  for (u8 i = 0; i < NUM_COLUMS; i++)
     print("-");
   print("\n");
   ConsoleResetColor();
