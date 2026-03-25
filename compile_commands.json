@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "D:/Progects/C++/TOS",
+    "command": "x86_64-elf-gcc -c -Isrc/Includes -ffreestanding src/impl/kernel/main.c",
+    "file": "src/impl/kernel/main.c"
+  }
+]
