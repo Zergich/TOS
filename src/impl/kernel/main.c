@@ -6,7 +6,9 @@
 #include <System/time.h>
 #include <VGA/print.h>
 #include <string.h>
+
 extern TimePit Timepit;
+extern StringStruct string;
 
 void kernel_main() {
   WelcomeMessage();
@@ -14,11 +16,13 @@ void kernel_main() {
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
-  int i = Atoi("3d500");
-  printf("%i", i);
+  IntConvertResult i = string.Atoi("3d500");
+  if (i.error != 0)
+    print("pede");
+  printf("%i", i.value);
 
   pit_init(1000);
-  static string pede;
+  static string15 pede;
   while (true) {
     Shell();
     // Бесконечный цикл ядра

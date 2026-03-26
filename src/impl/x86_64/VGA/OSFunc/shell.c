@@ -5,11 +5,12 @@
 #include <types.h>
 
 extern ConsoleInput Console;
+extern StringStruct string;
 
 void Shell() {
-  static string pede;
+  static string15 pede;
   Console.ReadLine(pede);
-  if (strcmp(pede, "pede") == 0)
+  if (string.Strcmp(pede, "pede") == 0)
     print("pede123");
   print(pede);
   print("\n");

@@ -1,6 +1,27 @@
-#include "VGA/print.h"
 #include <stdint.h>
 #include <string.h>
+
+typedef enum {
+  ERROR_CONVERT = -1,
+  OK = 0,
+
+} StringOPError;
+
+void to_lowercase(char *str);
+int strcmp(const char *s1, const char *s2);
+unsigned int strlen(char *string);
+IntConvertResult
+StringToInt(char *string); // коспилятор сука не дает из за того что Atoi
+                           // название функции зарезервированно
+char IsDigit(char *string);
+
+StringStruct string = {
+    .ToLower = to_lowercase,
+    .Strcmp = strcmp,
+    .Strlen = strlen,
+    .Atoi = StringToInt,
+    .IsDigit = IsDigit,
+};
 
 unsigned int strlen(char *string) {
   uint32_t Length = 0;
@@ -77,11 +98,12 @@ char IsDigit(char *string) {
   return 1; // Все таки числох
 }
 
-int Atoi(char *string) {
-  int result = 0;
+IntConvertResult StringToInt(char *string) {
+  IntConvertResult result;
   if (!IsDigit(string)) {
-    return 0; // по дргому пока никак я хотел попытаться вернуть стрктуру как в
-              // го но пока не могу
+    result.error = ERROR_CONVERT;
+    result.value = -1;
+    return result;
   }
 
   char minus = 0;
@@ -99,6 +121,8 @@ int Atoi(char *string) {
   }
   if (minus)
     i_result *= -1;
-  result = i_result;
+
+  result.error = OK;
+  result.value = i_result;
   return result;
 }
