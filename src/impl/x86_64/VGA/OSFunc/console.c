@@ -50,6 +50,11 @@ bool CheckSpecKeys(u8 SpecKey) {
   case Key_CapsLock:
     // printf(" |%u|%h|%c|", SpecKey, SpecKey, SpecKey);
     return false;
+  case UpArrow:
+  case RightArrow:
+  case LeftArrow:
+  case DownArrow:
+    return false;
   default:
     return true;
   }

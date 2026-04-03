@@ -16,6 +16,11 @@ enum SpecKodes {
   Code_KeySpec =
       0xE0, // этот код означает что после него пойдет другой который уже
             // отвечает за стрекли инсерты и тд (чтоб коллизиц не былох)
+  RightArrow = 0x4D,
+  LeftArrow = 0x4B,
+  DownArrow = 0x50,
+  UpArrow = 0x48,
+
 };
 
 u8 ReturnCharKeyboard(u8 sc);

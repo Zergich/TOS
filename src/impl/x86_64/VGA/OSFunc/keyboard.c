@@ -12,10 +12,15 @@ bool ShiftEnabled = false;
 bool CapsEnabled = false;
 bool SpecCode = false;
 
-u8 ReturnSpecCodes(u8 ScanCode) {
-  switch (ScanCode) {
+u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стрелки отдельно
+  switch (ScanCode) { // обработка шифта капса альта и других клавищь не
+                      // трубующих магического байта
   case Key_Alt:
   case Key_Tab:
+  case UpArrow:
+  case RightArrow:
+  case LeftArrow:
+  case DownArrow:
     return ScanCode;
   case Key_CapsLock:
     if (CapsEnabled)
@@ -44,16 +49,27 @@ u8 ReturnSpecCodes(u8 ScanCode) {
 }
 extern RoundBufferObgect RoundBuff;
 u8 LastKeyCode = 0;
+
+u8 DoubleSpeckeyBoard(u8 sc) { return 0; }
+
 u8 ReturnCharKeyboard(u8 sc) {
   // эта пиздагрязь просто так не работает чтоб без этих
   // костылей
-  if (SpecCode) {
+  if (sc == 0xE0) // пропуск магического байта для клавишь
+    return 0;
+  if (SpecCode) { // спец клавиши по типу шифта энтера и тд не
+                  // нам пад и не
+    // фки
     RoundBuff.put(LastKeyCode);
     SpecCode = false;
   }
   u8 GetSpecKeyCode = ReturnSpecCodes(sc);
   LastKeyCode = GetSpecKeyCode;
-
+  if (GetSpecKeyCode != 0) // чтоб не было коллизий
+  {
+    SpecCode = true;
+    return Code_MagickCode;
+  }
   static const char MapLow[256] = {
       [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c',  [0x20] = 'd', [0x12] = 'e',
       [0x21] = 'f', [0x22] = 'g',  [0x23] = 'h',  [0x17] = 'i', [0x24] = 'j',
@@ -89,10 +105,6 @@ u8 ReturnCharKeyboard(u8 sc) {
   if (ShiftEnabled && ShiftKey != 0) {
     return ShiftKey;
   }
-  if (GetSpecKeyCode != 0) // чтоб не было коллизий
-  {
-    SpecCode = true;
-    return Code_MagickCode;
-  }
+
   return ch;
 }
