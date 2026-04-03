@@ -11,6 +11,7 @@ uint16_t CursorPosRow = 3;
 bool ShiftEnabled = false;
 bool CapsEnabled = false;
 bool SpecCode = false;
+bool magic = false;
 
 u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стрелки отдельно
   switch (ScanCode) { // обработка шифта капса альта и других клавищь не
@@ -49,26 +50,34 @@ u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стре
 }
 extern RoundBufferObgect RoundBuff;
 u8 LastKeyCode = 0;
-
-u8 DoubleSpeckeyBoard(u8 sc) { return 0; }
+// Сначала в буфер попадает Code_MagickCode.
+// Ваш ConsoleRead считывает его, выставляет флаг SpecCodeConsoleRead и ждет
+// следующего байта. Но "следующий байт" (реальный код стрелки) попадет в буфер
+// только при следующем прерывании клавиатуры. Если вы просто "тапаете" клавишу
+// (нажали-отпустили), следующим прерыванием будет код "Отпускание клавиши"
+// (Break code). В итоге: Событие нажатия обрабатывается только когда приходит
+// событие отпускания. Это и есть ваша "небольшая задержка". Для обычных клавиш
+// (букв) все происходит сразу: MapLow[sc] -> возврат -> запись в буфер. Поэтому
+// они работают мгновенно.
 
 u8 ReturnCharKeyboard(u8 sc) {
   // эта пиздагрязь просто так не работает чтоб без этих
   // костылей
   if (sc == 0xE0) // пропуск магического байта для клавишь
+  {
+    magic = true;
     return 0;
-  if (SpecCode) { // спец клавиши по типу шифта энтера и тд не
-                  // нам пад и не
-    // фки
-    RoundBuff.put(LastKeyCode);
-    SpecCode = false;
   }
   u8 GetSpecKeyCode = ReturnSpecCodes(sc);
   LastKeyCode = GetSpecKeyCode;
   if (GetSpecKeyCode != 0) // чтоб не было коллизий
+  // Огромный комментарий относится к этому месту
+  // ну ведь можно ыбло посидеь подумсать, самостоятельно к этому придти
   {
     SpecCode = true;
-    return Code_MagickCode;
+    RoundBuff.put(Code_MagickCode);
+    RoundBuff.put(GetSpecKeyCode);
+    return 0;
   }
   static const char MapLow[256] = {
       [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c',  [0x20] = 'd', [0x12] = 'e',

@@ -18,9 +18,13 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
 u8 LimitXRow = 7;
+u32 CarretIndex = 0;
+u32 TextSize = 0;
+
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
-  if (CursorColumn() == LimitXRow)
+  u8 lineralpos = LimitXRow + CarretIndex;
+  if (lineralpos - 1 == LimitXRow)
     return;
   CursorSetColumn(CursorColumn() - 1);
   print(" ");
@@ -29,20 +33,31 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorPos(CursorPosCol, CursorPosRow);
   string[lastindex] = 0;
 }
-void ArrowHandle(u8 ArrowType) // пока только право лево
+void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
-  if (CursorColumn() == LimitXRow)
+  u8 lineralpos = LimitXRow + CarretIndex;
+  if (lineralpos == LimitXRow && ArrowType != RightArrow)
     return;
-  CursorSetColumn(CursorColumn() - 1);
-  CursorPos(--CursorPosCol, CursorPosRow);
+  if (ArrowType == RightArrow && CursorPosCol == TextSize + LimitXRow)
+    return;
+  int Mover = 0; // хрень которая определяет в какую сторону пойдет курсор
+  if (ArrowType == LeftArrow) {
+    Mover = -1;
+    CursorPosCol--;
+    CarretIndex--;
+  } else {
+    Mover = 1;
+    CursorPosCol++;
+    CarretIndex++;
+  }
+  CursorSetColumn(CursorColumn() + Mover);
+  CursorPos(CursorPosCol, CursorPosRow);
 }
 
 bool SpecCodeConsoleRead = false;
 bool CheckSpecKeys(u8 SpecKey) {
   switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
   case Key_Tab:
-    print("pede");
-    break;
   case Key_LShift:
   case Key_RShift:
   case Key_Ctrl:
@@ -50,10 +65,12 @@ bool CheckSpecKeys(u8 SpecKey) {
   case Key_CapsLock:
     // printf(" |%u|%h|%c|", SpecKey, SpecKey, SpecKey);
     return false;
-  case UpArrow:
   case RightArrow:
   case LeftArrow:
+    ArrowHandleRL(SpecKey);
+    break;
   case DownArrow:
+  case UpArrow:
     return false;
   default:
     return true;
@@ -81,13 +98,17 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     if (c == '\b') {
       if (i == 0) // иначе цикл завершится
         continue;
+      TextSize--;
       BackSpaceHandle(string, --i);
+      CarretIndex--;
       continue;
     }
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') {
       PrintChar('\n'); // Перевести строку на экране для красоты
+      CarretIndex = 0;
+      TextSize = 0;
       break;
     }
     if (SpecCodeConsoleRead) {
@@ -99,6 +120,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       SpecCodeConsoleRead = true;
       continue;
     }
+    CarretIndex++;
+    TextSize++;
     string[i++] = c;
     PrintChar(c);
   }
