@@ -170,8 +170,11 @@ void ConsoleColor(uint8_t foreground, uint8_t background) {
 void ConsoleSetCarretPos(uint8_t column, uint8_t row) {
   VGA_Column = column;
   VGA_Line = row;
+  CursorPos(column, row);
+  CursorPosCol = column;
+  CursorPosRow = row;
 }
-void CursorSetLinePos(uint8_t row) { VGA_Line = row; }
+void CursorSetLine(uint8_t row) { VGA_Line = row; }
 void CursorSetColumn(uint8_t column) { VGA_Column = column; }
 
 uint8_t CursorLine() { return VGA_Line; }

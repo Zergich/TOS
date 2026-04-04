@@ -40,7 +40,7 @@ void ConsoleForeground(uint8_t foreground);
 void ConsoleBackground(uint8_t background);
 
 // Курсор
-void CursorSetLinePos(uint8_t row);
+void CursorSetLine(uint8_t row);
 void CursorSetColumn(uint8_t column);
 void ConsoleSetCarretPos(uint8_t column, uint8_t row);
 uint8_t CursorColumn();

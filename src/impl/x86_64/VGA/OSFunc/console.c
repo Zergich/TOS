@@ -23,9 +23,19 @@ u32 TextSize = 0;
 
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
-  u8 lineralpos = LimitXRow + CarretIndex;
-  if (lineralpos - 1 == LimitXRow)
+  int _1 = CursorPosCol;
+  int _2 = CursorPosRow;
+  u16 lineralpos = LimitXRow + CarretIndex;
+  ConsoleSetCarretPos(0, 0);
+  printf("%u", lineralpos);
+  ConsoleSetCarretPos(_1, _2);
+
+  if (lineralpos == LimitXRow - 2) // без -2 не работает
     return;
+  if (CursorPosCol == 0) {
+    ConsoleSetCarretPos(80, CursorLine() - 1);
+  }
+
   CursorSetColumn(CursorColumn() - 1);
   print(" ");
   CursorSetColumn(CursorColumn() - 1);
@@ -35,7 +45,7 @@ void BackSpaceHandle(char *string, u16 lastindex) {
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
-  u8 lineralpos = LimitXRow + CarretIndex;
+  u16 lineralpos = LimitXRow + CarretIndex;
   if (lineralpos == LimitXRow && ArrowType != RightArrow)
     return;
   if (ArrowType == RightArrow && CursorPosCol == TextSize + LimitXRow)
@@ -75,6 +85,7 @@ bool CheckSpecKeys(u8 SpecKey) {
   default:
     return true;
   }
+  return false;
 }
 
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
@@ -130,7 +141,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   return 0;
 }
 char ReadKey() {
-  char GetChar;
+  u8 GetChar;
   RoundBuff.get(&GetChar);
   if (GetChar) {
     return GetChar;
