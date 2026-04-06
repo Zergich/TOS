@@ -27,15 +27,16 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   int _2 = CursorPosRow;
   u16 lineralpos = LimitXRow + CarretIndex;
   ConsoleSetCarretPos(0, 0);
-  printf("%u", lineralpos);
+  printf("|%u|%u|", CarretIndex, lineralpos);
   ConsoleSetCarretPos(_1, _2);
 
   if (lineralpos == LimitXRow - 2) // без -2 не работает
     return;
+  else if (lineralpos == 7)
+    return;
   if (CursorPosCol == 0) {
     ConsoleSetCarretPos(80, CursorLine() - 1);
   }
-
   CursorSetColumn(CursorColumn() - 1);
   print(" ");
   CursorSetColumn(CursorColumn() - 1);
@@ -46,9 +47,11 @@ void BackSpaceHandle(char *string, u16 lastindex) {
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
   u16 lineralpos = LimitXRow + CarretIndex;
+  if (CarretIndex == 0)
+    return;
   if (lineralpos == LimitXRow && ArrowType != RightArrow)
     return;
-  if (ArrowType == RightArrow && CursorPosCol == TextSize + LimitXRow)
+  if (ArrowType == RightArrow && lineralpos == TextSize + LimitXRow)
     return;
   int Mover = 0; // хрень которая определяет в какую сторону пойдет курсор
   if (ArrowType == LeftArrow) {
@@ -107,7 +110,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       continue;
     }
     if (c == '\b') {
-      if (i == 0) // иначе цикл завершится
+      if (i == 0 || CarretIndex == 0)
         continue;
       TextSize--;
       BackSpaceHandle(string, --i);
