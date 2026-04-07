@@ -18,7 +18,7 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
 u8 LimitXRow = 7;
-u32 CarretIndex = 0;
+u32 CarretIndex = 0; // фактическая позиция курсора (учитывает все строки)
 u32 TextSize = 0;
 
 void BackSpaceHandle(char *string, u16 lastindex) {
