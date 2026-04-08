@@ -1,3 +1,4 @@
+#include <System/Array.h>
 #include <System/keyboard.h>
 #include <VGA/console.h>
 #include <VGA/print.h>
@@ -20,6 +21,9 @@ ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 u8 LimitXRow = 7;
 u32 CarretIndex = 0; // фактическая позиция курсора (учитывает все строки)
 u32 TextSize = 0;
+static int max_len =
+    StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
+                  // нужны аллокаторы но где ты их блять возьмешь
 
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
@@ -42,6 +46,8 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorSetColumn(CursorColumn() - 1);
   CursorPosCol -= 2; // из за того что функция принт тоже двигает курсор
   CursorPos(CursorPosCol, CursorPosRow);
+  IndexDeleteC(string, &TextSize, 3);
+  // printf("\n%u", lastindex);
   string[lastindex] = 0;
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
@@ -95,11 +101,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
-  uint16_t i = 0;
+  u32 i = 0;
   u8 c = 0;
-  static int max_len =
-      StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
-                    // нужны аллокаторы но где ты их блять возьмешь
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
       // Буфер пуст (клавишу еще не нажали)
@@ -120,7 +123,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') {
-      PrintChar('\n'); // Перевести строку на экране для красоты
+      PrintChar('\n');
       CarretIndex = 0;
       TextSize = 0;
       break;
@@ -134,11 +137,13 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       SpecCodeConsoleRead = true;
       continue;
     }
-    CarretIndex++;
+    // CarretIndex++;
     TextSize++;
-    string[i++] = c;
+    IndexInsertC(string, &i, max_len, CarretIndex++, c);
+    // string[i++] = c;
     PrintChar(c);
   }
+  // IndexInsertC(string, &TextSize, max_len, i, '\0');
   string[i] = '\0'; // для корректного завершения строки
 
   return 0;

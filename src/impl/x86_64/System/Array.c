@@ -1,7 +1,8 @@
 #include <System/Array.h>
 #include <System/MemoryUtils.h>
+#include <types.h>
 
-int IndexInsertC(char *arr, int *size, int max_size, int index,
+int IndexInsertC(char *arr, u32 *size, int max_size, int index,
                  char value) { // C - значит что для char
   // size + 1: нам нужно место для нового символа
   // size + 2: нам нужно место для нуль-терминатора в конце (\0)
@@ -24,7 +25,7 @@ int IndexInsertC(char *arr, int *size, int max_size, int index,
 }
 
 // Удаление элемента по индексу
-int IndexDeleteC(char *arr, int *size, int index) {
+int IndexDeleteC(char *arr, u32 *size, int index) {
   if (index < 0 || index >= *size) {
     return -1;
   }
@@ -32,6 +33,7 @@ int IndexDeleteC(char *arr, int *size, int index) {
   // Сдвигаем элементы слева
   memmove(&arr[index], &arr[index + 1], (*size - index - 1) * sizeof(char));
   (*size)--;
+  // if (index == *size)
   arr[*size] = '\0';
 
   return 0;
