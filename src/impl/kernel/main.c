@@ -3,10 +3,10 @@
 #include <VGA/shell.h>
 #include <types.h>
 
+#include <System/Array.h>
 #include <System/time.h>
 #include <VGA/print.h>
 #include <string.h>
-
 extern TimePit Timepit;
 extern StringStruct string;
 
@@ -18,6 +18,10 @@ void kernel_main() {
 
   pit_init(1000);
 
+  char str[] = "12345";
+  int size = string.Strlen(str); // Убедитесь, что size правильный!
+  IndexDeleteC(str, &size, 4);
+  print(str);
   // int max_size = 10;
   // char arr[10];
   // int size = 0; // текущий размер массива

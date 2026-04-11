@@ -8,6 +8,7 @@
 #include <types.h>
 
 extern RoundBufferObgect RoundBuff;
+extern StringStruct string;
 
 extern size_t NUM_COLUMS;
 extern size_t NUM_ROWS;
@@ -27,11 +28,11 @@ static int max_len =
 
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
-  // int _1 = CursorPosCol;
-  // int _2 = CursorPosRow;
+  int _1 = CursorPosCol;
+  int _2 = CursorPosRow;
   u16 lineralpos = LimitXRow + CarretIndex;
   // ConsoleSetCarretPos(0, 0);
-  // printf("|%u|%u|", CarretIndex, lineralpos);
+  // printf("|%u|%u|%u|", lastindex, statlen(string1), TextSize);
   // ConsoleSetCarretPos(_1, _2);
 
   if (lineralpos == LimitXRow - 2) // без -2 не работает
@@ -46,7 +47,7 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorSetColumn(CursorColumn() - 1);
   CursorPosCol -= 2; // из за того что функция принт тоже двигает курсор
   CursorPos(CursorPosCol, CursorPosRow);
-  IndexDeleteC(string, &TextSize, 3);
+  IndexDeleteC(string, &TextSize, lastindex);
   // printf("\n%u", lastindex);
   string[lastindex] = 0;
 }
@@ -115,8 +116,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     if (c == '\b') {
       if (i == 0 || CarretIndex == 0)
         continue;
-      TextSize--;
       BackSpaceHandle(string, CarretIndex - 1);
+      TextSize--;
       CarretIndex--;
       continue;
     }
