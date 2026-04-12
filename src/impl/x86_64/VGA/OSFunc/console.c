@@ -1,5 +1,6 @@
 #include <System/Array.h>
 #include <System/keyboard.h>
+#include <System/sysinfo.h>
 #include <VGA/console.h>
 #include <VGA/print.h>
 #include <VGA/vgacursor.h>
@@ -9,9 +10,6 @@
 
 extern RoundBufferObgect RoundBuff;
 extern StringStruct string;
-
-extern size_t NUM_COLUMS;
-extern size_t NUM_ROWS;
 
 extern u16 CursorPosCol;
 extern u16 CursorPosRow;
@@ -49,7 +47,7 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorPos(CursorPosCol, CursorPosRow);
   IndexDeleteC(string, &TextSize, lastindex);
   // printf("\n%u", lastindex);
-  string[lastindex] = 0;
+  // string[lastindex] = 0;
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
@@ -156,4 +154,11 @@ char ReadKey() {
     return GetChar;
   }
   return -1;
+}
+void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line,
+                             struct Char *ReadedBuffer) {
+  struct Char *buffer = (struct Char *)0xb8000; // VGA память
+
+  for (u8 i = 0; i < End; i++)
+    ReadedBuffer[i] = buffer[(Start + i) + MaxColumn * Line];
 }

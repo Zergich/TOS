@@ -1,4 +1,5 @@
 #pragma once
+#include <VGA/print.h>
 #include <types.h>
 
 typedef struct {
@@ -8,3 +9,6 @@ typedef struct {
 
 int ConsoleRead(char *string);
 char ReadKey();
+
+void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line,
+                             struct Char *ReadedBuffer);

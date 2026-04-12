@@ -5,6 +5,7 @@
 
 #include <System/Array.h>
 #include <System/time.h>
+#include <VGA/console.h>
 #include <VGA/print.h>
 #include <string.h>
 extern TimePit Timepit;
@@ -16,27 +17,15 @@ void kernel_main() {
   // После полной настройки прерываний включаем их
   asm volatile("sti");
 
-  pit_init(1000);
-
-  char str[] = "12345";
-  int size = string.Strlen(str); // Убедитесь, что size правильный!
-  IndexDeleteC(str, &size, 4);
-  print(str);
-  // int max_size = 10;
-  // char arr[10];
-  // int size = 0; // текущий размер массива
-  //
-  // // Вставляем элементы
-  //
-  // IndexInsertC(arr, &size, max_size, 1, 'e');
-  // IndexInsertC(arr, &size, max_size, 2, 'd');
-  // IndexInsertC(arr, &size, max_size, 3, 'e');
-  // IndexInsertC(arr, &size, max_size, 0, '2');
-  //
-  // print(arr);
-  // print("\n");
-  // IndexDeleteC(arr, &size, 3);
-  // print(arr);
+  struct Char pede1[100];
+  print("pede");
+  ConsoleBufferReadString(20, 40, 80, 1, pede1);
+  struct Char *buffer = (struct Char *)0xb8000; // VGA память
+  for (int i = 0; i < 20; i++) {
+    buffer[i + 80 * 20] = pede1[i];
+    PrintChar(pede1[i].character);
+  }
+  pit_init(1000); // прерывается 1000 раз в секунду
 
   static string15 pede;
   while (true) {

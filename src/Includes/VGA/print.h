@@ -22,6 +22,11 @@ enum {
   CONSOLE_COLOR_WHITE = 15,
 };
 
+struct Char {
+  uint8_t character;
+  uint8_t color;
+};
+
 void ConsoleClear();
 // Вывод в VGA
 void PrintChar(char character);
