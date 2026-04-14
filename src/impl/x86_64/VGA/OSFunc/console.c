@@ -14,6 +14,8 @@ extern StringStruct string;
 extern u16 CursorPosCol;
 extern u16 CursorPosRow;
 
+extern struct Char *buffer;
+
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
@@ -47,7 +49,7 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   CursorPos(CursorPosCol, CursorPosRow);
   IndexDeleteC(string, &TextSize, lastindex);
   // printf("\n%u", lastindex);
-  // string[lastindex] = 0;
+  string[lastindex] = 0;
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
@@ -95,7 +97,30 @@ bool CheckSpecKeys(u8 SpecKey) {
   }
   return false;
 }
+void ShiftRight() {
+  if (CarretIndex >= TextSize)
+    return;
 
+  // я то мыслю правильно и пишу код в правильном направлении но так впадлу
+  // додумавать всю эту хунйю с индексами сторонами и тд по этому нейронка в
+  // этом случаех
+  int base_offset = 80 * CursorPosRow;
+
+  // ВЫЧИСЛЯЕМ СМЕЩЕНИЕ:
+  // Физическая позиция курсора минус логическая позиция в строке.
+  // Это даст нам колонку, с которой реально начинается текст на экране.
+  int visual_offset = CursorPosCol - CarretIndex;
+
+  // Идем с КОНЦА текста в НАЧАЛО.
+  for (int i = TextSize - 1; i >= CarretIndex; i--) {
+    // Читаем символ, учитывая РЕАЛЬНОЕ место на экране (base + смещение +
+    // индекс)
+    struct Char current = buffer[base_offset + visual_offset + i];
+
+    // +1 сдвиг в право
+    buffer[base_offset + visual_offset + i + 1] = current;
+  }
+}
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
@@ -136,10 +161,10 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       SpecCodeConsoleRead = true;
       continue;
     }
-    // CarretIndex++;
     TextSize++;
     IndexInsertC(string, &i, max_len, CarretIndex++, c);
     // string[i++] = c;
+    ShiftRight();
     PrintChar(c);
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
@@ -147,6 +172,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
 
   return 0;
 }
+
 char ReadKey() {
   u8 GetChar;
   RoundBuff.get(&GetChar);
@@ -157,7 +183,7 @@ char ReadKey() {
 }
 void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line,
                              struct Char *ReadedBuffer) {
-  struct Char *buffer = (struct Char *)0xb8000; // VGA память
+  // struct Char *buffer = (struct Char *)0xb8000; // VGA память
 
   for (u8 i = 0; i < End; i++)
     ReadedBuffer[i] = buffer[(Start + i) + MaxColumn * Line];
