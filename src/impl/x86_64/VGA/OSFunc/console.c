@@ -5,6 +5,7 @@
 #include <VGA/print.h>
 #include <VGA/vgacursor.h>
 #include <datastruct.h>
+#include <stddef.h>
 #include <string.h>
 #include <types.h>
 
@@ -13,6 +14,7 @@ extern StringStruct string;
 
 extern u16 CursorPosCol;
 extern u16 CursorPosRow;
+extern size_t VGA_Column; // зачем это нужно описано в обработке клавишь
 
 extern struct Char *buffer;
 
@@ -25,6 +27,23 @@ u32 TextSize = 0;
 static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
+void ShiftLeft() {
+  if (CarretIndex <= 0 || TextSize <= 0)
+    return;
+
+  int base_offset = 80 * CursorPosRow;
+
+  // Строка жестко привязана к этой колонке!
+  int visual_offset = CursorPosCol - CarretIndex;
+
+  for (int i = CarretIndex; i < TextSize; i++) {
+    buffer[base_offset + visual_offset + i - 1] =
+        buffer[base_offset + visual_offset + i];
+  }
+
+  int last_char_pos = base_offset + visual_offset + TextSize - 1;
+  buffer[last_char_pos].character = ' ';
+}
 
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
@@ -42,14 +61,15 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   if (CursorPosCol == 0) {
     ConsoleSetCarretPos(80, CursorLine() - 1);
   }
-  CursorSetColumn(CursorColumn() - 1);
-  print(" ");
-  CursorSetColumn(CursorColumn() - 1);
-  CursorPosCol -= 2; // из за того что функция принт тоже двигает курсор
+  ShiftLeft();
+  // CursorSetColumn(CursorColumn() - 1);
+  // print(" ");
+  // CursorSetColumn(CursorColumn() - 1);
+  CursorPosCol -= 1; // из за того что функция принт тоже двигает курсор
   CursorPos(CursorPosCol, CursorPosRow);
   IndexDeleteC(string, &TextSize, lastindex);
   // printf("\n%u", lastindex);
-  string[lastindex] = 0;
+  // string[lastindex] = 0;
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
@@ -140,8 +160,15 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       if (i == 0 || CarretIndex == 0)
         continue;
       BackSpaceHandle(string, CarretIndex - 1);
-      TextSize--;
       CarretIndex--;
+      VGA_Column =
+          CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
+                        // координат и после того как я мувнулся влево и удалил
+                        // до конца координаты шлют меня нахуй и печать
+                        // начинается с того момента когда я начал удалять а
+                        // символ которрый остался в начале копируется. И опять
+                        // без нейронки не обошлось, но в конце концов я оставил
+                        // свой вариант
       continue;
     }
 
