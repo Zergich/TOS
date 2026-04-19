@@ -1,11 +1,16 @@
 global start
+global mb2_magic   ; для структуры граба такая ебатория если честно
+global mb2_info_ptr 
+
 extern long_mode_start
 
 section .text
 bits 32
 start:
 	mov esp, stack_top
-  
+  mov [mb2_magic], eax
+  mov [mb2_info_ptr], ebx
+
 	call check_multiboot
 	call check_cpuid
 	call check_long_mode ; проверяет достпуна ли x64 а потом переводит 
@@ -125,6 +130,12 @@ page_table_l2:
 stack_bottom:
 	resb 4096 * 4
 stack_top:
+
+mb2_magic:
+    resb 4
+mb2_info_ptr:
+    resb 4
+
 
 section .rodata
 gdt64:

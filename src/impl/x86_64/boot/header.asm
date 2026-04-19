@@ -7,6 +7,10 @@ header_start:
   ;контрольная сумма
   dd 0x100000000 - (0xe85250d6 +0+(header_end - header_start))
 
+  dw 6          ; type = 6 (Memory map)
+  dw 0          ; flags = 0
+  dd 8          ; size = 8
+
   ;конечный тег
   dw 0
   dw 0
