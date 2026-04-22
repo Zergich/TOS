@@ -12,6 +12,7 @@ typedef struct {
   unsigned int (*Strlen)(char *string);
   IntConvertResult (*Atoi)(char *string);
   char (*IsDigit)(char *string);
+  int (*IsEmptyOrWhitespace)(const char *str);
 } StringStruct;
 
 // void to_lowercase(char *str);

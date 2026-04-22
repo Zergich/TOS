@@ -10,6 +10,7 @@ typedef enum {
 void to_lowercase(char *str);
 int strcmp(const char *s1, const char *s2);
 unsigned int strlen(char *string);
+int IsEmptyOrWhitespace(const char *str);
 IntConvertResult
 StringToInt(char *string); // коспилятор сука не дает из за того что Atoi
                            // название функции зарезервированно
@@ -21,6 +22,7 @@ StringStruct string = {
     .Strlen = strlen,
     .Atoi = StringToInt,
     .IsDigit = IsDigit,
+    .IsEmptyOrWhitespace = IsEmptyOrWhitespace,
 };
 
 unsigned int strlen(char *string) {
@@ -125,4 +127,17 @@ IntConvertResult StringToInt(char *string) {
   result.error = OK;
   result.value = i_result;
   return result;
+}
+
+int IsEmptyOrWhitespace(const char *str) {
+  if (str == 0)
+    return 1;
+  while (*str) {
+    if (*str != ' ' && *str != '\t' && *str != '\n' && *str != '\r') {
+      return 0;
+    }
+    str++;
+  }
+
+  return 1;
 }
