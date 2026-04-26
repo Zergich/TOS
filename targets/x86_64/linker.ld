@@ -1,54 +1,37 @@
-ENTRY(start)
+OUTPUT_FORMAT(elf64-x86-64)
+ENTRY(kernel_main)
 
-/* Явно определяем типы сегментов (Program Headers) с правами */
-PHDRS
-{
-    text PT_LOAD FLAGS(0x5);   /* 0x5 = Read + Execute (R-X) */
-    data PT_LOAD FLAGS(0x6);   /* 0x6 = Read + Write (RW-) */
-    bss  PT_LOAD FLAGS(0x6);   /* 0x6 = Read + Write (RW-) */
+PHDRS {
+    text    PT_LOAD;
+    rodata  PT_LOAD;
+    data    PT_LOAD;
+    dynamic PT_DYNAMIC;
 }
 
-SECTIONS
-{
-    . = 1M;
+SECTIONS {
+    /* Базовый адрес для Higher Half ядра */
+    . = 0xffffffff80000000;
 
-    /* Секция загрузки. Привязываем к текстовому сегменту (:text) */
-    .boot : {
-        KEEP(*(.multiboot_header))
-    } : text
-
-    /* Секция кода. Привязываем к текстовому сегменту (:text) */
     .text : {
-        *(.text)
-        *(.text.*)
-    } : text
+        *(.text .text.*)
+    } :text
 
-    /* Секция только для чтения. Привязываем к текстовому сегменту (:text) */
     .rodata : {
-        *(.rodata)
-        *(.rodata.*)
-    } : text
+        *(.rodata .rodata.*)
+    } :rodata
 
-    /* Секция данных. Привязываем к сегменту данных (:data) */
     .data : {
-        *(.data)
-        *(.data.*)
-        /* Помещаем сюда "сиротские" секции (например, .jcr), чтобы не создавались новые сегменты */
-        *(.jcr)
-    } : data
+        *(.data .data.*)
+    } :data
 
-    /* Секция BSS. Привязываем к сегменту данных (:data) */
     .bss : {
+        *(.bss .bss.*)
         *(COMMON)
-        *(.bss)
-        *(.bss.*)
-    } : data
+    } :data
 
-    /* Удаляем лишние секции, которые могут создать свои сегменты */
     /DISCARD/ : {
-        *(.comment)
         *(.eh_frame)
-        *(.eh_frame_hdr)
-        *(.note.gnu.build-id)
+        *(.note .note.*)
     }
 }
+

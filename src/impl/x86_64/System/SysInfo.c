@@ -53,7 +53,7 @@ void GetPhysicsMemory(u64 mb2_magic, u64 mb2_info_addr,
 
         // Доступная память = Type 1 (Usable) + Type 3 (ACPI Reclaimable)
         // Type 3 можно использовать после чтения таблиц ACPI!
-        if (entry->type == 1 || entry->type == 3) {
+        if (entry->type == 1 || entry->type == 15) {
           available_bytes += entry->len;
         }
 
