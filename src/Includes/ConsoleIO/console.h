@@ -1,5 +1,5 @@
 #pragma once
-#include <VGA/print.h>
+#include <ConsoleIO/print.h>
 #include <types.h>
 
 typedef struct {

@@ -1,8 +1,8 @@
+#include <ConsoleIO/console.h>
+#include <ConsoleIO/print.h>
 #include <System/Array.h>
 #include <System/keyboard.h>
 #include <System/sysinfo.h>
-#include <VGA/console.h>
-#include <VGA/print.h>
 #include <VGA/vgacursor.h>
 #include <datastruct.h>
 #include <stddef.h>

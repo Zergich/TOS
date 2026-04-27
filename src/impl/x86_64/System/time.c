@@ -1,7 +1,7 @@
+#include <ConsoleIO/print.h>
 #include <System/interrupts.h>
 #include <System/io.h>
 #include <System/time.h>
-#include <VGA/print.h>
 #include <types.h>
 
 TimePit Timepit = {

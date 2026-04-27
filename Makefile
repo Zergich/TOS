@@ -1,92 +1,88 @@
-CC := x86_64-elf-gcc 
+# --- Настройки компилятора ---
+CC := x86_64-elf-gcc
 LD := x86_64-elf-ld
 
-kernel_source_files := $(shell find src/impl/kernel -name *.c)
+# --- Флаги компиляции ---
+# Общие флаги для всех файлов ядра
+CFLAGS_COMMON := -I src/Includes -I src/Includes/System -I src/Includes/VGA  -I src/Includes/ConsoleIO \
+                 -ffreestanding -mcmodel=kernel -mno-red-zone -m64
+
+# Флаги для релизной сборки
+GCC_RELEASE := $(CFLAGS_COMMON) -O2 -c
+
+# Флаги для дебаг сборки
+CFLAGS_DEBUG := $(CFLAGS_COMMON) -g -O0 -DDEBUG -c
+
+# Флаги линковщика
+LDFLAGS := -m elf_x86_64 -nostdlib -static -z max-page-size=0x1000
+
+# --- Поиск исходников ---
+# Находим все .c файлы в ядре и платформозависимой части
+kernel_source_files := $(shell find src/impl/kernel -name "*.c")
+x86_64_c_source_files := $(shell find src/impl/x86_64 -name "*.c")
+
+# Генерируем пути для объектных файлов (release)
 kernel_object_files := $(patsubst src/impl/kernel/%.c, build/kernel/%.o, $(kernel_source_files))
+x86_64_object_files := $(patsubst src/impl/x86_64/%.c, build/x86_64/%.o, $(x86_64_c_source_files))
 
-x86_64_c_source_files := $(shell find src/impl/x86_64 -name *.c)
-x86_64_c_object_files := $(patsubst src/impl/x86_64/%.c, build/x86_64/%.o, $(x86_64_c_source_files))
-
-# x86_64_asm_source_files := $(shell find src/impl/x86_64 -name *.asm)
-# x86_64_asm_object_files := $(patsubst src/impl/x86_64/%.asm, build/x86_64/%.o, $(x86_64_asm_source_files))
-
-x86_64_object_files := $(x86_64_c_object_files) 
-
-
-
-# --- Переменные для Debug (отдельная папка build-debug/) ---
+# Генерируем пути для объектных файлов (debug)
 kernel_debug_object_files := $(patsubst src/impl/kernel/%.c, build-debug/kernel/%.o, $(kernel_source_files))
-x86_64_c_debug_object_files := $(patsubst src/impl/x86_64/%.c, build-debug/x86_64/%.o, $(x86_64_c_source_files))
-# x86_64_asm_debug_object_files := $(patsubst src/impl/x86_64/%.asm, build-debug/x86_64/%.o, $(x86_64_asm_source_files))
-x86_64_debug_object_files := $(x86_64_c_debug_object_files)
+x86_64_debug_object_files := $(patsubst src/impl/x86_64/%.c, build-debug/x86_64/%.o, $(x86_64_c_source_files))
 
-CFLAGS_DEBUG   := -I src/Includes -I src/Includes/System -I src/Includes/VGA  -ffreestanding -g -O0 -DDEBUG -mcmodel=kernel -mno-red-zone
-ASMFLAGS      := -f elf64
+# --- Правила сборки ---
 
-GCC_REALISE := -c -I src/Includes -I src/Includes/System -I src/Includes/VGA  -ffreestanding -mcmodel=kernel -mno-red-zone
+.PHONY: all clean build-x86_64
 
+all: build-x86_64
+
+# Универсальное правило для x86_64 (Release) с защитой от спецсимволов
+build/x86_64/%.o: src/impl/x86_64/%.c
+	@mkdir -p "$(dir $@)"
+	$(CC) $(GCC_RELEASE) "$<" -o "$@"
+
+# Универсальное правило для ядра (Release)
 build/kernel/%.o: src/impl/kernel/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(GCC_REALISE) $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
+	@mkdir -p "$(dir $@)"
+	$(CC) $(GCC_RELEASE) "$<" -o "$@"
 
-build/x86_64/VGA/OSFunc/%.o: src/impl/x86_64/VGA/OSFunc/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(GCC_REALISE) $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+# Специфичные флаги для папки прерываний (Release)
+build/x86_64/Interrupt/%.o: GCC_RELEASE += -mno-mmx -mno-sse -mno-80387
 
-build/x86_64/System/%.o: src/impl/x86_64/System/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(GCC_REALISE) $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
-
-
-build/x86_64/Interrupt/%.o: src/impl/x86_64/Interrupt/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(GCC_REALISE) -mno-mmx -mno-sse -mno-80387 -mno-red-zone -mcmodel=kernel $(patsubst build/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
-
-# build/x86_64/%.o: src/impl/x86_64/%.asm
-# 	mkdir -p $(dir $@)
-# 	nasm -f elf64 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.asm, $@) -o $@
-
-
-#debug
-
+# Правило для ядра (Debug)
 build-debug/kernel/%.o: src/impl/kernel/%.c
-	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS_DEBUG) "$<" -o "$@"
 
-build-debug/x86_64/VGA/OSFunc/%.o: src/impl/x86_64/VGA/OSFunc/%.c
-	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+# Правило для x86_64 (Debug)
+build-debug/x86_64/%.o: src/impl/x86_64/%.c
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS_DEBUG) "$<" -o "$@"
 
-build-debug/x86_64/System/%.o: src/impl/x86_64/System/%.c
-	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS_DEBUG) $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
 
-build-debug/x86_64/Interrupt/%.o: src/impl/x86_64/Interrupt/%.c
-	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS_DEBUG) -mno-mmx -mno-sse -mno-80387 -mno-red-zone -mcmodel=kernel $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.c, $@) -o $@
+# Специфичные флаги для папки прерываний (Debug)
+build-debug/x86_64/Interrupt/%.o: CFLAGS_DEBUG += -mno-mmx -mno-sse -mno-80387
 
-# build-debug/x86_64/%.o: src/impl/x86_64/%.asm
-# 	mkdir -p $(dir $@)
-# 	nasm $(ASMFLAGS) -g $(patsubst build-debug/x86_64/%.o, src/impl/x86_64/%.asm, $@) -o $@
-
-.PHONY: build-x86_64
+# Основная цель сборки
 build-x86_64: $(kernel_object_files) $(x86_64_object_files) $(kernel_debug_object_files) $(x86_64_debug_object_files)
-	mkdir -p dist/x86_64
-	$(LD) -m elf_x86_64 -nostdlib -static -z max-page-size=0x1000 -o dist/x86_64/kernel.elf -T targets/x86_64/linker.ld $(kernel_object_files) $(x86_64_object_files)
-	cp dist/x86_64/kernel.elf targets/x86_64/iso/boot/kernel.elf
-	#grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
-
-	xorriso -as mkisofs -b limine-bios-cd.bin \
-	-no-emul-boot -boot-load-size 4 -boot-info-table \
-	--efi-boot limine-uefi-cd.bin \
-	-efi-boot-part --efi-boot-image --protective-msdos-label \
-	targets/x86_64/iso -o dist/x86_64/kernel.iso
+	@mkdir -p dist/x86_64
 	
-	#debug file 
-	$(LD) -o dist/x86_64/kernelD.elf -T targets/x86_64/linker.ld $(kernel_debug_object_files) $(x86_64_debug_object_files)
+	# Линковка релизного ядра
+	$(LD) $(LDFLAGS) -o dist/x86_64/kernel.elf -T targets/x86_64/linker.ld $(kernel_object_files) $(x86_64_object_files)
+	
+	# Линковка дебаг ядра
+	$(LD) $(LDFLAGS) -o dist/x86_64/kernelD.elf -T targets/x86_64/linker.ld $(kernel_debug_object_files) $(x86_64_debug_object_files)
+	
+	# Подготовка ISO
+	@mkdir -p targets/x86_64/iso/boot
+	cp dist/x86_64/kernel.elf targets/x86_64/iso/boot/kernel.elf
+	
+	# Создание ISO образа (используем xorriso как для Limine)
+	xorriso -as mkisofs -b limine-bios-cd.bin \
+		-no-emul-boot -boot-load-size 4 -boot-info-table \
+		--efi-boot limine-uefi-cd.bin \
+		-efi-boot-part --efi-boot-image --protective-msdos-label \
+		targets/x86_64/iso -o dist/x86_64/kernel.iso
+	
 
-.PHONY: clean
 clean:
-	rm -rf build dist
-
-# -mno-mmx -mno-sse -mno-80387 флаги для компиляции с прерываниями 
+	rm -rf build build-debug dist

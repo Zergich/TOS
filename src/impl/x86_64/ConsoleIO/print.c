@@ -1,5 +1,5 @@
+#include <ConsoleIO/print.h>
 #include <System/sysinfo.h>
-#include <VGA/print.h>
 #include <VGA/vgacursor.h>
 #include <stdarg.h>
 #include <stdint.h>

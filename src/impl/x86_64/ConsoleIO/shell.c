@@ -1,7 +1,7 @@
+#include <ConsoleIO/console.h>
+#include <ConsoleIO/print.h>
+#include <ConsoleIO/shell.h>
 #include <System/sysinfo.h>
-#include <VGA/console.h>
-#include <VGA/print.h>
-#include <VGA/shell.h>
 #include <string.h>
 #include <types.h>
 extern ConsoleInput Console;

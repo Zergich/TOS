@@ -1,7 +1,7 @@
 // #include "System/sysinfo.h"
+#include <ConsoleIO/shell.h>
 #include <System/OSInit.h>
 #include <System/interrupts.h>
-#include <VGA/shell.h>
 #include <types.h>
 
 #include <System/time.h>
@@ -27,7 +27,7 @@ __attribute__((
 // Маркер конца запросов (обязателен)
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
-;
+
 void kernel_main() {
 
   if (framebuffer_request.response == NULL ||
@@ -39,7 +39,6 @@ void kernel_main() {
   // Рисуем синий экран (0x0000FF)
   // Используем uintptr_t для работы с 64-битными адресами
   uint32_t *fb_ptr = (uint32_t *)fb->address;
-
   for (size_t i = 0; i < (fb->pitch / 4) * fb->height; i++) {
     fb_ptr[i] = 0x27F5B0;
   }

@@ -1,7 +1,7 @@
 #include "types.h"
+#include <ConsoleIO/print.h>
 #include <System/OSInit.h>
 #include <System/sysinfo.h>
-#include <VGA/print.h>
 #include <VGA/vgacursor.h>
 
 char *VersionOS = "ALPHA";

@@ -16,4 +16,7 @@ workdir /root/env
 #docker run --rm -it -v D:\Progects\C++\TOS:/root/env tos
 # запуск ядра
 # qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
+# полезно для отладки
 #qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -S -gdb tcp::1234
+#стэк регистры 2 опкод
+#qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -d int -no-reboot

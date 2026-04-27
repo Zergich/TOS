@@ -1,9 +1,10 @@
+#include <ConsoleIO/print.h>
 #include <System/keyboard.h>
-#include <VGA/print.h>
 #include <datastruct.h>
 #include <stdint.h>
 #include <types.h>
 // стартовые позиции курсора
+// потому что shell> с пробелом
 uint16_t CursorPosCol = 7;
 uint16_t CursorPosRow = 3;
 

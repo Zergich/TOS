@@ -1,7 +1,8 @@
+#include <ConsoleIO/print.h>
 #include <System/sysinfo.h>
-#include <VGA/print.h>
 #include <types.h>
 
+#if LOADER == 0
 struct multiboot_tag {
   u32 type;
   u32 size;
@@ -93,3 +94,8 @@ void PrintMem() {
   printf("%i", reserved);
   print(" MB\n");
 }
+
+#elif LOADER == 1
+void PrintMem() {}
+
+#endif
