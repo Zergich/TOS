@@ -35,6 +35,8 @@ struct idt_entry {
 // IDT — массив из 256 записей
 struct idt_entry idt[256];
 
+extern u32 *pede;
+
 // Описание регистра IDTR для lidt
 struct {
   uint16_t limit;
@@ -45,10 +47,13 @@ struct {
 void set_idt_gate(int n, void (*handler)(void)) {
   uint64_t handler_addr = (uint64_t)handler;
 
+  uint16_t current_cs;
+  asm volatile("mov %%cs, %0" : "=r"(current_cs));
+
   idt[n].offset_low = handler_addr & 0xFFFF;
-  idt[n].selector = 0x08;  // обычно это селектор кода в GDT
-  idt[n].ist = 0;          // без использования IST
-  idt[n].type_attr = 0x8E; // прерывание, присутствует, DPL=0
+  idt[n].selector = current_cs; // обычно это селектор кода в GDT
+  idt[n].ist = 0;               // без использования IST
+  idt[n].type_attr = 0x8E;      // прерывание, присутствует, DPL=0
   idt[n].offset_mid = (handler_addr >> 16) & 0xFFFF;
   idt[n].offset_high = (handler_addr >> 32) & 0xFFFFFFFF;
   idt[n].zero = 0;

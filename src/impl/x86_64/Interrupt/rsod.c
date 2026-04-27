@@ -1,3 +1,4 @@
+#include <System/sysinfo.h>
 #include <VGA/print.h>
 #include <VGA/rsod.h>
 
@@ -27,11 +28,10 @@ void ErrorFone() {
   PrintBaner();
   ConsoleSetCarretPos(16, 7);
 }
-
 void DivideZero() {
   ErrorFone();
   print("INT 0. Processor error. Division by zero."); // Ошибка процессора.
-                                                      // Деление на ноль.
+  // // Деление на ноль.
 }
 
 void MappingError() {

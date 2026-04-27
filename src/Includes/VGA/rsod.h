@@ -1,4 +1,3 @@
-
 void DivideZero();
 void MappingError();
 void OpcodeError();

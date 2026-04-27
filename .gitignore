@@ -4,3 +4,5 @@ dist
 build-debug
 *.exe
 .vscode
+*.bin
+*.elf
