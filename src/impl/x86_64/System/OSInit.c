@@ -4,9 +4,14 @@
 #include <System/sysinfo.h>
 #include <VGA/vgacursor.h>
 
+// Инициализация констант
+
 char *VersionOS = "ALPHA";
 const u8 NUM_COLUMS = 80;
 const u8 NUM_ROWS = 25;
+
+u64 WidthDisplay = 0;
+u64 HiegthDisplay = 0;
 
 void WelcomeMessage() {
   ConsoleClear();
@@ -35,4 +40,11 @@ void ApperLine() {
   CursorPosCol = 7;
   CursorPosRow = 3;
   CursorPos(CursorPosCol, CursorPosRow);
+}
+
+// задумка пиздатая но пока не нашел ей действительно стоющего применения
+void InitConstantGraphics(u64 Width, u64 Hiegth) {
+
+  HiegthDisplay = Hiegth;
+  WidthDisplay = Width;
 }

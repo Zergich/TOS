@@ -1,7 +1,7 @@
 #include <ConsoleIO/print.h>
 #include <System/sysinfo.h>
+#include <limine.h>
 #include <types.h>
-
 #if LOADER == 0
 struct multiboot_tag {
   u32 type;
@@ -95,7 +95,9 @@ void PrintMem() {
   print(" MB\n");
 }
 
-#elif LOADER == 1
-void PrintMem() {}
-
+// #elif LOADER == 1
+//
+//
 #endif
+
+void PrintMem() {}
