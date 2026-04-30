@@ -24,17 +24,17 @@ void DrawPixel(u64 x, u64 y, u32 color) {
 
 void DrawChar(u64 x, u64 y, char c, u32 color) {
 
-  const u8 *glyph = &font8x16[(uint8_t)c * 16];
+  uint32_t char_index = (uint8_t)c;
+  const u8 *glyph = &vga_font[(char_index * 16)];
 
   for (int cy = 0; cy < 16; cy++) {
-    // 2. Берем байт, описывающий 8 горизонтальных пикселей
     u8 row = glyph[cy];
-
     for (int cx = 0; cx < 8; cx++) {
-      // 3. Проверяем биты слева направо
+      // Попробуйте (row & (0x80 >> cx)) - это классический порядок (MSB first)
       if ((row >> (7 - cx)) & 1) {
-        // Используйте Pitch / 4 для надежности
-        BuffPtr[(y + cy) * WidthDisplay + (x + cx)] = color;
+        // Используйте Pitch / 4. В Limine это критично!
+        size_t offset = (y + cy) * WidthDisplay + (x + cx);
+        BuffPtr[offset] = color;
       }
     }
   }

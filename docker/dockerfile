@@ -14,9 +14,10 @@ workdir /root/env
 
 #запуск контейнера
 #docker run --rm -it -v D:\Progects\C++\TOS:/root/env tos
+#docker run --rm -it -v "C:\Users\pytho\OneDrive\Рабочий стол\TOSIK\TOS":/root/env tos
 # запуск ядра
 # qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso
 # полезно для отладки
 #qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -S -gdb tcp::1234
-#стэк регистры 2 опкод
+#стэк регистры 2 опкода[]
 #qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -d int -no-reboot

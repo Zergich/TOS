@@ -51,13 +51,6 @@ void ReturnMem() {
     }
   }
 }
-void DrawTest(u64 x, u64 y, u32 color, u32 *pede1) {
-  for (int cy = 0; cy < 16; cy++) {
-    for (int cx = 0; cx < 8; cx++) {
-      pede1[(y + cy) * WidthDisplay + (x + cx)] = color;
-    }
-  }
-}
 
 void kernel_main() {
 
@@ -75,8 +68,7 @@ void kernel_main() {
     fb_ptr[i] = 0x120F2E;
   }
   // PixelGrapchics.Draw(0, 3000 * 30, 0x784F2E);
-  PixelGrapchics.DrawChar(100, 1, '1', 0x27F53F);
-  DrawTest(100, 1, 0x27F53F, fb_ptr);
+  PixelGrapchics.DrawChar(100, 3, 'A', 0x27F53F);
   WelcomeMessage();
   idt_init();
 
