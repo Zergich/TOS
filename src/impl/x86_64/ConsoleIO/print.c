@@ -1,4 +1,7 @@
+#include <ConsoleIO/font.h>
+#include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
+#include <System/MemoryUtils.h>
 #include <System/sysinfo.h>
 #include <VGA/vgacursor.h>
 #include <stdarg.h>
@@ -6,29 +9,23 @@
 
 extern uint16_t CursorPosCol;
 extern uint16_t CursorPosRow;
+extern Pixeling PixelGrapchics;
 
-// const static size_t NUM_COLS = 80;
-// const static size_t NUM_ROWS = 25;
-
-struct Char *buffer = (struct Char *)0xb8000; // VGA память
-size_t VGA_Column = 0;
-size_t VGA_Line = 0;
+size_t Current_Column = 0;
+size_t Curent_Line = 0;
 
 // Цвета
-uint8_t Foreground = CONSOLE_COLOR_WHITE;
-uint8_t Background = CONSOLE_COLOR_BLACK;
-uint8_t color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
-uint8_t SaveColor = 0;
+u32 Foreground = CONSOLE_COLOR_WHITE;
+u32 Background = CONSOLE_COLOR_BLACK;
+u32 SaveColorFG = 0;
+u32 SaveColorBG = 0;
 //  сохранить цвет при его изменгением в функции ошибки
 
 void ClearRow(size_t row) {
-  struct Char EmptySymbol = (struct Char){
-    character : ' ',
-    color : color,
-  };
-  for (size_t col = 0; col < NUM_COLUMS; col++) {
-    buffer[col + NUM_COLUMS * row] = EmptySymbol;
-  }
+  //
+  // for (size_t col = 0; col < NUM_COLUMS; col++) {
+  //   buffer[col + NUM_COLUMS * row] = EmptySymbol;
+  // }
 }
 void ConsoleClear() {
   for (size_t i = 0; i < NUM_ROWS; i++) {
@@ -36,59 +33,68 @@ void ConsoleClear() {
   }
 }
 
-void ConsoleRePrintDown() { // переписывает буффер консоли (строка дошла до
-                            // конца). пролистывает вниз
-  VGA_Column = 0;
-  if (VGA_Line < NUM_ROWS - 1) {
-    VGA_Line++;
-    return;
+void PutChar(u64 x, u64 y, char character) {
+
+  PixelGrapchics.DrawChar(x, y, character, Foreground, Background);
+}
+
+void ConsoleScroll() {
+  // ВНИМАНИЕ: Если у тебя артефакты (смещение картинки по диагонали),
+  // замени WidthDisplay на реальный Pitch фреймбуфера (PitchBytes /
+  // sizeof(u32)).
+  u64 pixels_per_line = WidthDisplay;
+
+  // Приводим указатель к u32* для правильной математики указателей
+  u32 *buffer = (u32 *)PixelGrapchics.ptr;
+
+  // Сдвигаем все пиксели, кроме последней текстовой строки, вверх на
+  // FONT_HEIGHT пикселей
+  u64 offset_to_src = pixels_per_line * FONT_HEIGHT;
+  u64 pixels_to_move = pixels_per_line * (HeightDisplay - FONT_HEIGHT);
+
+  memmove(buffer, buffer + offset_to_src, pixels_to_move * sizeof(u32));
+
+  // Очищаем последнюю текстовую строку фоновым цветом
+  u32 bg_color = Background;
+  u64 start_of_last_line = (HeightDisplay - FONT_HEIGHT) * pixels_per_line;
+
+  for (u64 i = 0; i < pixels_per_line * FONT_HEIGHT; i++) {
+    buffer[start_of_last_line + i] = bg_color;
   }
-  // здесь + 1 один потому что без него функция копирует последнюю
-  // строку и втасляет ее заново. то есть на новой строке у тебя
-  // было то что на пердыдущей
-  for (size_t row = 1; row < NUM_ROWS + 1; row++) {
-    for (size_t col = 0; col < NUM_COLUMS; col++) {
-      struct Char character = buffer[col + NUM_COLUMS * row];
-      buffer[col + NUM_COLUMS * (row - 1)] = character;
-    }
-  }
-  ClearRow(NUM_COLUMS - 1);
-  CursorPosCol = 0;
-  CursorPosRow = NUM_ROWS - 2; // курсор просто пропадает без этой штуки
 }
 
 void PrintChar(char character) {
+  // 1. Обработка переноса строки (Enter)
   if (character == '\n') {
-    ConsoleRePrintDown();
     CursorPosCol = 0;
-    // тут дело в суфиксах и постфиксах потому что если Х++ то сначала
-    // передается значение в функции, функция отрабатывает с этим значением а
-    // потом только увеличивает его а если ++Х то сначала увеличивает а потом
-    // работает
-    CursorPos(CursorPosCol, ++CursorPosRow);
-    return;
-  }
-  if (VGA_Column > NUM_COLUMS) {
-    ConsoleRePrintDown();
-    CursorPosCol =
-        1; // из за какойто херни когда автоматически переходит на новую строку
-           // при заполнении пердыдущей строки печатается первый символ в
-           // позиции 0 а следующей символ встает на эту же позицию таким
-           // образом скпивая 1 символ по этому переменная равна 1 а не 0 и в
-           // конце тела колона инкрементируется
     CursorPosRow++;
-    CursorPos(CursorPosCol, CursorPosRow);
-    VGA_Column++;
   }
-  buffer[VGA_Column + NUM_COLUMS * VGA_Line] = (struct Char){
-    character : (uint8_t)character,
-    color : color,
-  };
-  VGA_Column++;
+  // 2. Обработка обычного символа
+  else {
+    // пиксельные координаты для отрисовки
+    u64 px = CursorPosCol * FONT_WIDTH;
+    u64 py = CursorPosRow * FONT_HEIGHT;
 
-  CursorPos(++CursorPosCol, CursorPosRow);
+    PixelGrapchics.DrawChar(px, py, character, Foreground, Background);
+
+    CursorPosCol++;
+  }
+
+  // 3. Проверка на достижение правого края экрана (автоматический перенос)
+  if (CursorPosCol >= NUM_COLUMS) {
+    CursorPosCol = 0;
+    CursorPosRow++;
+  }
+
+  // 4. Проверка на достижение нижнего края экрана
+  if (CursorPosRow >= NUM_ROWS) {
+    ConsoleScroll();             // Двигаем экран вверх
+    CursorPosRow = NUM_ROWS - 1; // Оставляем курсор на последней строке
+  }
+
+  // 5. Обновляем позицию (например, для аппаратного курсора, если он есть)
+  CursorPos(CursorPosCol, CursorPosRow);
 }
-
 void print(char *string) { // это для базового ввода
   for (size_t i = 0; 1; i++) {
     char character = (uint8_t)string[i];
@@ -159,21 +165,22 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
   va_end(args);
 }
 
-void ConsoleColor(uint8_t foreground, uint8_t background) {
-  color = foreground + (background << 4);
+void ConsoleColor(u32 foreground, u32 background) {
+  Foreground = foreground;
+  Background = background;
 }
-void ConsoleSetCarretPos(uint8_t column, uint8_t row) {
-  VGA_Column = column;
-  VGA_Line = row;
+void ConsoleSetCarretPos(u16 column, u16 row) {
+  Current_Column = column;
+  Curent_Line = row;
   CursorPos(column, row);
   CursorPosCol = column;
   CursorPosRow = row;
 }
-void CursorSetLine(uint8_t row) { VGA_Line = row; }
-void CursorSetColumn(uint8_t column) { VGA_Column = column; }
+void CursorSetLine(u16 row) { Curent_Line = row; }
+void CursorSetColumn(u16 column) { Current_Column = column; }
 
-uint8_t CursorLine() { return VGA_Line; }
-uint8_t CursorColumn() { return VGA_Column; }
+uint8_t CursorLine() { return Curent_Line; }
+uint8_t CursorColumn() { return Current_Column; }
 
 void PrintDEC(uint64_t value) {
   if (value == 0) {
@@ -234,11 +241,13 @@ void Print64Bin(uint64_t value) { // мб ужалить потому что н�
 }
 
 void PrintError(char *string) {
-  SaveColor = color;
+  SaveColorFG = Foreground;
+  SaveColorBG = Background;
   ConsoleColor(CONSOLE_COLOR_RED, CONSOLE_COLOR_BLACK);
   print("ERROR:\n");
   print(string);
-  color = SaveColor;
+  Background = SaveColorBG;
+  Foreground = SaveColorFG;
 }
 
 void PrintINT(int value) {
@@ -266,18 +275,15 @@ void PrintINT(int value) {
 void ConsoleResetColor() {
   Foreground = CONSOLE_COLOR_WHITE; // синхронизация цвета
   Background = CONSOLE_COLOR_BLACK;
-  color = CONSOLE_COLOR_WHITE | CONSOLE_COLOR_BLACK << 4;
 }
 
 // тут проблема в том что изначально мо человечески это сделать не получаеься
 // потому что компилятор хочет чтоб переменные которые задействуюся в цвете
 // (передний|задний) были константнымих
-void ConsoleForeground(uint8_t foreground) {
+void ConsoleForeground(u32 foreground) {
   Foreground = foreground; // сохранение цвета для его синхронизации
-  color = foreground | Background << 4;
 }
 
-void ConsoleBackground(uint8_t background) {
+void ConsoleBackground(u32 background) {
   Background = background; // сохранение цвета для его синхронизации
-  color = Foreground | background << 4;
 }

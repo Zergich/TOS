@@ -14,10 +14,10 @@
 extern char *VersionOS;
 
 // можно использовать и там и там я все равно консоль хочу
-extern const u8 NUM_COLUMS;
-extern const u8 NUM_ROWS;
+extern u16 NUM_COLUMS;
+extern u16 NUM_ROWS;
 
-extern u64 HiegthDisplay;
+extern u64 HeightDisplay;
 extern u64 WidthDisplay;
 
 #if LOADER == 0

@@ -1,4 +1,5 @@
 #include <ConsoleIO/console.h>
+#include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
 #include <System/Array.h>
 #include <System/keyboard.h>
@@ -14,10 +15,9 @@ extern StringStruct string;
 
 extern u16 CursorPosCol;
 extern u16 CursorPosRow;
-extern size_t VGA_Column; // зачем это нужно описано в обработке клавишь
+extern size_t Current_Column; // зачем это нужно описано в обработке клавишь
 
-extern struct Char *buffer;
-
+extern Pixeling PixelGrapchicyys;
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
@@ -27,7 +27,7 @@ u32 TextSize = 0;
 static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
-void ShiftLeft() {
+void ShiftLeft(char *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
 
@@ -37,18 +37,18 @@ void ShiftLeft() {
   int visual_offset = CursorPosCol - CarretIndex;
 
   for (int i = CarretIndex; i < TextSize; i++) {
+
     buffer[base_offset + visual_offset + i - 1] =
         buffer[base_offset + visual_offset + i];
   }
 
   int last_char_pos = base_offset + visual_offset + TextSize - 1;
-  buffer[last_char_pos].character = ' ';
+  PixelGrapchicyys.DrawCharOf(last_char_pos);
 }
 
 void BackSpaceHandle(char *string, u16 lastindex) {
   // лимит по X
-  int _1 = CursorPosCol;
-  int _2 = CursorPosRow;
+
   u16 lineralpos = LimitXRow + CarretIndex;
   // ConsoleSetCarretPos(0, 0);
   // printf("|%u|%u|%u|", lastindex, statlen(string1), TextSize);
@@ -59,7 +59,7 @@ void BackSpaceHandle(char *string, u16 lastindex) {
   else if (lineralpos == 7)
     return;
   if (CursorPosCol == 0) {
-    ConsoleSetCarretPos(80, CursorLine() - 1);
+    ConsoleSetCarretPos(NUM_COLUMS, CursorLine() - 1);
   }
   ShiftLeft();
   // CursorSetColumn(CursorColumn() - 1);
@@ -117,14 +117,15 @@ bool CheckSpecKeys(u8 SpecKey) {
   }
   return false;
 }
-void ShiftRight() {
+
+void ShiftRight(char *string) {
   if (CarretIndex >= TextSize)
     return;
 
   // я то мыслю правильно и пишу код в правильном направлении но так впадлу
   // додумавать всю эту хунйю с индексами сторонами и тд по этому нейронка в
   // этом случаех
-  int base_offset = 80 * CursorPosRow;
+  int base_offset = NUM_COLUMS * CursorPosRow;
 
   // ВЫЧИСЛЯЕМ СМЕЩЕНИЕ:
   // Физическая позиция курсора минус логическая позиция в строке.
@@ -135,12 +136,14 @@ void ShiftRight() {
   for (int i = TextSize - 1; i >= CarretIndex; i--) {
     // Читаем символ, учитывая РЕАЛЬНОЕ место на экране (base + смещение +
     // индекс)
-    struct Char current = buffer[base_offset + visual_offset + i];
+    char current = string[base_offset + visual_offset + i];
 
     // +1 сдвиг в право
-    buffer[base_offset + visual_offset + i + 1] = current;
+    PutChar(CarretIndex, CursorLine(), current);
+    // PixelGrapchics.ptr[base_offset + visual_offset + i + 1] = current;
   }
 }
+
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
@@ -161,7 +164,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
         continue;
       BackSpaceHandle(string, CarretIndex - 1);
       CarretIndex--;
-      VGA_Column =
+      Current_Column =
           CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
                         // координат и после того как я мувнулся влево и удалил
                         // до конца координаты шлют меня нахуй и печать
@@ -191,7 +194,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     TextSize++;
     IndexInsertC(string, &i, max_len, CarretIndex++, c);
     // string[i++] = c;
-    ShiftRight();
+    ShiftRight(string);
     PrintChar(c);
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
@@ -212,6 +215,6 @@ void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line,
                              struct Char *ReadedBuffer) {
   // struct Char *buffer = (struct Char *)0xb8000; // VGA память
 
-  for (u8 i = 0; i < End; i++)
-    ReadedBuffer[i] = buffer[(Start + i) + MaxColumn * Line];
+  // for (u8 i = 0; i < End; i++)
+  // ReadedBuffer[i] = buffer[(Start + i) + MaxColumn * Line];
 }

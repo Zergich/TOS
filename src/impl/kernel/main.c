@@ -7,6 +7,7 @@
 #include <types.h>
 
 #include <ConsoleIO/graphics.h>
+#include <ConsoleIO/print.h>
 #include <System/time.h>
 #include <limine.h>
 #include <stddef.h>
@@ -64,11 +65,14 @@ void kernel_main() {
   PixelGrapchics.Init(fb_ptr);
   InitConstantGraphics(fb->pitch / 4, fb->height);
 
-  for (size_t i = 0; i < WidthDisplay * HiegthDisplay; i++) {
-    fb_ptr[i] = 0x120F2E;
-  }
-  // PixelGrapchics.Draw(0, 3000 * 30, 0x784F2E);
-  PixelGrapchics.DrawChar(100, 3, 'A', 0x27F53F);
+  // for (size_t i = 0; i < WidthDisplay * HeightDisplay; i++) {
+  //   fb_ptr[i] = 0x120F2E;
+  // }
+  // // PixelGrapchics.Draw(0, 3000 * 30, 0x784F2E);
+  // PixelGrapchics.DrawChar(0, 0, 'A', 0x27F53F, 0x000000);
+  // PixelGrapchics.DrawChar(9, 0, 'y', 0x27F53F, 0x000000);
+  // PixelGrapchics.DrawChar(0, 17, 'p', 0x27F53F, 0x000000);
+
   WelcomeMessage();
   idt_init();
 
