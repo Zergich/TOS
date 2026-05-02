@@ -29,8 +29,6 @@ static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
 
-// Функция ТОЛЬКО для работы с памятью и экраном. Без изменения глобальных
-// курсоров.
 void ShiftLeft(char *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
@@ -40,24 +38,23 @@ void ShiftLeft(char *buffer) {
     buffer[i] = buffer[i + 1];
   }
   TextSize--;
-  buffer[TextSize] = '\0'; // Ставим ноль в конце. БОЛЬШЕ НИКАКИХ IndexDeleteC!
-
-  // 2. Вычисляем, откуда empezar рисовать
+  buffer[TextSize] = '\0';
+  // 2. Вычисляем корды
   int drawX = CursorPosCol - 1;
   int drawY = CursorPosRow;
 
-  // 3. Защита от ухода в минус (если мы в начале строки)
+  // 3. Защита от ухода в минус
   if (drawX < 0) {
     drawX = NUM_COLUMS - 1; // Переходим в самый конец предыдущей строки
     drawY--;
   }
 
-  // 4. Рисуем сдвинутый текст
+  // 4. Перерисовка текста тот самый сдвиг
   for (int i = CarretIndex - 1; i < TextSize; i++) {
     PutChar(drawX, drawY, buffer[i]);
     drawX++;
 
-    // Обязательно переносим строку при рисовании, если текст длинный!
+    //  перенос текста на новую строку
     if (drawX >= NUM_COLUMS) {
       drawX = 0;
       drawY++;
@@ -66,14 +63,9 @@ void ShiftLeft(char *buffer) {
 
   // 5. Затираем последний символ пробелом
   PutChar(drawX, drawY, ' ');
-
-  // ВАЖНО: Мы НЕ трогаем CarretIndex и CursorPosCol здесь!
 }
 
-// Главная функция удаления
 void BackSpaceHandle(char *string) {
-  // Убрали странные проверки lineralpos. Если CarretIndex > 0, значит удалять
-  // можно.
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
 
@@ -83,10 +75,9 @@ void BackSpaceHandle(char *string) {
     CursorPosCol = NUM_COLUMS; // Становимся в самый правый край
   }
 
-  // 2. Рисуем и меняем буфер (передаем текущие координаты, она сама отнимет 1)
+  // 2. Рисуем и меняем буфер
   ShiftLeft(string);
 
-  // 3. Обновляем ВСЕ переменные состояния строго после сдвига
   CarretIndex--;  // Двигаем логический индекс
   CursorPosCol--; // Двигаем визуальную колонку
 
@@ -142,32 +133,43 @@ bool CheckSpecKeys(u8 SpecKey) {
 }
 
 void ShiftRight(char *buffer) {
+  // Защита: если мы печатаем в самый конец строки,
+  // визуально сдвигать нечего (CursorPosCol уже там, где нужно).
+  // CarretIndex здесь уже увеличен на 1 в ConsoleRead, поэтому сравниваем с
+  // TextSize.
   if (CarretIndex >= TextSize)
     return;
 
-  // я то мыслю правильно и пишу код в правильном направлении но так впадлу
-  // додумавать всю эту хунйю с индексами сторонами и тд по этому нейронка в
-  // этом случаех
-  // int base_offset = NUM_COLUMS * CursorPosRow;
-  //
-  // // ВЫЧИСЛЯЕМ СМЕЩЕНИЕ:
-  // // Физическая позиция курсора минус логическая позиция в строке.
-  // // Это даст нам колонку, с которой реально начинается текст на экране.
-  // int visual_offset = CursorPosCol - CarretIndex;
-  //
-  // // Идем с КОНЦА текста в НАЧАЛО.
-  // for (int i = TextSize - 1; i >= CarretIndex; i--) {
-  //   // Читаем символ, учитывая РЕАЛЬНОЕ место на экране (base + смещение +
-  //   // индекс)
-  //   char current = buffer[base_offset + visual_offset + i];
-  //
-  //   // +1 сдвиг в право
-  //   // buffer[base_offset + visual_offset + i + 1] = current;
-  //   PixelGrapchics.DrawCharOf(base_offset + visual_offset + i + 1, current,
-  //                             CONSOLE_COLOR_BLUE, CONSOLE_COLOR_BLACK);
-  // }
-}
+  int drawX = CursorPosCol;
+  int drawY = CursorPosRow;
 
+  // Так как ConsoleRead сделал CarretIndex++ ДО вызова этой функции,
+  // индекс только что вставленного символа равен (CarretIndex - 1).
+  // Рисуем от него до конца строки.
+  for (int i = CarretIndex - 1; i < TextSize; i++) {
+
+    // Защита от мусора на всякий случай
+    if (buffer[i] == '\0')
+      break;
+
+    PutChar(drawX, drawY, buffer[i]);
+    drawX++;
+
+    // Переход на новую строку
+    if (drawX >= NUM_COLUMS) {
+      drawX = 0;
+      drawY++;
+
+      // Защита от ухода за экран (чтобы не было бесконечности)
+      if (drawY >= NUM_ROWS) { // Замените MAX_ROWS на вашу высоту
+        break;
+      }
+    }
+  }
+
+  // Затираем крайний символ пробелом, так как текст стал на 1 символ длиннее
+  PutChar(drawX, drawY, ' ');
+}
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
@@ -234,11 +236,4 @@ char ReadKey() {
     return GetChar;
   }
   return -1;
-}
-void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line,
-                             struct Char *ReadedBuffer) {
-  // struct Char *buffer = (struct Char *)0xb8000; // VGA память
-
-  // for (u8 i = 0; i < End; i++)
-  // ReadedBuffer[i] = buffer[(Start + i) + MaxColumn * Line];
 }
