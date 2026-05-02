@@ -35,14 +35,16 @@ void ConsoleClear() {
 
 void PutChar(u64 x, u64 y, char character) {
 
-  PixelGrapchics.DrawChar(x, y, character, Foreground, Background);
+  u64 px = x * FONT_WIDTH;
+  u64 py = y * FONT_HEIGHT;
+  PixelGrapchics.DrawChar(px, py, character, Foreground, Background);
 }
 
 void ConsoleScroll() {
   // ВНИМАНИЕ: Если у тебя артефакты (смещение картинки по диагонали),
   // замени WidthDisplay на реальный Pitch фреймбуфера (PitchBytes /
   // sizeof(u32)).
-  u64 pixels_per_line = WidthDisplay;
+  u64 pixels_per_line = BufferPitchW;
 
   // Приводим указатель к u32* для правильной математики указателей
   u32 *buffer = (u32 *)PixelGrapchics.ptr;

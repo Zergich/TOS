@@ -18,7 +18,7 @@ extern u16 NUM_COLUMS;
 extern u16 NUM_ROWS;
 
 extern u64 HeightDisplay;
-extern u64 WidthDisplay;
+extern u64 BufferPitchW;
 
 #if LOADER == 0
 extern u64 Mb2InfoAddr;

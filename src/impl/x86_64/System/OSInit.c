@@ -9,7 +9,7 @@
 
 char *VersionOS = "ALPHA";
 
-u64 WidthDisplay = 0;
+u64 BufferPitchW = 0;
 u64 HeightDisplay = 0;
 
 u8 FONT_WIDTH = 8;
@@ -51,10 +51,10 @@ void ApperLine() {
 void InitConstantGraphics(u64 Width, u64 Hiegth) {
 
   HeightDisplay = Hiegth;
-  WidthDisplay = Width;
+  BufferPitchW = Width;
 
   NUM_ROWS = HeightDisplay / FONT_HEIGHT;
-  NUM_COLUMS = WidthDisplay / FONT_WIDTH;
+  NUM_COLUMS = BufferPitchW / FONT_WIDTH;
 }
 
 u8 vga_font[256 * 16] = {

@@ -1,4 +1,5 @@
 #include <ConsoleIO/console.h>
+#include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
 #include <System/Array.h>
@@ -17,7 +18,7 @@ extern u16 CursorPosCol;
 extern u16 CursorPosRow;
 extern size_t Current_Column; // зачем это нужно описано в обработке клавишь
 
-extern Pixeling PixelGrapchicyys;
+extern Pixeling PixelGrapchics;
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
 
 };
@@ -27,50 +28,72 @@ u32 TextSize = 0;
 static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
+
+// Функция ТОЛЬКО для работы с памятью и экраном. Без изменения глобальных
+// курсоров.
 void ShiftLeft(char *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
 
-  int base_offset = 80 * CursorPosRow;
+  // 1. Сдвигаем память
+  for (int i = CarretIndex - 1; i < TextSize - 1; i++) {
+    buffer[i] = buffer[i + 1];
+  }
+  TextSize--;
+  buffer[TextSize] = '\0'; // Ставим ноль в конце. БОЛЬШЕ НИКАКИХ IndexDeleteC!
 
-  // Строка жестко привязана к этой колонке!
-  int visual_offset = CursorPosCol - CarretIndex;
+  // 2. Вычисляем, откуда empezar рисовать
+  int drawX = CursorPosCol - 1;
+  int drawY = CursorPosRow;
 
-  for (int i = CarretIndex; i < TextSize; i++) {
-
-    buffer[base_offset + visual_offset + i - 1] =
-        buffer[base_offset + visual_offset + i];
+  // 3. Защита от ухода в минус (если мы в начале строки)
+  if (drawX < 0) {
+    drawX = NUM_COLUMS - 1; // Переходим в самый конец предыдущей строки
+    drawY--;
   }
 
-  int last_char_pos = base_offset + visual_offset + TextSize - 1;
-  PixelGrapchicyys.DrawCharOf(last_char_pos);
+  // 4. Рисуем сдвинутый текст
+  for (int i = CarretIndex - 1; i < TextSize; i++) {
+    PutChar(drawX, drawY, buffer[i]);
+    drawX++;
+
+    // Обязательно переносим строку при рисовании, если текст длинный!
+    if (drawX >= NUM_COLUMS) {
+      drawX = 0;
+      drawY++;
+    }
+  }
+
+  // 5. Затираем последний символ пробелом
+  PutChar(drawX, drawY, ' ');
+
+  // ВАЖНО: Мы НЕ трогаем CarretIndex и CursorPosCol здесь!
 }
 
-void BackSpaceHandle(char *string, u16 lastindex) {
-  // лимит по X
-
-  u16 lineralpos = LimitXRow + CarretIndex;
-  // ConsoleSetCarretPos(0, 0);
-  // printf("|%u|%u|%u|", lastindex, statlen(string1), TextSize);
-  // ConsoleSetCarretPos(_1, _2);
-
-  if (lineralpos == LimitXRow - 2) // без -2 не работает
+// Главная функция удаления
+void BackSpaceHandle(char *string) {
+  // Убрали странные проверки lineralpos. Если CarretIndex > 0, значит удалять
+  // можно.
+  if (CarretIndex <= 0 || TextSize <= 0)
     return;
-  else if (lineralpos == 7)
-    return;
+
+  // 1. Обработка переноса курсора НАЗАД
   if (CursorPosCol == 0) {
-    ConsoleSetCarretPos(NUM_COLUMS, CursorLine() - 1);
+    CursorPosRow--;            // Поднимаемся на строку вверх
+    CursorPosCol = NUM_COLUMS; // Становимся в самый правый край
   }
-  ShiftLeft();
-  // CursorSetColumn(CursorColumn() - 1);
-  // print(" ");
-  // CursorSetColumn(CursorColumn() - 1);
-  CursorPosCol -= 1; // из за того что функция принт тоже двигает курсор
+
+  // 2. Рисуем и меняем буфер (передаем текущие координаты, она сама отнимет 1)
+  ShiftLeft(string);
+
+  // 3. Обновляем ВСЕ переменные состояния строго после сдвига
+  CarretIndex--;  // Двигаем логический индекс
+  CursorPosCol--; // Двигаем визуальную колонку
+
+  // 4. Двигаем аппаратный курсор консоли туда, где он должен быть
   CursorPos(CursorPosCol, CursorPosRow);
-  IndexDeleteC(string, &TextSize, lastindex);
-  // printf("\n%u", lastindex);
-  // string[lastindex] = 0;
 }
+
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
   u16 lineralpos = LimitXRow + CarretIndex;
@@ -118,30 +141,31 @@ bool CheckSpecKeys(u8 SpecKey) {
   return false;
 }
 
-void ShiftRight(char *string) {
+void ShiftRight(char *buffer) {
   if (CarretIndex >= TextSize)
     return;
 
   // я то мыслю правильно и пишу код в правильном направлении но так впадлу
   // додумавать всю эту хунйю с индексами сторонами и тд по этому нейронка в
   // этом случаех
-  int base_offset = NUM_COLUMS * CursorPosRow;
-
-  // ВЫЧИСЛЯЕМ СМЕЩЕНИЕ:
-  // Физическая позиция курсора минус логическая позиция в строке.
-  // Это даст нам колонку, с которой реально начинается текст на экране.
-  int visual_offset = CursorPosCol - CarretIndex;
-
-  // Идем с КОНЦА текста в НАЧАЛО.
-  for (int i = TextSize - 1; i >= CarretIndex; i--) {
-    // Читаем символ, учитывая РЕАЛЬНОЕ место на экране (base + смещение +
-    // индекс)
-    char current = string[base_offset + visual_offset + i];
-
-    // +1 сдвиг в право
-    PutChar(CarretIndex, CursorLine(), current);
-    // PixelGrapchics.ptr[base_offset + visual_offset + i + 1] = current;
-  }
+  // int base_offset = NUM_COLUMS * CursorPosRow;
+  //
+  // // ВЫЧИСЛЯЕМ СМЕЩЕНИЕ:
+  // // Физическая позиция курсора минус логическая позиция в строке.
+  // // Это даст нам колонку, с которой реально начинается текст на экране.
+  // int visual_offset = CursorPosCol - CarretIndex;
+  //
+  // // Идем с КОНЦА текста в НАЧАЛО.
+  // for (int i = TextSize - 1; i >= CarretIndex; i--) {
+  //   // Читаем символ, учитывая РЕАЛЬНОЕ место на экране (base + смещение +
+  //   // индекс)
+  //   char current = buffer[base_offset + visual_offset + i];
+  //
+  //   // +1 сдвиг в право
+  //   // buffer[base_offset + visual_offset + i + 1] = current;
+  //   PixelGrapchics.DrawCharOf(base_offset + visual_offset + i + 1, current,
+  //                             CONSOLE_COLOR_BLUE, CONSOLE_COLOR_BLACK);
+  // }
 }
 
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
@@ -162,16 +186,16 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     if (c == '\b') {
       if (i == 0 || CarretIndex == 0)
         continue;
-      BackSpaceHandle(string, CarretIndex - 1);
-      CarretIndex--;
+      BackSpaceHandle(string);
+      // CarretIndex--;
       Current_Column =
           CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
-                        // координат и после того как я мувнулся влево и удалил
-                        // до конца координаты шлют меня нахуй и печать
+                        // координат и после того как я мувнулся влево и
+                        // удалил до конца координаты шлют меня нахуй и печать
                         // начинается с того момента когда я начал удалять а
-                        // символ которрый остался в начале копируется. И опять
-                        // без нейронки не обошлось, но в конце концов я оставил
-                        // свой вариант
+                        // символ которрый остался в начале копируется. И
+                        // опять без нейронки не обошлось, но в конце концов я
+                        // оставил свой вариант
       continue;
     }
 

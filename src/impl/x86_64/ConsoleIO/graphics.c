@@ -49,7 +49,7 @@ void DrawChar(u64 x, u64 y, char c, u32 fg_color, u32 bg_color) {
   for (int cy = 0; cy < 16; cy++) {
     u8 row = glyph[cy];
     for (int cx = 0; cx < 8; cx++) {
-      size_t offset = (y + cy) * WidthDisplay + (x + cx);
+      size_t offset = (y + cy) * BufferPitchW + (x + cx);
       if ((row >> (7 - cx)) & 1) {
         BuffPtr[offset] = fg_color; // рисование символов
       } else {
