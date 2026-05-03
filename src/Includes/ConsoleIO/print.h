@@ -23,11 +23,6 @@ enum {
   CONSOLE_COLOR_WHITE = 0xFFFFFF,
 };
 
-struct Char {
-  uint8_t character;
-  uint8_t color;
-};
-
 void ConsoleClear();
 // Вывод
 void PrintChar(char character);

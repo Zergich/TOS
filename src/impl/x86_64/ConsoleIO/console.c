@@ -155,7 +155,8 @@ void ShiftRight(char *buffer) {
     PutChar(drawX, drawY, buffer[i]);
     drawX++;
 
-    // Переход на новую строку
+    // Переход на новую строк
+
     if (drawX >= NUM_COLUMS) {
       drawX = 0;
       drawY++;
@@ -170,12 +171,55 @@ void ShiftRight(char *buffer) {
   // Затираем крайний символ пробелом, так как текст стал на 1 символ длиннее
   PutChar(drawX, drawY, ' ');
 }
+
+// 1 - курсор видим, 0 - скрыт
+u8 CursorVisible = 1;
+
+// Счетчик тиков таймера для управления скоростью моргания
+u32 CursorBlinkTicks = 0;
+
+// Скорость моргания
+u16 CURSOR_BLINK_RATE = 200;
+
+char *ActiveInputBuffer = 0;
+
+void DrawConsoleCursor() {
+  // Если мы не в режиме ввода текста, ничего не рисуем
+  if (ActiveInputBuffer == 0)
+    return;
+
+  if (CursorVisible) {
+    // Рисуем саму каретку (например, полупрозрачный квадрат или символ '_' по
+    // вашему вкусу) Я использую символ блока, замените на свой, если нужно
+    PutChar(CursorPosCol, CursorPosRow, '_');
+  } else {
+    // Курсор "моргнул" в невидимую сторону. Нам нужно стереть '_' и нарисовать
+    // ТОТ СИМВОЛ, который реально находится в буфере на этом месте!
+    char char_to_restore =
+        ' '; // По умолчанию пробел (если курсор в самом конце текста)
+
+    if (CarretIndex < TextSize) {
+      char_to_restore = ActiveInputBuffer[CarretIndex];
+    }
+
+    PutChar(CursorPosCol, CursorPosRow, char_to_restore);
+  }
+}
+void ResetCursorBlink() {
+  CursorVisible = 1;    // Делаем курсор сразу видимым
+  CursorBlinkTicks = 0; // Сбрасываем таймер
+  DrawConsoleCursor();  // Рисуем
+}
+
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
   u32 i = 0;
   u8 c = 0;
+  ActiveInputBuffer = string;
+
+  ResetCursorBlink();
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
       // Буфер пуст (клавишу еще не нажали)
@@ -188,6 +232,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     if (c == '\b') {
       if (i == 0 || CarretIndex == 0)
         continue;
+      ResetCursorBlink(); // <--- сброс мигания при удалении
       BackSpaceHandle(string);
       // CarretIndex--;
       Current_Column =
@@ -206,6 +251,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       PrintChar('\n');
       CarretIndex = 0;
       TextSize = 0;
+      ActiveInputBuffer = 0; // <--- убрать курсор
       break;
     }
     if (SpecCodeConsoleRead) {
@@ -222,6 +268,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     // string[i++] = c;
     ShiftRight(string);
     PrintChar(c);
+    ResetCursorBlink(); // <--- сброс мигания при печати
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
   string[i] = '\0'; // для корректного завершения строки

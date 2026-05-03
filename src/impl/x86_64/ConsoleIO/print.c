@@ -67,6 +67,12 @@ void ConsoleScroll() {
 
 void PrintChar(char character) {
   // 1. Обработка переноса строки (Enter)
+
+  if (CursorPosCol == NUM_COLUMS && CursorPosRow == NUM_ROWS)
+    ConsoleScroll();
+  // потому что если я что то пишу в конце всех строк
+  // и потом пытается написать куда то в низ и ядро крашится я блять даже такой
+  // ошибки процессора не хнаю это не ошибка страниц хз
   if (character == '\n') {
     CursorPosCol = 0;
     CursorPosRow++;

@@ -1,4 +1,5 @@
 
+#include <ConsoleIO/console.h>
 #include <System/interrupts.h>
 #include <System/io.h>
 #include <System/keyboard.h>
@@ -137,8 +138,15 @@ extern TimePit Timepit;
 volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
 __attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
   PitTicks++;
-  if (PitTicks % 1000 == 0)
+  if (PitTicks % 1000 == 0) {
     Timepit.PitTimerSecondsUp++;
+  }
+  CursorBlinkTicks++;
+  if (CursorBlinkTicks >= CURSOR_BLINK_RATE) {
+    CursorBlinkTicks = 0;
+    CursorVisible = !CursorVisible; // Инвертируем состояние (1->0, 0->1)
+    DrawConsoleCursor();            // Перерисовываем курсор
+  }
   Timepit.PitTimerMiliSecondsUp++;
   outb(PIC1_COMMAND, PIC_EOI);
 }
