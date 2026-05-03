@@ -29,6 +29,24 @@ static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
 
+void EraseCursorTrail() {
+  if (ActiveInputBuffer == 0)
+    return;
+
+  char char_to_restore = ' ';
+
+  // Берем символ, который находится ПОД курсором прямо сейчас
+  if (CarretIndex < TextSize) {
+    char_to_restore = ActiveInputBuffer[CarretIndex];
+  }
+
+  u64 px = CursorPosCol * FONT_WIDTH;
+  u64 py = CursorPosRow * FONT_HEIGHT;
+
+  // ПЕРЕЗАПИСЫВАЕМ старую позицию курсора обычными цветами (без белого
+  // квадрата)
+  PutChar(CursorPosCol, CursorPosRow, char_to_restore);
+}
 void ShiftLeft(char *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
@@ -63,6 +81,7 @@ void ShiftLeft(char *buffer) {
 
   // 5. Затираем последний символ пробелом
   PutChar(drawX, drawY, ' ');
+  EraseCursorTrail();
 }
 
 void BackSpaceHandle(char *string) {
@@ -82,7 +101,7 @@ void BackSpaceHandle(char *string) {
   CursorPosCol--; // Двигаем визуальную колонку
 
   // 4. Двигаем аппаратный курсор консоли туда, где он должен быть
-  CursorPos(CursorPosCol, CursorPosRow);
+  EraseCursorTrail();
 }
 
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
@@ -184,25 +203,25 @@ u16 CURSOR_BLINK_RATE = 200;
 char *ActiveInputBuffer = 0;
 
 void DrawConsoleCursor() {
-  // Если мы не в режиме ввода текста, ничего не рисуем
   if (ActiveInputBuffer == 0)
     return;
 
+  char char_to_draw = ' '; // Символ по умолчанию (если курсор в самом конце)
+
+  if (CarretIndex < TextSize) {
+    char_to_draw =
+        ActiveInputBuffer[CarretIndex]; // Берем РЕАЛЬНЫЙ символ из буфера
+  }
+
   if (CursorVisible) {
-    // Рисуем саму каретку (например, полупрозрачный квадрат или символ '_' по
-    // вашему вкусу) Я использую символ блока, замените на свой, если нужно
-    PutChar(CursorPosCol, CursorPosRow, '_');
+    u64 px = CursorPosCol * FONT_WIDTH;
+    u64 py = CursorPosRow * FONT_HEIGHT;
+    PixelGrapchics.DrawChar(px, py, char_to_draw, CONSOLE_COLOR_BLACK,
+                            CONSOLE_COLOR_LIGHT_GRAY);
+
   } else {
-    // Курсор "моргнул" в невидимую сторону. Нам нужно стереть '_' и нарисовать
-    // ТОТ СИМВОЛ, который реально находится в буфере на этом месте!
-    char char_to_restore =
-        ' '; // По умолчанию пробел (если курсор в самом конце текста)
-
-    if (CarretIndex < TextSize) {
-      char_to_restore = ActiveInputBuffer[CarretIndex];
-    }
-
-    PutChar(CursorPosCol, CursorPosRow, char_to_restore);
+    // Курсор невидим -> просто рисуем то, что должно быть на экране
+    PutChar(CursorPosCol, CursorPosRow, char_to_draw);
   }
 }
 void ResetCursorBlink() {
@@ -251,11 +270,11 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       PrintChar('\n');
       CarretIndex = 0;
       TextSize = 0;
-      ActiveInputBuffer = 0; // <--- убрать курсор
       break;
     }
     if (SpecCodeConsoleRead) {
       CheckSpecKeys(c);
+      ResetCursorBlink(); // <--- сброс мигания при печати
       SpecCodeConsoleRead = false;
       continue;
     }
