@@ -29,24 +29,6 @@ static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
 
-void EraseCursorTrail() {
-  if (ActiveInputBuffer == 0)
-    return;
-
-  char char_to_restore = ' ';
-
-  // Берем символ, который находится ПОД курсором прямо сейчас
-  if (CarretIndex < TextSize) {
-    char_to_restore = ActiveInputBuffer[CarretIndex];
-  }
-
-  u64 px = CursorPosCol * FONT_WIDTH;
-  u64 py = CursorPosRow * FONT_HEIGHT;
-
-  // ПЕРЕЗАПИСЫВАЕМ старую позицию курсора обычными цветами (без белого
-  // квадрата)
-  PutChar(CursorPosCol, CursorPosRow, char_to_restore);
-}
 void ShiftLeft(char *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
@@ -81,7 +63,6 @@ void ShiftLeft(char *buffer) {
 
   // 5. Затираем последний символ пробелом
   PutChar(drawX, drawY, ' ');
-  EraseCursorTrail();
 }
 
 void BackSpaceHandle(char *string) {
@@ -99,18 +80,68 @@ void BackSpaceHandle(char *string) {
 
   CarretIndex--;  // Двигаем логический индекс
   CursorPosCol--; // Двигаем визуальную колонку
-
-  // 4. Двигаем аппаратный курсор консоли туда, где он должен быть
-  EraseCursorTrail();
 }
+// 1 - курсор видим, 0 - скрыт
+u8 CursorVisible = 1;
 
+// Счетчик тиков таймера для управления скоростью моргания
+u32 CursorBlinkTicks = 0;
+
+// Скорость моргания
+u16 CURSOR_BLINK_RATE = 250;
+
+char *ActiveInputBuffer = 0;
+
+void DrawConsoleCursor() {
+  if (ActiveInputBuffer == 0)
+    return;
+
+  char char_to_draw = ' '; // Символ по умолчанию (если курсор в самом конце)
+
+  if (CarretIndex < TextSize) {
+    char_to_draw =
+        ActiveInputBuffer[CarretIndex]; // Берем РЕАЛЬНЫЙ символ из буфера
+  }
+
+  if (CursorVisible) {
+    u64 px = CursorPosCol * FONT_WIDTH;
+    u64 py = CursorPosRow * FONT_HEIGHT;
+    PixelGrapchics.DrawChar(px, py, char_to_draw, CONSOLE_COLOR_BLACK,
+                            CONSOLE_COLOR_LIGHT_GRAY);
+
+  } else {
+    // Курсор невидим -> просто рисуем то, что должно быть на экране
+    PutChar(CursorPosCol, CursorPosRow, char_to_draw);
+  }
+}
+void ResetCursorBlink() {
+  CursorVisible = 1;    // Делаем курсор сразу видимым
+  CursorBlinkTicks = 0; // Сбрасываем таймер
+  DrawConsoleCursor();  // Рисуем
+}
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
+  // ветвление отвечающие за переход с левой части текста на права на новую
+  // строку
+  // if (ArrowType == LeftArrow) {
+  //   CursorPosRow--;
+  //   ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
+  // }
   u16 lineralpos = LimitXRow + CarretIndex;
-  if (CarretIndex == 0 && ArrowType == LeftArrow)
-    return;
+  if ((CursorPosCol == 0 || CursorPosRow == NUM_COLUMS) &&
+      ArrowType == LeftArrow) {
+    if (TextSize > NUM_COLUMS - LimitXRow) {
+      CursorPosRow--;
+      ConsoleForeground(CONSOLE_COLOR_RED);
+      ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
+      return;
+    }
+  }
+  // чтоб не заходила за границы по левой части
   if (lineralpos == LimitXRow && ArrowType != RightArrow)
     return;
+  // запрещает двигаться дальше в право чем размер текста с условием + стартовую
+  // позицию
   if (ArrowType == RightArrow && lineralpos == TextSize + LimitXRow)
     return;
   int Mover = 0; // хрень которая определяет в какую сторону пойдет курсор
@@ -124,7 +155,7 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
     CarretIndex++;
   }
   CursorSetColumn(CursorColumn() + Mover);
-  CursorPos(CursorPosCol, CursorPosRow);
+  ResetCursorBlink();
 }
 
 bool SpecCodeConsoleRead = false;
@@ -191,45 +222,6 @@ void ShiftRight(char *buffer) {
   PutChar(drawX, drawY, ' ');
 }
 
-// 1 - курсор видим, 0 - скрыт
-u8 CursorVisible = 1;
-
-// Счетчик тиков таймера для управления скоростью моргания
-u32 CursorBlinkTicks = 0;
-
-// Скорость моргания
-u16 CURSOR_BLINK_RATE = 200;
-
-char *ActiveInputBuffer = 0;
-
-void DrawConsoleCursor() {
-  if (ActiveInputBuffer == 0)
-    return;
-
-  char char_to_draw = ' '; // Символ по умолчанию (если курсор в самом конце)
-
-  if (CarretIndex < TextSize) {
-    char_to_draw =
-        ActiveInputBuffer[CarretIndex]; // Берем РЕАЛЬНЫЙ символ из буфера
-  }
-
-  if (CursorVisible) {
-    u64 px = CursorPosCol * FONT_WIDTH;
-    u64 py = CursorPosRow * FONT_HEIGHT;
-    PixelGrapchics.DrawChar(px, py, char_to_draw, CONSOLE_COLOR_BLACK,
-                            CONSOLE_COLOR_LIGHT_GRAY);
-
-  } else {
-    // Курсор невидим -> просто рисуем то, что должно быть на экране
-    PutChar(CursorPosCol, CursorPosRow, char_to_draw);
-  }
-}
-void ResetCursorBlink() {
-  CursorVisible = 1;    // Делаем курсор сразу видимым
-  CursorBlinkTicks = 0; // Сбрасываем таймер
-  DrawConsoleCursor();  // Рисуем
-}
-
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
@@ -251,17 +243,17 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     if (c == '\b') {
       if (i == 0 || CarretIndex == 0)
         continue;
-      ResetCursorBlink(); // <--- сброс мигания при удалении
       BackSpaceHandle(string);
       // CarretIndex--;
       Current_Column =
-          CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
-                        // координат и после того как я мувнулся влево и
-                        // удалил до конца координаты шлют меня нахуй и печать
-                        // начинается с того момента когда я начал удалять а
-                        // символ которрый остался в начале копируется. И
-                        // опять без нейронки не обошлось, но в конце концов я
-                        // оставил свой вариант
+          CursorPosCol;   // из за того что я еблан и у меня в консоли 2 системы
+                          // координат и после того как я мувнулся влево и
+                          // удалил до конца координаты шлют меня нахуй и печать
+                          // начинается с того момента когда я начал удалять а
+                          // символ которрый остался в начале копируется. И
+                          // опять без нейронки не обошлось, но в конце концов я
+                          // оставил свой вариант
+      ResetCursorBlink(); // <--- сброс мигания при печати
       continue;
     }
 
@@ -291,7 +283,6 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
   string[i] = '\0'; // для корректного завершения строки
-
   return 0;
 }
 
