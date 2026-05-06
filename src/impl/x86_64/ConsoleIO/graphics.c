@@ -24,7 +24,8 @@ void DrawPixel(u64 x, u64 y, u32 color) {
 }
 
 void DrawChar(u64 x, u64 y, char c, u32 fg_color, u32 bg_color) {
-
+  x *= FONT_WIDTH;
+  y *= FONT_HEIGHT;
   uint32_t char_index = (uint8_t)c;
   const u8 *glyph = &vga_font[(char_index * 16)];
 

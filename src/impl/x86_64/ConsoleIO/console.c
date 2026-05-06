@@ -11,6 +11,18 @@
 #include <string.h>
 #include <types.h>
 
+/*
+ * ВАЖНО!!!
+ * ТУТ БУДУТ ЗАМЕТКИ
+ *
+ * а что если на функцию перемещения стрелок повесить херню. ту же самую функцию
+ * которая отвчает за моргание но именнно затирать предыдущий курсор какой
+ * гениальный бред
+ *
+ *
+ *
+ */
+
 extern RoundBufferObgect RoundBuff;
 extern StringStruct string;
 
@@ -82,7 +94,7 @@ void BackSpaceHandle(char *string) {
   CursorPosCol--; // Двигаем визуальную колонку
 }
 // 1 - курсор видим, 0 - скрыт
-u8 CursorVisible = 1;
+bool CursorVisible = true;
 
 // Счетчик тиков таймера для управления скоростью моргания
 u32 CursorBlinkTicks = 0;
@@ -90,8 +102,14 @@ u32 CursorBlinkTicks = 0;
 // Скорость моргания
 u16 CURSOR_BLINK_RATE = 250;
 
-char *ActiveInputBuffer = 0;
+char *ActiveInputBuffer;
 
+struct CursorLastPos {
+  u16 Column;
+  u16 Row;
+  u16 CarretIndex;
+};
+struct CursorLastPos cursor_last_pos;
 void DrawConsoleCursor() {
   if (ActiveInputBuffer == 0)
     return;
@@ -104,20 +122,45 @@ void DrawConsoleCursor() {
   }
 
   if (CursorVisible) {
-    u64 px = CursorPosCol * FONT_WIDTH;
-    u64 py = CursorPosRow * FONT_HEIGHT;
-    PixelGrapchics.DrawChar(px, py, char_to_draw, CONSOLE_COLOR_BLACK,
-                            CONSOLE_COLOR_LIGHT_GRAY);
+
+    PixelGrapchics.DrawChar(CursorPosCol, CursorPosRow, char_to_draw,
+                            CONSOLE_COLOR_BLACK, CONSOLE_COLOR_LIGHT_GRAY);
 
   } else {
     // Курсор невидим -> просто рисуем то, что должно быть на экране
     PutChar(CursorPosCol, CursorPosRow, char_to_draw);
   }
+
+  cursor_last_pos.Column = CursorPosCol;
+  cursor_last_pos.Row = CursorPosRow;
+  cursor_last_pos.CarretIndex = CarretIndex;
+}
+void CursorClear() {
+  // для стирания старого курсора на старом месте
+  if (cursor_last_pos.CarretIndex < TextSize) {
+    char char_at_cursor = ActiveInputBuffer[cursor_last_pos.CarretIndex];
+    PutChar(cursor_last_pos.Column, cursor_last_pos.Row, char_at_cursor);
+  } else {
+    // Если курсор стоял в самом конце текста
+    PutChar(cursor_last_pos.Column, cursor_last_pos.Row, ' ');
+  }
+  // а здусб защита от тени при старом коде была тень + эта же неполная функция
+  // давала 1 символ с выделением + куроср
+  u64 shadow_index = cursor_last_pos.CarretIndex + 1;
+  if (shadow_index < TextSize) {
+    char shadow_char = ActiveInputBuffer[shadow_index];
+
+    u64 shadow_col = cursor_last_pos.Column + 1;
+    u64 shadow_row = cursor_last_pos.Row;
+
+    PutChar(shadow_col, shadow_row, shadow_char);
+  }
 }
 void ResetCursorBlink() {
-  CursorVisible = 1;    // Делаем курсор сразу видимым
+  CursorVisible = true; // Делаем курсор сразу видимым
   CursorBlinkTicks = 0; // Сбрасываем таймер
   DrawConsoleCursor();  // Рисуем
+  // CursorClear()
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
@@ -132,16 +175,18 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
       ArrowType == LeftArrow) {
     if (TextSize > NUM_COLUMS - LimitXRow) {
       CursorPosRow--;
-      ConsoleForeground(CONSOLE_COLOR_RED);
+      CursorClear();
+
       ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
+
       return;
     }
   }
   // чтоб не заходила за границы по левой части
   if (lineralpos == LimitXRow && ArrowType != RightArrow)
     return;
-  // запрещает двигаться дальше в право чем размер текста с условием + стартовую
-  // позицию
+  // запрещает двигаться дальше в право чем размер текста с условием +
+  // стартовую позицию
   if (ArrowType == RightArrow && lineralpos == TextSize + LimitXRow)
     return;
   int Mover = 0; // хрень которая определяет в какую сторону пойдет курсор
@@ -154,8 +199,9 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
     CursorPosCol++;
     CarretIndex++;
   }
+  CursorClear();
+
   CursorSetColumn(CursorColumn() + Mover);
-  ResetCursorBlink();
 }
 
 bool SpecCodeConsoleRead = false;
@@ -258,10 +304,14 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     }
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
-    if (c == '\r' || c == '\n') {
+    if (c == '\r' || c == '\n') { // промежуточное решение следа курсора
+      CursorClear();
+
       PrintChar('\n');
+
       CarretIndex = 0;
       TextSize = 0;
+
       break;
     }
     if (SpecCodeConsoleRead) {

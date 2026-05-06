@@ -35,9 +35,7 @@ void ConsoleClear() {
 
 void PutChar(u64 x, u64 y, char character) {
 
-  u64 px = x * FONT_WIDTH;
-  u64 py = y * FONT_HEIGHT;
-  PixelGrapchics.DrawChar(px, py, character, Foreground, Background);
+  PixelGrapchics.DrawChar(x, y, character, Foreground, Background);
 }
 
 void ConsoleScroll() {
@@ -80,10 +78,9 @@ void PrintChar(char character) {
   // 2. Обработка обычного символа
   else {
     // пиксельные координаты для отрисовки
-    u64 px = CursorPosCol * FONT_WIDTH;
-    u64 py = CursorPosRow * FONT_HEIGHT;
 
-    PixelGrapchics.DrawChar(px, py, character, Foreground, Background);
+    PixelGrapchics.DrawChar(CursorPosCol, CursorPosRow, character, Foreground,
+                            Background);
 
     CursorPosCol++;
   }
