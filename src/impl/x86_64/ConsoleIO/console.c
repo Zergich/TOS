@@ -135,7 +135,15 @@ void DrawConsoleCursor() {
   cursor_last_pos.Row = CursorPosRow;
   cursor_last_pos.CarretIndex = CarretIndex;
 }
-void CursorClear() {
+void CursorClear(bool IsEnter) {
+  if (IsEnter) { // когда я задержываю энетер он не оставлял следа но неприятно
+                 // мигал а вот собственно и решение проблемы
+    u64 shadow_row = cursor_last_pos.Row - 1;
+    u64 shadow_col = cursor_last_pos.Column;
+    PutChar(shadow_col, shadow_row, ' ');
+    // ретурн не нужен без него не робии почему то
+  }
+
   // для стирания старого курсора на старом месте
   if (cursor_last_pos.CarretIndex < TextSize) {
     char char_at_cursor = ActiveInputBuffer[cursor_last_pos.CarretIndex];
@@ -160,7 +168,6 @@ void ResetCursorBlink() {
   CursorVisible = true; // Делаем курсор сразу видимым
   CursorBlinkTicks = 0; // Сбрасываем таймер
   DrawConsoleCursor();  // Рисуем
-  // CursorClear()
 }
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
@@ -169,13 +176,27 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
   // if (ArrowType == LeftArrow) {
   //   CursorPosRow--;
   //   ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
+  //   printf("%u|%u|", cursor_last_pos.Row, CursorPosRow);
   // }
+  if (CarretIndex == NUM_COLUMS - LimitXRow && ArrowType == LeftArrow &&
+      cursor_last_pos.Row - 1 != CursorPosRow) {
+    CursorClear(false);
+    CursorPosRow--;
+
+    ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
+  } else if (CarretIndex == NUM_COLUMS - LimitXRow && ArrowType == RightArrow &&
+             cursor_last_pos.Row - 1 != CursorPosRow) {
+    CursorClear(false);
+    CursorPosRow++;
+
+    ConsoleSetCarretPos(0, CursorPosRow);
+  }
   u16 lineralpos = LimitXRow + CarretIndex;
   if ((CursorPosCol == 0 || CursorPosRow == NUM_COLUMS) &&
       ArrowType == LeftArrow) {
     if (TextSize > NUM_COLUMS - LimitXRow) {
       CursorPosRow--;
-      CursorClear();
+      CursorClear(false);
 
       ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
 
@@ -199,7 +220,7 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
     CursorPosCol++;
     CarretIndex++;
   }
-  CursorClear();
+  CursorClear(false);
 
   CursorSetColumn(CursorColumn() + Mover);
 }
@@ -275,7 +296,6 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   u32 i = 0;
   u8 c = 0;
   ActiveInputBuffer = string;
-
   ResetCursorBlink();
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
@@ -290,24 +310,26 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       if (i == 0 || CarretIndex == 0)
         continue;
       BackSpaceHandle(string);
-      // CarretIndex--;
       Current_Column =
-          CursorPosCol;   // из за того что я еблан и у меня в консоли 2 системы
-                          // координат и после того как я мувнулся влево и
-                          // удалил до конца координаты шлют меня нахуй и печать
-                          // начинается с того момента когда я начал удалять а
-                          // символ которрый остался в начале копируется. И
-                          // опять без нейронки не обошлось, но в конце концов я
-                          // оставил свой вариант
+          CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
+                        // координат и после того как я мувнулся влево и
+                        // удалил до конца координаты шлют меня нахуй и печать
+                        // начинается с того момента когда я начал удалять а
+                        // символ которрый остался в начале копируется. И
+                        // опять без нейронки не обошлось, но в конце концов я
+                        // оставил свой вариант
+      CursorClear(false);
+
       ResetCursorBlink(); // <--- сброс мигания при печати
+
       continue;
     }
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') { // промежуточное решение следа курсора
-      CursorClear();
 
       PrintChar('\n');
+      CursorClear(true);
 
       CarretIndex = 0;
       TextSize = 0;
