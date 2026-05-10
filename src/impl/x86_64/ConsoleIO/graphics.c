@@ -1,6 +1,7 @@
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
 #include <System/sysinfo.h>
+#include <stddef.h>
 #include <types.h>
 
 u32 *BuffPtr = 0;

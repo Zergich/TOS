@@ -52,7 +52,8 @@ void ReturnMem() {
     }
   }
 }
-
+// для карты памяти
+volatile struct limine_memmap_request *MemMapStructPtr;
 void kernel_main() {
 
   if (framebuffer_request.response == NULL ||
@@ -64,6 +65,9 @@ void kernel_main() {
   uint32_t *fb_ptr = (uint32_t *)fb->address;
   PixelGrapchics.Init(fb_ptr);
   InitConstantGraphics(fb->pitch / 4, fb->height);
+
+  // передача указателся на структуру карты памяти
+  MemMapStructPtr = &memmap_request;
 
   // for (size_t i = 0; i < WidthDisplay * HeightDisplay; i++) {
   //   fb_ptr[i] = 0x120F2E;

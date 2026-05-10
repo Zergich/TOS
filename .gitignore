@@ -6,3 +6,4 @@ build-debug
 .vscode
 *.bin
 *.elf
+*.lua

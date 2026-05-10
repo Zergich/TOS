@@ -169,60 +169,56 @@ void ResetCursorBlink() {
   CursorBlinkTicks = 0; // Сбрасываем таймер
   DrawConsoleCursor();  // Рисуем
 }
+void MoveCursorRight() {
+  // Если мы еще не дошли до правого края
+  if (CursorPosCol < NUM_COLUMS - 1) {
+    CursorPosCol++;
+  }
+  // Если мы уперлись в край — переходим на новую строку
+  else {
+    CursorPosCol = 0;
+    CursorPosRow++;
+  }
+
+  // Проверка на выход за нижнюю границу экрана
+  if (CursorPosRow >= NUM_ROWS) {
+    // Здесь должен быть ваш вызов ScrollScreen();
+    CursorPosRow = NUM_ROWS - 1;
+  }
+}
+u16 ShellStartRow = 4; // эта херня спасает от лесенки
+
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
 {
-  // ветвление отвечающие за переход с левой части текста на права на новую
-  // строку
-  // if (ArrowType == LeftArrow) {
-  //   CursorPosRow--;
-  //   ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
-  //   printf("%u|%u|", cursor_last_pos.Row, CursorPosRow);
-  // }
-  if (CarretIndex == NUM_COLUMS - LimitXRow && ArrowType == LeftArrow &&
-      cursor_last_pos.Row - 1 != CursorPosRow) {
-    CursorClear(false);
-    CursorPosRow--;
-
-    ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
-  } else if (CarretIndex == NUM_COLUMS - LimitXRow && ArrowType == RightArrow &&
-             cursor_last_pos.Row - 1 != CursorPosRow) {
-    CursorClear(false);
-    CursorPosRow++;
-
-    ConsoleSetCarretPos(0, CursorPosRow);
-  }
   u16 lineralpos = LimitXRow + CarretIndex;
-  if ((CursorPosCol == 0 || CursorPosRow == NUM_COLUMS) &&
-      ArrowType == LeftArrow) {
-    if (TextSize > NUM_COLUMS - LimitXRow) {
-      CursorPosRow--;
-      CursorClear(false);
+  u16 next_carret = CarretIndex;
 
-      ConsoleSetCarretPos(NUM_COLUMS, CursorPosRow);
-
-      return;
-    }
-  }
-  // чтоб не заходила за границы по левой части
-  if (lineralpos == LimitXRow && ArrowType != RightArrow)
-    return;
-  // запрещает двигаться дальше в право чем размер текста с условием +
-  // стартовую позицию
-  if (ArrowType == RightArrow && lineralpos == TextSize + LimitXRow)
-    return;
-  int Mover = 0; // хрень которая определяет в какую сторону пойдет курсор
   if (ArrowType == LeftArrow) {
-    Mover = -1;
-    CursorPosCol--;
-    CarretIndex--;
+    if (lineralpos > LimitXRow)
+      next_carret--;
+    else
+      return;
   } else {
-    Mover = 1;
-    CursorPosCol++;
-    CarretIndex++;
+    if (lineralpos < TextSize + LimitXRow)
+      next_carret++;
+    else
+      return;
   }
+
   CursorClear(false);
 
-  CursorSetColumn(CursorColumn() + Mover);
+  // обновление индекс
+  CarretIndex = next_carret;
+
+  // математический расчет координат
+  u16 total_pos = CarretIndex + LimitXRow;
+
+  CursorPosCol = total_pos % NUM_COLUMS;
+
+  CursorPosRow = ShellStartRow + (total_pos / NUM_COLUMS);
+  // CursorPosRow = CursorPosRow + (total_pos / NUM_COLUMS);
+  // тут была лесенка из за проблемы накопления я бы сам в жизни никогда не
+  // догадался бы
 }
 
 bool SpecCodeConsoleRead = false;
@@ -354,6 +350,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     ResetCursorBlink(); // <--- сброс мигания при печати
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
+  ShellStartRow = CursorPosRow; // спасает от лесенки
+
   string[i] = '\0'; // для корректного завершения строки
   return 0;
 }

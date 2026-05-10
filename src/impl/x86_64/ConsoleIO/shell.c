@@ -46,6 +46,12 @@ void ShellCommandEnding() {
   printf("Shell> ");
 }
 
+void PrintMemoryMap(struct MemoryType mem) {
+  printf("Usable Memory - %u MB\n", mem.UsableMemory);
+  printf("Reserved Memory - %u MB\n", mem.ReservedMemory);
+  printf("Total - %u MB", mem.ReservedMemory + mem.UsableMemory);
+}
+
 void Shell() {
   static string15 pede;
   Console.ReadLine(pede);
@@ -63,7 +69,7 @@ void Shell() {
     break;
 
   case Mem:
-    PrintMem();
+    PrintMemoryMap(ReturnMemoryMap());
     break;
   }
   // print(pede);
