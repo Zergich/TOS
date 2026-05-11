@@ -11,24 +11,11 @@
 #include <string.h>
 #include <types.h>
 
-/*
- * ВАЖНО!!!
- * ТУТ БУДУТ ЗАМЕТКИ
- *
- * а что если на функцию перемещения стрелок повесить херню. ту же самую функцию
- * которая отвчает за моргание но именнно затирать предыдущий курсор какой
- * гениальный бред
- *
- *
- *
- */
-
 extern RoundBufferObgect RoundBuff;
 extern StringStruct string;
 
 extern u16 CursorPosCol;
 extern u16 CursorPosRow;
-extern size_t Current_Column; // зачем это нужно описано в обработке клавишь
 
 extern Pixeling PixelGrapchics;
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
@@ -135,57 +122,21 @@ void DrawConsoleCursor() {
   cursor_last_pos.Row = CursorPosRow;
   cursor_last_pos.CarretIndex = CarretIndex;
 }
-void CursorClear(bool IsEnter) {
-  if (IsEnter) { // когда я задержываю энетер он не оставлял следа но неприятно
-                 // мигал а вот собственно и решение проблемы
-    u64 shadow_row = cursor_last_pos.Row - 1;
-    u64 shadow_col = cursor_last_pos.Column;
-    PutChar(shadow_col, shadow_row, ' ');
-    // ретурн не нужен без него не робии почему то
-  }
+void CursorClear() {
 
-  // для стирания старого курсора на старом месте
+  char c = ' ';
   if (cursor_last_pos.CarretIndex < TextSize) {
-    char char_at_cursor = ActiveInputBuffer[cursor_last_pos.CarretIndex];
-    PutChar(cursor_last_pos.Column, cursor_last_pos.Row, char_at_cursor);
-  } else {
-    // Если курсор стоял в самом конце текста
-    PutChar(cursor_last_pos.Column, cursor_last_pos.Row, ' ');
+    c = ActiveInputBuffer[cursor_last_pos.CarretIndex];
   }
-  // а здусб защита от тени при старом коде была тень + эта же неполная функция
-  // давала 1 символ с выделением + куроср
-  u64 shadow_index = cursor_last_pos.CarretIndex + 1;
-  if (shadow_index < TextSize) {
-    char shadow_char = ActiveInputBuffer[shadow_index];
 
-    u64 shadow_col = cursor_last_pos.Column + 1;
-    u64 shadow_row = cursor_last_pos.Row;
-
-    PutChar(shadow_col, shadow_row, shadow_char);
-  }
+  PutChar(cursor_last_pos.Column, cursor_last_pos.Row, c);
 }
 void ResetCursorBlink() {
   CursorVisible = true; // Делаем курсор сразу видимым
   CursorBlinkTicks = 0; // Сбрасываем таймер
   DrawConsoleCursor();  // Рисуем
 }
-void MoveCursorRight() {
-  // Если мы еще не дошли до правого края
-  if (CursorPosCol < NUM_COLUMS - 1) {
-    CursorPosCol++;
-  }
-  // Если мы уперлись в край — переходим на новую строку
-  else {
-    CursorPosCol = 0;
-    CursorPosRow++;
-  }
 
-  // Проверка на выход за нижнюю границу экрана
-  if (CursorPosRow >= NUM_ROWS) {
-    // Здесь должен быть ваш вызов ScrollScreen();
-    CursorPosRow = NUM_ROWS - 1;
-  }
-}
 u16 ShellStartRow = 4; // эта херня спасает от лесенки
 
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
@@ -205,7 +156,7 @@ void ArrowHandleRL(u8 ArrowType) // пока только право лево
       return;
   }
 
-  CursorClear(false);
+  CursorClear();
 
   // обновление индекс
   CarretIndex = next_carret;
@@ -293,6 +244,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   u8 c = 0;
   ActiveInputBuffer = string;
   ResetCursorBlink();
+
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
       // Буфер пуст (клавишу еще не нажали)
@@ -306,15 +258,14 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       if (i == 0 || CarretIndex == 0)
         continue;
       BackSpaceHandle(string);
-      Current_Column =
-          CursorPosCol; // из за того что я еблан и у меня в консоли 2 системы
-                        // координат и после того как я мувнулся влево и
-                        // удалил до конца координаты шлют меня нахуй и печать
-                        // начинается с того момента когда я начал удалять а
-                        // символ которрый остался в начале копируется. И
-                        // опять без нейронки не обошлось, но в конце концов я
-                        // оставил свой вариант
-      CursorClear(false);
+      // из за того что я еблан и у меня в консоли 2 системы
+      // координат и после того как я мувнулся влево и
+      // удалил до конца координаты шлют меня нахуй и печать
+      // начинается с того момента когда я начал удалять а
+      // символ которрый остался в начале копируется. И
+      // опять без нейронки не обошлось, но в конце концов я
+      // оставил свой вариант
+      CursorClear();
 
       ResetCursorBlink(); // <--- сброс мигания при печати
 
@@ -323,12 +274,14 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') { // промежуточное решение следа курсора
+      CursorClear(); // должен быть именно тут иначе после перерисовки пойдет
+                     // хвост от курсорах
 
       PrintChar('\n');
-      CursorClear(true);
 
       CarretIndex = 0;
       TextSize = 0;
+      ShellStartRow = CursorPosRow;
 
       break;
     }

@@ -38,20 +38,6 @@ __attribute__((
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
-void ReturnMem() {
-  uint64_t total_usable = 0;
-  uint64_t total_reserved = 0;
-
-  for (uint64_t i = 0; i < memmap_request.response->entry_count; i++) {
-    struct limine_memmap_entry *entry = memmap_request.response->entries[i];
-
-    if (entry->type == LIMINE_MEMMAP_USABLE) {
-      total_usable += entry->length;
-    } else {
-      total_reserved += entry->length;
-    }
-  }
-}
 // для карты памяти
 volatile struct limine_memmap_request *MemMapStructPtr;
 void kernel_main() {
@@ -64,7 +50,7 @@ void kernel_main() {
 
   uint32_t *fb_ptr = (uint32_t *)fb->address;
   PixelGrapchics.Init(fb_ptr);
-  InitConstantGraphics(fb->pitch / 4, fb->height);
+  InitConstantGraphics(fb->pitch / 4, fb->width, fb->height);
 
   // передача указателся на структуру карты памяти
   MemMapStructPtr = &memmap_request;
@@ -79,6 +65,7 @@ void kernel_main() {
 
   WelcomeMessage();
   idt_init();
+  // printf("%u|%u|", fb->width, fb->width);
 
   // После полной настройки прерываний включаем их
   asm volatile("sti");

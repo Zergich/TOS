@@ -10,7 +10,8 @@
 char *VersionOS = "ALPHA";
 
 u64 BufferPitchW = 0;
-u64 HeightDisplay = 0;
+u16 HeightDisplay = 0;
+u16 WidthDisplay = 0;
 
 u16 NUM_COLUMS;
 u16 NUM_ROWS;
@@ -45,10 +46,11 @@ void ApperLine() {
 }
 
 // задумка пиздатая но пока не нашел ей действительно стоющего применения
-void InitConstantGraphics(u64 Width, u64 Hiegth) {
+void InitConstantGraphics(u64 Pitch, u16 Width, u16 Hiegth) {
 
+  WidthDisplay = Width;
   HeightDisplay = Hiegth;
-  BufferPitchW = Width;
+  BufferPitchW = Pitch;
 
   NUM_ROWS = HeightDisplay / FONT_HEIGHT;
   NUM_COLUMS = BufferPitchW / FONT_WIDTH;

@@ -3,4 +3,4 @@
 
 void WelcomeMessage();
 void ApperLine();
-void InitConstantGraphics(u64 Width, u64 Hiegth);
+void InitConstantGraphics(u64 Pitch, u16 Width, u16 Hiegth);

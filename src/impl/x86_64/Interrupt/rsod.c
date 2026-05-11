@@ -33,7 +33,7 @@ void ErrorFone() {
   //   }
   //   print("\n");
   // }
-  DrawPixel(0, HeightDisplay * BufferPitchW, CONSOLE_COLOR_RED);
+  DrawPixel(0, HeightDisplay * WidthDisplay, CONSOLE_COLOR_RED);
   PrintBaner();
   ConsoleSetCarretPos(CenterColPading + 4, CenterRowPading + 2);
 }

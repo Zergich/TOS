@@ -11,9 +11,6 @@ extern uint16_t CursorPosCol;
 extern uint16_t CursorPosRow;
 extern Pixeling PixelGrapchics;
 
-size_t Current_Column = 0;
-size_t Curent_Line = 0;
-
 // Цвета
 u32 Foreground = CONSOLE_COLOR_WHITE;
 u32 Background = CONSOLE_COLOR_BLACK;
@@ -39,9 +36,6 @@ void PutChar(u64 x, u64 y, char character) {
 }
 
 void ConsoleScroll() {
-  // ВНИМАНИЕ: Если у тебя артефакты (смещение картинки по диагонали),
-  // замени WidthDisplay на реальный Pitch фреймбуфера (PitchBytes /
-  // sizeof(u32)).
   u64 pixels_per_line = BufferPitchW;
 
   // Приводим указатель к u32* для правильной математики указателей
@@ -175,17 +169,17 @@ void ConsoleColor(u32 foreground, u32 background) {
   Background = background;
 }
 void ConsoleSetCarretPos(u16 column, u16 row) {
-  Current_Column = column;
-  Curent_Line = row;
+  CursorPosCol = column;
+  CursorPosRow = row;
   CursorPos(column, row);
   CursorPosCol = column;
   CursorPosRow = row;
 }
-void CursorSetLine(u16 row) { Curent_Line = row; }
-void CursorSetColumn(u16 column) { Current_Column = column; }
+void CursorSetLine(u16 row) { CursorPosRow = row; }
+void CursorSetColumn(u16 column) { CursorPosCol = column; }
 
-uint8_t CursorLine() { return Curent_Line; }
-uint8_t CursorColumn() { return Current_Column; }
+uint8_t CursorLine() { return CursorPosRow; }
+uint8_t CursorColumn() { return CursorPosCol; }
 
 void PrintDEC(uint64_t value) {
   if (value == 0) {

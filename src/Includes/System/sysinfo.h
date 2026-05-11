@@ -5,14 +5,14 @@
 extern char *VersionOS;
 
 // можно использовать и там и там я все равно консоль хочу
+// консоль
 extern u16 NUM_COLUMS;
 extern u16 NUM_ROWS;
 
-extern u64 HeightDisplay;
+// экран и графика
+extern u16 HeightDisplay;
 extern u64 BufferPitchW;
-
-extern u64 Mb2InfoAddr;
-extern u32 Mb2Magic;
+extern u16 WidthDisplay;
 
 struct MemoryType {
   u64 UsableMemory;
