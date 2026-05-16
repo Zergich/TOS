@@ -2,7 +2,7 @@
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
 #include <System/sysinfo.h>
-#include <string.h>
+#include <libs/string.h>
 #include <types.h>
 extern ConsoleInput Console;
 extern StringStruct string;
@@ -13,15 +13,14 @@ enum ShellCommand {
   Mem = 1,
   WhiteSpace = 2,
   Echo = 3,
+  ConsoleClearCommand = 4,
 };
 
-bool EmptyString = false;
 int ParseCommnad(
     char *str) { // очевидная проблема в том что пока эта херь не сплитает
                  // строки и команды с флагами не сработают
   // закомментированные функции нужны потому что мб через if сделаю
   if (string.IsEmptyOrWhitespace(str)) {
-    EmptyString = true;
     return WhiteSpace;
   }
   if (string.Strcmp(str, "pede") == 0) {
@@ -36,15 +35,13 @@ int ParseCommnad(
     // print(str);
     return Echo;
   }
+  if (string.Strcmp(str, "clear") == 0) {
+    // ConsoleClear();
+    return ConsoleClearCommand;
+  }
   return NotACommand;
 }
-void ShellCommandEnding() {
-  if (!EmptyString) {
-    print("\n");
-    EmptyString = false;
-  }
-  printf("Shell> ");
-}
+void ShellCommandEnding() { printf("Shell> "); }
 
 void PrintMemoryMap(struct MemoryType mem) {
   printf("Usable Memory - %u MB\n", mem.UsableMemory);
@@ -70,6 +67,9 @@ void Shell() {
 
   case Mem:
     PrintMemoryMap(ReturnMemoryMap());
+    break;
+  case ConsoleClearCommand:
+    ConsoleClear();
     break;
   }
   // print(pede);

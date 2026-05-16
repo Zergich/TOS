@@ -1,9 +1,9 @@
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
-#include <System/MemoryUtils.h>
 #include <System/sysinfo.h>
 #include <VGA/vgacursor.h>
+#include <libs/MemoryUtils.h>
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -19,10 +19,11 @@ u32 SaveColorBG = 0;
 //  сохранить цвет при его изменгением в функции ошибки
 
 void ClearRow(size_t row) {
-  //
-  // for (size_t col = 0; col < NUM_COLUMS; col++) {
-  //   buffer[col + NUM_COLUMS * row] = EmptySymbol;
-  // }
+
+  for (size_t col = 0; col < NUM_COLUMS; col++) {
+    DrawChar(col, row, 0, Background, Background);
+  }
+  CursorPosRow = 0;
 }
 void ConsoleClear() {
   for (size_t i = 0; i < NUM_ROWS; i++) {
@@ -94,7 +95,10 @@ void PrintChar(char character) {
   // 5. Обновляем позицию (например, для аппаратного курсора, если он есть)
   CursorPos(CursorPosCol, CursorPosRow);
 }
-void print(char *string) { // это для базового ввода
+void print_int(int value) { printf("%i", value); }
+void print_unsigned(u64 value) { printf("%u", value); }
+void print_char(char value) { PrintChar(value); }
+void print_str(char *string) { // это для базового ввода
   for (size_t i = 0; 1; i++) {
     char character = (uint8_t)string[i];
     if (character == '\0')

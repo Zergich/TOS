@@ -1,6 +1,6 @@
 #include <ConsoleIO/print.h>
-#include <System/keyboard.h>
-#include <datastruct.h>
+#include <drivers/keyboard.h>
+#include <libs/datastruct.h>
 #include <stdint.h>
 #include <types.h>
 // стартовые позиции курсора

@@ -19,6 +19,7 @@ u32 *InitDraw(u32 *framebuffer_ptr) {
   return BuffPtr;
 }
 void DrawPixel(u64 x, u64 y, u32 color) {
+
   for (; x < y; x++) {
     BuffPtr[x] = color;
   }

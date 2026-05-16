@@ -1,7 +1,7 @@
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
+#include <System/rsod.h>
 #include <System/sysinfo.h>
-#include <VGA/rsod.h>
 
 #pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
                                         // выключение регистров XMM/YMM

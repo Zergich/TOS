@@ -4,7 +4,7 @@ LD := x86_64-elf-ld
 
 # --- Флаги компиляции ---
 # Общие флаги для всех файлов ядра
-CFLAGS_COMMON := -I src/Includes -I src/Includes/System -I src/Includes/VGA  -I src/Includes/ConsoleIO \
+CFLAGS_COMMON := -I src/Includes -I src/Includes/System -I src/Includes/VGA  -I src/Includes/ConsoleIO -I src/Includes/Drivers -I src/Includes/libs \
                  -ffreestanding -mcmodel=kernel -mno-red-zone -m64
 
 # Флаги для релизной сборки

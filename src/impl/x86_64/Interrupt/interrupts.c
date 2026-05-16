@@ -2,10 +2,10 @@
 #include <ConsoleIO/console.h>
 #include <System/interrupts.h>
 #include <System/io.h>
-#include <System/keyboard.h>
-#include <System/time.h>
-#include <VGA/rsod.h>
-#include <datastruct.h>
+#include <System/rsod.h>
+#include <drivers/keyboard.h>
+#include <libs/datastruct.h>
+#include <libs/time.h>
 #include <stdint.h>
 
 #pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX

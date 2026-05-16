@@ -2,13 +2,13 @@
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
-#include <System/Array.h>
-#include <System/keyboard.h>
+#include <Drivers/keyboard.h>
 #include <System/sysinfo.h>
 #include <VGA/vgacursor.h>
-#include <datastruct.h>
+#include <libs/Array.h>
+#include <libs/datastruct.h>
+#include <libs/string.h>
 #include <stddef.h>
-#include <string.h>
 #include <types.h>
 
 extern RoundBufferObgect RoundBuff;
@@ -176,6 +176,7 @@ bool SpecCodeConsoleRead = false;
 bool CheckSpecKeys(u8 SpecKey) {
   switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
   case Key_Tab:
+
   case Key_LShift:
   case Key_RShift:
   case Key_Ctrl:
@@ -244,7 +245,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   u8 c = 0;
   ActiveInputBuffer = string;
   ResetCursorBlink();
-
+  ShellStartRow = CursorPosRow;
   while (i < max_len - 1) {
     if (RoundBuff.get(&c) != 0) {
       // Буфер пуст (клавишу еще не нажали)
@@ -303,7 +304,6 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     ResetCursorBlink(); // <--- сброс мигания при печати
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
-  ShellStartRow = CursorPosRow; // спасает от лесенки
 
   string[i] = '\0'; // для корректного завершения строки
   return 0;

@@ -23,10 +23,22 @@ enum {
   CONSOLE_COLOR_WHITE = 0xFFFFFF,
 };
 
+#define print(x)                                                               \
+  _Generic((x),                                                                \
+      int: print_int,                                                          \
+      u64: print_unsigned,                                                     \
+      char: print_char,                                                        \
+      char *: print_str)(x)
+
 void ConsoleClear();
 // Вывод
 void PrintChar(char character);
-void print(char *string); // с маленькой буквы для удобствa
+// для удобства и тчоб каждый раз не писать printf
+void print_int(int value);
+void print_unsigned(u64 value);
+void print_char(char value);
+void print_str(char *string); // с маленькой буквы для удобствa
+
 void printf(char *string, ...);
 void PrintDEC(uint64_t value);
 void PrintHex64(uint64_t value);

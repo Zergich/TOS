@@ -1,5 +1,5 @@
-#include <System/Array.h>
-#include <System/MemoryUtils.h>
+#include <libs/Array.h>
+#include <libs/MemoryUtils.h>
 #include <types.h>
 
 int IndexInsertC(char *arr, u32 *size, int max_size, int index,

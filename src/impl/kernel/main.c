@@ -8,10 +8,10 @@
 
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
-#include <System/time.h>
+#include <libs/string.h>
+#include <libs/time.h>
 #include <limine.h>
 #include <stddef.h>
-#include <string.h>
 
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;

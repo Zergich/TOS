@@ -1,5 +1,5 @@
+#include <libs/string.h>
 #include <stdint.h>
-#include <string.h>
 
 typedef enum {
   ERROR_CONVERT = -1,
