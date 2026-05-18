@@ -1,4 +1,4 @@
-#include <System/io.h>
+#include <arch/x86_64/io.h>
 
 #pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
                                         // выключение регистров XMM/YMM

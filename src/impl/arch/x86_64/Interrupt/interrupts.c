@@ -1,8 +1,8 @@
 
 #include <ConsoleIO/console.h>
-#include <System/interrupts.h>
-#include <System/io.h>
 #include <System/rsod.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/io.h>
 #include <drivers/keyboard.h>
 #include <libs/datastruct.h>
 #include <libs/time.h>

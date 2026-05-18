@@ -1,3 +1,4 @@
+#include "System/OSInit.h"
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
@@ -14,6 +15,7 @@ enum ShellCommand {
   WhiteSpace = 2,
   Echo = 3,
   ConsoleClearCommand = 4,
+  PrintStatusCommand = 5,
 };
 
 int ParseCommnad(
@@ -38,6 +40,10 @@ int ParseCommnad(
   if (string.Strcmp(str, "clear") == 0) {
     // ConsoleClear();
     return ConsoleClearCommand;
+  }
+  if (string.Strcmp(str, "status") == 0) {
+    // SystemStatus();
+    return PrintStatusCommand;
   }
   return NotACommand;
 }
@@ -70,6 +76,9 @@ void Shell() {
     break;
   case ConsoleClearCommand:
     ConsoleClear();
+    break;
+  case PrintStatusCommand:
+    SystemStatus(true);
     break;
   }
   // print(pede);

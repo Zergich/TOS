@@ -55,3 +55,20 @@ void InitConstantGraphics(u64 Pitch, u16 Width, u16 Hiegth) {
   NUM_ROWS = HeightDisplay / FONT_HEIGHT;
   NUM_COLUMS = BufferPitchW / FONT_WIDTH;
 }
+void SystemStatus(bool command) {
+  // что то устанавливает переменные в другие координаты
+  // а в качесиве команды сучек устанавливает такую позицию и все плывет.х
+  if (!command) {
+    CursorPosCol = 0;
+    CursorPosRow = 0;
+  }
+  ConsoleForeground(CONSOLE_COLOR_CYAN);
+
+  printf("OS version: %F%s%F\n", CONSOLE_COLOR_GREEN, VersionOS,
+         CONSOLE_COLOR_CYAN);
+
+  printf("Screen resolution: %F%ux%u%F\n", CONSOLE_COLOR_GREEN, WidthDisplay,
+         HeightDisplay, CONSOLE_COLOR_CYAN);
+  printf("Console resolution: %F%ux%u%F\n", CONSOLE_COLOR_GREEN, NUM_COLUMS,
+         NUM_ROWS, CONSOLE_COLOR_CYAN);
+}

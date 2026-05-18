@@ -2,7 +2,7 @@
 #include "System/sysinfo.h"
 #include <ConsoleIO/shell.h>
 #include <System/OSInit.h>
-#include <System/interrupts.h>
+#include <arch/x86_64/interrupts.h>
 #include <stdint.h>
 #include <types.h>
 
@@ -63,13 +63,16 @@ void kernel_main() {
   // PixelGrapchics.DrawChar(9, 0, 'y', 0x27F53F, 0x000000);
   // PixelGrapchics.DrawChar(0, 17, 'p', 0x27F53F, 0x000000);
 
-  WelcomeMessage();
   idt_init();
   // printf("%u|%u|", fb->width, fb->width);
 
   // После полной настройки прерываний включаем их
   asm volatile("sti");
   pit_init(1000); // прерывается 1000 раз в секунду
+  // SystemStatus(false);
+  // Timepit.Sleep(1500);
+
+  WelcomeMessage();
 
   static string15 pede;
   while (true) {

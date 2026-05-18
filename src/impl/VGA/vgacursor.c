@@ -1,5 +1,5 @@
-#include <System/io.h>
 #include <VGA/vgacursor.h>
+#include <arch/x86_64/io.h>
 #include <stdint.h>
 
 #define VGA_CTRL 0x3D4

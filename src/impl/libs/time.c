@@ -1,6 +1,6 @@
 #include <ConsoleIO/print.h>
-#include <System/interrupts.h>
-#include <System/io.h>
+#include <arch/x86_64/interrupts.h>
+#include <arch/x86_64/io.h>
 #include <libs/time.h>
 #include <types.h>
 
