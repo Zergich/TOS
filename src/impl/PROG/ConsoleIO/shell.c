@@ -1,4 +1,5 @@
 #include "System/OSInit.h"
+#include "libs/time.h"
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
@@ -16,6 +17,7 @@ enum ShellCommand {
   Echo = 3,
   ConsoleClearCommand = 4,
   PrintStatusCommand = 5,
+  UpTimeWorkSystem = 6,
 };
 
 int ParseCommnad(
@@ -45,6 +47,10 @@ int ParseCommnad(
     // SystemStatus();
     return PrintStatusCommand;
   }
+  if (string.Strcmp(str, "uptime") == 0) {
+    // Timepit.UpTime();
+    return UpTimeWorkSystem;
+  }
   return NotACommand;
 }
 void ShellCommandEnding() { printf("Shell> "); }
@@ -52,7 +58,7 @@ void ShellCommandEnding() { printf("Shell> "); }
 void PrintMemoryMap(struct MemoryType mem) {
   printf("Usable Memory - %u MB\n", mem.UsableMemory);
   printf("Reserved Memory - %u MB\n", mem.ReservedMemory);
-  printf("Total - %u MB", mem.ReservedMemory + mem.UsableMemory);
+  printf("Total - %u MB\n", mem.ReservedMemory + mem.UsableMemory);
 }
 
 void Shell() {
@@ -68,7 +74,7 @@ void Shell() {
     printf("\"%s\" - Is not a command.\n", pede);
     break;
   case Pede:
-    print("pede123");
+    print("pede123\n");
     break;
 
   case Mem:
@@ -79,6 +85,9 @@ void Shell() {
     break;
   case PrintStatusCommand:
     SystemStatus(true);
+    break;
+  case UpTimeWorkSystem:
+    Timepit.UpTime();
     break;
   }
   // print(pede);

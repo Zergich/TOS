@@ -9,7 +9,8 @@ typedef struct {
   volatile u64 PitTimerMiliSecondsUp;
 } TimePit;
 
-void UpTime();
-void Sleep(u32);
+extern TimePit Timepit;
+// void UpTime();
+// void Sleep(u32);
 
-void pit_init(int);
+// void pit_init(int);

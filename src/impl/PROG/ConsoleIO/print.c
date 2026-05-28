@@ -1,3 +1,5 @@
+#include "types.h"
+#include <ConsoleIO/console.h>
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
@@ -55,6 +57,10 @@ void ConsoleScroll() {
 
   for (u64 i = 0; i < pixels_per_line * FONT_HEIGHT; i++) {
     buffer[start_of_last_line + i] = bg_color;
+  }
+  // обновление значения логики переменных отвечающих за стрелки
+  if (ShellStartRow > 0) {
+    ShellStartRow--;
   }
 }
 

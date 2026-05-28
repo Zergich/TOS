@@ -60,3 +60,12 @@ void GeneralProtectionError() {
   print("INT 13. Null pointer or writing in read-only memory, or violation of "
         "privileges");
 }
+
+void PMMError() {
+  ErrorFone();
+  print("PMM Error: Memory map and HHDM responses = NULL");
+}
+void PMMBitMapPlaceNotfound() {
+  ErrorFone();
+  print("PMM Error: There was no place for bitmap");
+}

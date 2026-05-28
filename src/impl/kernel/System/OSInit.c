@@ -71,4 +71,12 @@ void SystemStatus(bool command) {
          HeightDisplay, CONSOLE_COLOR_CYAN);
   printf("Console resolution: %F%ux%u%F\n", CONSOLE_COLOR_GREEN, NUM_COLUMS,
          NUM_ROWS, CONSOLE_COLOR_CYAN);
+
+  struct MemoryType MemMap = ReturnMemoryMap();
+  printf("Memory size.\nActive: %F%u%F MB.\n", CONSOLE_COLOR_GREEN,
+         MemMap.UsableMemory, CONSOLE_COLOR_CYAN);
+  printf("Reserved: %F%u%F MB.\n", CONSOLE_COLOR_GREEN, MemMap.ReservedMemory,
+         CONSOLE_COLOR_CYAN);
+  printf("Total: %F%u%F MB.\n", CONSOLE_COLOR_GREEN,
+         MemMap.ReservedMemory + MemMap.UsableMemory, CONSOLE_COLOR_CYAN);
 }

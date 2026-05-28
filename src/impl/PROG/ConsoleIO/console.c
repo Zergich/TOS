@@ -132,11 +132,10 @@ void CursorClear() {
   PutChar(cursor_last_pos.Column, cursor_last_pos.Row, c);
 }
 void ResetCursorBlink() {
-  CursorVisible = true; // Делаем курсор сразу видимым
-  CursorBlinkTicks = 0; // Сбрасываем таймер
-  DrawConsoleCursor();  // Рисуем
+  CursorVisible = true;
+  CursorBlinkTicks = 0;
+  DrawConsoleCursor();
 }
-
 u16 ShellStartRow = 4; // эта херня спасает от лесенки
 
 void ArrowHandleRL(u8 ArrowType) // пока только право лево
@@ -275,14 +274,15 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
 
     // Клавиша Enter обычно посылает код 0x0D ('\r'), иногда 0x0A ('\n')
     if (c == '\r' || c == '\n') { // промежуточное решение следа курсора
-      CursorClear(); // должен быть именно тут иначе после перерисовки пойдет
-                     // хвост от курсорах
+      CursorClear();
 
       PrintChar('\n');
 
       CarretIndex = 0;
       TextSize = 0;
       ShellStartRow = CursorPosRow;
+
+      // ResetCursorBlink();
 
       break;
     }

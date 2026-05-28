@@ -152,6 +152,18 @@ __attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
 }
 
 // Инициализация IDT – назначаем обработчики
+void pit_init(int hz) {
+  int divisor = 1193180 / hz; // Рассчитываем делитель
+                              // выбор канала (нулевой канал)
+  outb(PIT_CMD, 0x36);
+
+  // отправка делителей сначала младший потом старший
+  uint8_t low = (uint8_t)(divisor & 0xFF);
+  uint8_t high = (uint8_t)((divisor >> 8) & 0xFF);
+
+  outb(PIT_CH0, low);
+  outb(PIT_CH0, high);
+}
 void idt_init() {
 
   for (int i = 0; i < 256; i++) {
@@ -160,6 +172,7 @@ void idt_init() {
   }
   pic_remap();
 
+  pit_init(1000);
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
   set_idt_gate(32, (void *)pit_hendler);

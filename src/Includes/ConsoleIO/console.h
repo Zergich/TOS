@@ -17,6 +17,8 @@ typedef struct {
   char (*ReadKey)(void);
 } ConsoleInput;
 
+extern u16 ShellStartRow; //  хрень нужна для обновления позиции при перемотке
+                          //  для стрелок
 int ConsoleRead(char *string);
 char ReadKey();
 void DrawConsoleCursor();
