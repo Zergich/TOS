@@ -64,9 +64,15 @@ void pmm_init() {
   // для расчета макс размера битмапа
   u64 max_addr = 0;
   for (u64 i = 0; i < memmap->entry_count; i++) {
-    u64 top = memmap->entries[i]->base + memmap->entries[i]->length;
-    if (top > max_addr)
-      max_addr = top;
+    struct limine_memmap_entry *entry = memmap->entries[i];
+
+    if (entry->type == LIMINE_MEMMAP_USABLE ||
+        entry->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE) {
+
+      u64 top = entry->base + entry->length;
+      if (top > max_addr)
+        max_addr = top;
+    }
   }
 
   pmm_state.total_pages = max_addr / PAGE_SIZE;
@@ -117,30 +123,29 @@ void pmm_init() {
 
   pmm_state.last_alloc_idx = 0;
 }
-
-// --- Выделение страницы ---
-uptr pmm_alloc_page() {
+uintptr_t pmm_alloc_page(void) {
   spinlock_lock(&pmm_state.lock);
 
-  // Ищем свободный бит (1), начиная с последнего выделенного индекса (Next-Fit)
+  // поиск свободной страницы по последнему индексу
   for (u64 i = pmm_state.last_alloc_idx; i < pmm_state.total_pages; i++) {
     if (bitmap_test(i)) {
       bitmap_clear(i); // Помечаем как занятую (0)
       pmm_state.free_pages--;
-      pmm_state.last_alloc_idx = i + 1; // В следующий раз ищем отсюда
+      pmm_state.last_alloc_idx = i + 1;
 
-      uptr phys_addr = i * PAGE_SIZE;
+      uintptr_t phys_addr = i * PAGE_SIZE;
       spinlock_unlock(&pmm_state.lock);
 
-      // Очищаем страницу от мусора (очень важно!)
-      // базовая защита памяти от других процессов после отработки
+      // преобразование виртуального адреса от лима1н в физический и само
+      // выделение страницых
       memset((void *)(phys_addr + pmm_state.hhdm_offset), 0, PAGE_SIZE);
+
       return phys_addr;
     }
   }
 
-  // Если ничего не нашли до конца, пробуем с начала (First-Fit)
-  for (uint64_t i = 0; i < pmm_state.last_alloc_idx; i++) {
+  // Если дошли до конца, ищем с начала (First-Fit)
+  for (u64 i = 0; i < pmm_state.last_alloc_idx; i++) {
     if (bitmap_test(i)) {
       bitmap_clear(i);
       pmm_state.free_pages--;
@@ -158,23 +163,26 @@ uptr pmm_alloc_page() {
   return 0;
 }
 
-// Освобождение странциы
+// освобождение страницы
 void pmm_free_page(uintptr_t addr) {
   if (addr == 0)
-    return;
+    return; // Нельзя освободить нулевую страницу
 
-  uint64_t bit_idx = BIT_INDEX(addr);
+  u64 bit_idx = BIT_INDEX(addr);
 
-  // Проверка на двойное освобождение (Double Free)
-  if (!bitmap_test(bit_idx)) {
-    // Критическая ошибка: попытка освободить уже свободную страницу
+  spinlock_lock(&pmm_state.lock);
+
+  // Если бит уже 1 (страница свободна), просто выходим, не трогая счетчик!
+  if (bitmap_test(bit_idx)) {
+    spinlock_unlock(&pmm_state.lock);
     return;
   }
 
-  spinlock_lock(&pmm_state.lock);
-  bitmap_set(bit_idx); // Помечаем как свободную (1)
+  // Если бит был 0 (страница занята), помечаем как свободную
+  bitmap_set(bit_idx);
   pmm_state.free_pages++;
+
   spinlock_unlock(&pmm_state.lock);
 }
 
-uint64_t pmm_get_free_pages() { return pmm_state.free_pages; }
+u64 pmm_get_free_pages(void) { return pmm_state.free_pages; }
