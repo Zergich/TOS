@@ -3,6 +3,7 @@
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
+#include <System/rts.h>
 #include <System/sysinfo.h>
 #include <libs/string.h>
 #include <types.h>
@@ -18,6 +19,7 @@ enum ShellCommand {
   ConsoleClearCommand = 4,
   PrintStatusCommand = 5,
   UpTimeWorkSystem = 6,
+  GetTime = 7,
 };
 
 int ParseCommnad(
@@ -50,6 +52,13 @@ int ParseCommnad(
   if (string.Strcmp(str, "uptime") == 0) {
     // Timepit.UpTime();
     return UpTimeWorkSystem;
+  }
+  if (string.Strcmp(str, "time") == 0) {
+    // return GetTime    struct DateTime now = GetTimeRTS();
+    //
+    // printf("Time: %u-%u-%u %u:%u:%u\n", now.day, now.month, now.year,
+    // now.hour,now.minute, now.second);
+    return GetTime;
   }
   return NotACommand;
 }
@@ -89,7 +98,14 @@ void Shell() {
   case UpTimeWorkSystem:
     Timepit.UpTime();
     break;
+  case GetTime: { // фигурные скобки нужну чтобы обозначить область видимости
+                  // если начать блок case со структуры то это не очень хорошо
+    struct DateTime now = GetTimeRTS();
+
+    printf("Time: %u-%u-%u %u:%u:%u\n", now.day, now.month, now.year, now.hour,
+           now.minute, now.second);
+    break;
   }
-  // print(pede);
+  }
   ShellCommandEnding();
 }
