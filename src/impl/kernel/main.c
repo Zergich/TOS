@@ -43,6 +43,8 @@ __attribute__((
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
+#include <System/Mion/GeometryWindow.h>
+
 // для карты памяти
 volatile struct limine_memmap_request *MemMapStructPtr;
 volatile struct limine_hhdm_request *HHDMRequest; // для страниц
@@ -62,10 +64,15 @@ void kernel_main() {
   // передача указателся на структуру карты памяти
   MemMapStructPtr = &memmap_request;
   HHDMRequest = &hhdm_request;
-
+  WelcomeMessage();
   idt_init();
+  struct WindowInfo info;
+  info.PosY = 10;
+  info.PosX = 10;
+  info.Height = 5;
+  info.Width = 7;
+  DrawsQare(info);
 
-  // После полной настройки прерываний включаем их
   asm volatile("sti");
 
   static string15 pede;

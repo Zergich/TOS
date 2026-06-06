@@ -7,3 +7,4 @@ build-debug
 *.bin
 *.elf
 *.lua
+*.bat

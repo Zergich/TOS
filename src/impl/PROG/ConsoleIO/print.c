@@ -9,8 +9,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-extern uint16_t CursorPosCol;
-extern uint16_t CursorPosRow;
+uint16_t CursorPosCol = 7;
+uint16_t CursorPosRow = 3;
 extern Pixeling PixelGrapchics;
 
 // Цвета

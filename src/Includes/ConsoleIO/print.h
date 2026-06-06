@@ -64,3 +64,6 @@ uint8_t CursorLine();
 
 // вывод ошибок
 void PrintError(char *string);
+
+extern uint16_t CursorPosCol;
+extern uint16_t CursorPosRow;

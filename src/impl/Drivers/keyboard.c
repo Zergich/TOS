@@ -5,8 +5,6 @@
 #include <types.h>
 // стартовые позиции курсора
 // потому что shell> с пробелом
-uint16_t CursorPosCol = 7;
-uint16_t CursorPosRow = 3;
 
 // Простой маппинг кода клавиши на ASCII для букв и цифр
 bool ShiftEnabled = false;

@@ -105,11 +105,12 @@ build-x86_64: $(ALL_RELEASE_OBJECTS) $(ALL_DEBUG_OBJECTS)
 	cp dist/x86_64/kernel.elf targets/x86_64/iso/boot/kernel.elf
 	
 	@echo "💿 Создание загрузочного ISO-образа через xorriso..."
+	# Создание ISO образа (Облегченный и чистый вариант без ломающих MBR-флагов)
 	xorriso -as mkisofs -b limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
 		--efi-boot limine-uefi-cd.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
 		targets/x86_64/iso -o dist/x86_64/kernel.iso
+
 	@echo "✨ Сборка успешно завершена! Образ: dist/x86_64/kernel.iso"
 
 # --- Очистка проекта ---
