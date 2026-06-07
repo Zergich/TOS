@@ -7,6 +7,10 @@ struct WindowInfo {
 
   u16 PosX;
   u16 PosY;
+
+  char *Title;
 };
 
-void DrawsQare(struct WindowInfo info);
+void SetTitle(struct WindowInfo win);
+void SetButtonsMenu(struct WindowInfo win);
+void DrawWindow(struct WindowInfo info);

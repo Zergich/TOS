@@ -1,7 +1,9 @@
 #include <ConsoleIO/print.h>
 #include <System/Mion/GeometryWindow.h>
 #include <System/sysinfo.h>
+#include <libs/string.h>
 #include <types.h>
+
 enum LinesConfig {
   RightCorner = '/',
   LeftCorner = '\\',
@@ -19,11 +21,12 @@ enum LinesConfig {
 #define CHAR_VERTICAL '\xBA'     // ║
 
 // Функция для отрисовки прямоугольника
-void DrawsQare(struct WindowInfo win) {
+void DrawWindow(struct WindowInfo win) {
+  ConsoleBackground(HexColor("#1F1FA3"));
   // Защита от выхода за пределы экрана (чтобы ядро не крашнулось)
   if (win.PosX >= NUM_COLUMS || win.PosY >= NUM_ROWS)
     return;
-  if (win.Width < 3 || win.Height < 3)
+  if (win.Width < 5 || win.Height < 3)
     return; // Минимальный размер окна 2x2
 
   // Вычисляем границы, чтобы не выходить за пределы экрана
@@ -57,7 +60,26 @@ void DrawsQare(struct WindowInfo win) {
     PutChar(x, max_y, CHAR_HORIZONTAL); // Горизонтальная линия
   }
   PutChar(max_x, max_y, CHAR_BOTTOM_RIGHT); // Правый нижний угол
+  SetTitle(win);
+  SetButtonsMenu(win);
 }
 
-void SetTitle(struct WindowInfo win) {}
-void SetButtonsMenu(struct WindowInfo win) {}
+void SetTitle(struct WindowInfo win) {
+  if (win.Width < 10)
+    return;
+  ConsoleSetCarretPos(win.PosX + 1, win.PosY);
+
+  for (int i = 0; i < string.Strlen(win.Title); i++) {
+    if (i < win.Width - 10) // 5 символо в на кнопки 3 на троеточие и еще 2 на
+                            // показ линии pede...== - X
+      print(win.Title[i]);
+    else {
+      print("...");
+      break;
+    }
+  }
+}
+void SetButtonsMenu(struct WindowInfo win) {
+  ConsoleSetCarretPos(win.PosX + win.Width - 5, win.PosY);
+  print(" - X");
+}

@@ -54,6 +54,7 @@ void ConsoleColor(u32 foreground, u32 background);
 void ConsoleResetColor();
 void ConsoleForeground(u32 foreground);
 void ConsoleBackground(u32 background);
+u32 HexColor(char *hex);
 
 // Курсор
 void CursorSetLine(u16 row);

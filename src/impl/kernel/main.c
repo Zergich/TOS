@@ -70,8 +70,9 @@ void kernel_main() {
   info.PosY = 10;
   info.PosX = 10;
   info.Height = 5;
-  info.Width = 7;
-  DrawsQare(info);
+  info.Width = 11;
+  info.Title = "PEDE123123123123";
+  DrawWindow(info);
 
   asm volatile("sti");
 

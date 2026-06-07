@@ -296,3 +296,50 @@ void ConsoleForeground(u32 foreground) {
 void ConsoleBackground(u32 background) {
   Background = background; // сохранение цвета для его синхронизации
 }
+
+static inline u8 hex_char_to_int(char c) {
+  if (c >= '0' && c <= '9')
+    return c - '0';
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+  return 0;
+}
+
+u32 HexColor(char *hex_str) {
+  if (hex_str == 0)
+    return 0;
+
+  u32 index = 0;
+
+  if (hex_str[index] == '#') {
+    index++;
+  } else if (hex_str[index] == '0' &&
+             (hex_str[index + 1] == 'x' || hex_str[index + 1] == 'X')) {
+    index += 2;
+  }
+
+  u32 result_color = 0;
+
+  while (hex_str[index] != '\0') {
+    char current_char = hex_str[index];
+
+    if ((current_char >= '0' && current_char <= '9') ||
+        (current_char >= 'a' && current_char <= 'f') ||
+        (current_char >= 'A' && current_char <= 'F')) {
+      result_color = (result_color << 4) | hex_char_to_int(current_char);
+      index++;
+    } else {
+      PrintError("Hex Error");
+      break;
+    }
+  }
+
+  if (index == 6 || (hex_str[0] == '#' && index == 7) ||
+      (hex_str[1] == 'x' && index == 8)) {
+    result_color |= 0xFF000000;
+  }
+
+  return result_color;
+}

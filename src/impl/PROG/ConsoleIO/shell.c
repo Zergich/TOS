@@ -8,7 +8,6 @@
 #include <libs/string.h>
 #include <types.h>
 extern ConsoleInput Console;
-extern StringStruct string;
 
 enum ShellCommand {
   NotACommand = -1,

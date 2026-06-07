@@ -15,6 +15,7 @@ typedef struct {
   int (*IsEmptyOrWhitespace)(const char *str);
 } StringStruct;
 
+extern StringStruct string;
 // void to_lowercase(char *str);
 // int strcmp(const char *s1, const char *s2);
 // unsigned int strlen(char *string);
