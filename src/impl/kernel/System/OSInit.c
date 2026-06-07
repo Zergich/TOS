@@ -16,6 +16,7 @@ u16 WidthDisplay = 0;
 u16 NUM_COLUMS;
 u16 NUM_ROWS;
 
+void Enabled();
 void WelcomeMessage() {
   ConsoleClear();
   ConsoleSetCarretPos(NUM_COLUMS / 3, 0); // центрирование
@@ -24,6 +25,8 @@ void WelcomeMessage() {
   ConsoleSetCarretPos(NUM_COLUMS / 3, 1);
   printf("OS Version: %s\n", VersionOS);
   ApperLine();
+
+  Enabled();
 }
 
 // надо потому что иначе начальное значние убивается и после первого символа
@@ -79,4 +82,26 @@ void SystemStatus(bool command) {
          CONSOLE_COLOR_CYAN);
   printf("Total: %F%u%F MB.\n", CONSOLE_COLOR_GREEN,
          MemMap.ReservedMemory + MemMap.UsableMemory, CONSOLE_COLOR_CYAN);
+}
+void Enabled() {
+  // Правильное чтение и запись MSR в x86_64
+  uint32_t efer_low, efer_high;
+
+  // 1. Читаем EFER
+  __asm__ volatile("rdmsr"
+                   : "=a"(efer_low), "=d"(efer_high)
+                   : "c"(0xC0000080)); // Адрес EFER
+
+  // 2. Собираем 64-битное значение
+  uint64_t efer = ((uint64_t)efer_high << 32) | (uint64_t)efer_low;
+
+  // 3. Устанавливаем 11-й бит (NXE)
+  efer |= (1ULL << 11);
+
+  // 4. Разбиваем обратно на два 32-битных слова
+  efer_low = (uint32_t)(efer & 0xFFFFFFFF);
+  efer_high = (uint32_t)(efer >> 32);
+
+  // 5. Записываем обратно
+  __asm__ volatile("wrmsr" ::"a"(efer_low), "d"(efer_high), "c"(0xC0000080));
 }

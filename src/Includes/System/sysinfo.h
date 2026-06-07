@@ -21,4 +21,5 @@ struct MemoryType {
 extern struct MemoryType ReturnMemoryMapStruct;
 extern volatile struct limine_hhdm_request *HHDMRequest;
 extern volatile struct limine_memmap_request *MemMapStructPtr;
+extern uptr HHDM_Offset;
 struct MemoryType ReturnMemoryMap();

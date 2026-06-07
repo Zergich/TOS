@@ -13,6 +13,9 @@
 #include <limine.h>
 #include <stddef.h>
 
+#include <System/MemoryManager/PMM.h>
+#include <System/MemoryManager/VMM.h>
+
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
 extern StringStruct string;
@@ -42,8 +45,6 @@ __attribute__((
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 
-#include <System/Mion/GeometryWindow.h>
-
 // для карты памяти
 volatile struct limine_memmap_request *MemMapStructPtr;
 volatile struct limine_hhdm_request *HHDMRequest; // для страниц
@@ -65,16 +66,11 @@ void kernel_main() {
   HHDMRequest = &hhdm_request;
   WelcomeMessage();
   idt_init();
-  struct WindowInfo info;
-  info.PosY = 10;
-  info.PosX = 10;
-  info.Height = 5;
-  info.Width = 11;
-  info.Title = "PEDE123123123123";
-  info.Color = 0; // Дефолтный цвет
-  DrawWindow(&info);
-
+  pmm_init();
   asm volatile("sti");
+
+  vmm_init();
+  test_vmm();
 
   static string15 pede;
   while (true) {

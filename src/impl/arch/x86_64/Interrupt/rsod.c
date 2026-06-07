@@ -43,9 +43,9 @@ void DivideZero() {
   // // Деление на ноль.
 }
 
-void MappingError() {
+void PageError() {
   ErrorFone();
-  print("INT 14. Mapping memory error.");
+  print("INT 14. Page fault.");
 }
 void OpcodeError() {
   ErrorFone();
@@ -68,4 +68,12 @@ void PMMError() {
 void PMMBitMapPlaceNotfound() {
   ErrorFone();
   print("PMM Error: There was no place for bitmap");
+}
+
+void Panic(char *str) {
+  // ErrorFone();
+  print(str);
+  while (1) {
+    __asm__ volatile("cli; hlt"); // Отключаем прерывания и останавливаем CPU
+  }
 }

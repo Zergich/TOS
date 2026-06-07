@@ -17,6 +17,7 @@ static inline void spinlock_lock(spinlock_t *lock) {
     __asm__ volatile("pause" ::: "memory");
   }
 }
+uptr HHDM_Offset = 0;
 
 static inline void spinlock_unlock(spinlock_t *lock) {
   __asm__ volatile("" ::: "memory");
@@ -59,6 +60,7 @@ void pmm_init() {
 
   struct limine_hhdm_response *hhdm_response = HHDMRequest->response;
   pmm_state.hhdm_offset = hhdm_response->offset;
+  HHDM_Offset = pmm_state.hhdm_offset;
   struct limine_memmap_response *memmap = MemMapStructPtr->response;
 
   // для расчета макс размера битмапа
@@ -102,7 +104,7 @@ void pmm_init() {
   pmm_state.free_pages = 0;
   for (u64 i = 0; i < memmap->entry_count; i++) {
     struct limine_memmap_entry *entry = memmap->entries[i];
-    if (entry->type == LIMINE_MEMMAP_USABLE) {
+    if (entry->type == LIMINE_MEMMAP_USABLE && entry->base >= 0x100000) {
       u64 start_idx = BIT_INDEX(entry->base);
       u64 end_idx = BIT_INDEX(entry->base + entry->length);
 
@@ -123,7 +125,7 @@ void pmm_init() {
 
   pmm_state.last_alloc_idx = 0;
 }
-uintptr_t pmm_alloc_page(void) {
+uintptr_t pmm_alloc_frame() {
   spinlock_lock(&pmm_state.lock);
 
   // поиск свободной страницы по последнему индексу
@@ -164,7 +166,7 @@ uintptr_t pmm_alloc_page(void) {
 }
 
 // освобождение страницы
-void pmm_free_page(uintptr_t addr) {
+void pmm_free_frame(uintptr_t addr) {
   if (addr == 0)
     return; // Нельзя освободить нулевую страницу
 

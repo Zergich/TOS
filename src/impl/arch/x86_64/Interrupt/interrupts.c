@@ -8,12 +8,16 @@
 #include <libs/time.h>
 #include <stdint.h>
 
+#include <System/MemoryManager/PMM.h>
+#include <System/MemoryManager/VMM.h>
+
 #pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
                                         // выключение регистров XMM/YMM
 
 extern RoundBufferObgect RoundBuff;
 // Структура, описывающая фрейм прерывания (x86_64)
 struct interrupt_frame {
+  uint64_t error_code; // Процессор кладет его первым!
   uint64_t rip;
   uint64_t cs;
   uint64_t rflags;
@@ -36,6 +40,13 @@ struct idt_entry {
 struct idt_entry idt[256];
 
 extern u32 *pede;
+
+// Флаги кода ошибки Page Fault (биты error_code)
+#define PF_ERROR_PRESENT                                                       \
+  (1 << 0) // 0 = страница не существует, 1 = нарушение прав доступа
+#define PF_ERROR_WRITE (1 << 1) // 0 = чтение, 1 = попытка записи
+#define PF_ERROR_USER (1 << 2)  // 0 = ядро (Ring 0), 1 = пользователь (Ring 3)
+#define PF_ERROR_FETCH (1 << 4) // 1 = попытка выполнения кода (NX бит)
 
 // Описание регистра IDTR для lidt
 struct {
@@ -72,9 +83,39 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
   DivideZero();
   asm volatile("hlt");
 }
+bool is_lazy_heap_address(uint64_t virt) {
+  return (virt >= 0xFFFF800000100000 && virt < 0xFFFF800000200000);
+}
+
+// САМ ОБРАБОТЧИК Page Fault
 __attribute__((interrupt)) void
 page_fault_handler(struct interrupt_frame *frame) {
-  MappingError();
+  uint64_t fault_addr;
+  __asm__ volatile("mov %%cr2, %0" : "=r"(fault_addr));
+
+  print("\n!!! PAGE FAULT !!!\n");
+  print("  Fault Address: 0x");
+  printf("%h", fault_addr);
+  print("\n");
+  print("  Error Code:    0x");
+  printf("%h", frame->error_code);
+  print("\n");
+
+  // Детальная расшифровка битов Error Code
+  if (frame->error_code & (1 << 3)) {
+    print("  -> RSVD bit set in PTE! (Reserved bit violation)\n");
+  } else if (frame->error_code & (1 << 0)) {
+    print("  -> Access Rights Violation! (e.g., Write to Read-Only)\n");
+  } else {
+    print("  -> Page Not Present!\n");
+  }
+
+  if (frame->error_code & (1 << 1)) {
+    print("  -> Caused by WRITE\n");
+  } else {
+    print("  -> Caused by READ\n");
+  }
+
   asm volatile("hlt");
 }
 __attribute__((interrupt)) void
@@ -84,7 +125,7 @@ invalide_opcode_handler(struct interrupt_frame *frame) {
 }
 __attribute__((interrupt)) void
 double_fault_handler(struct interrupt_frame *frame) {
-  OpcodeError();
+  DoubleFaultError();
   asm volatile("hlt");
 }
 __attribute__((interrupt)) void
