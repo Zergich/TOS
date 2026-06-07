@@ -9,8 +9,10 @@ struct WindowInfo {
   u16 PosY;
 
   char *Title;
+
+  u32 Color;
 };
 
-void SetTitle(struct WindowInfo win);
-void SetButtonsMenu(struct WindowInfo win);
-void DrawWindow(struct WindowInfo info);
+void SetTitle(struct WindowInfo *win);
+void SetButtonsMenu(struct WindowInfo *win);
+void DrawWindow(struct WindowInfo *info);

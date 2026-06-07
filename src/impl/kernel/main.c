@@ -1,5 +1,4 @@
 // #include "System/sysinfo.h"
-#include "System/MemoryManager/PMM.h"
 #include "System/sysinfo.h"
 #include <ConsoleIO/shell.h>
 #include <System/OSInit.h>
@@ -72,7 +71,8 @@ void kernel_main() {
   info.Height = 5;
   info.Width = 11;
   info.Title = "PEDE123123123123";
-  DrawWindow(info);
+  info.Color = 0; // Дефолтный цвет
+  DrawWindow(&info);
 
   asm volatile("sti");
 
