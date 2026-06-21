@@ -8,6 +8,7 @@
 // Инициализация констант
 
 char *VersionOS = "ALPHA";
+char *ShellVersion = "0.0.1";
 
 u64 BufferPitchW = 0;
 u16 HeightDisplay = 0;

@@ -3,6 +3,7 @@
 #include <limine.h>
 
 extern char *VersionOS;
+extern char *ShellVersion;
 
 // можно использовать и там и там я все равно консоль хочу
 // консоль

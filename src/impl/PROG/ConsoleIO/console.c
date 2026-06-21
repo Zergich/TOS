@@ -4,12 +4,13 @@
 #include <ConsoleIO/print.h>
 #include <Drivers/keyboard.h>
 #include <System/sysinfo.h>
-#include <VGA/vgacursor.h>
 #include <libs/Array.h>
 #include <libs/datastruct.h>
 #include <libs/string.h>
 #include <stddef.h>
 #include <types.h>
+#include <ConsoleIO/shell.h>
+
 
 extern RoundBufferObgect RoundBuff;
 extern StringStruct string;
@@ -236,6 +237,23 @@ void ShiftRight(char *buffer) {
   PutChar(drawX, drawY, ' ');
 }
 
+void Syntax(char *str)
+{
+  int result = ParseCommnad(str);
+  if(result == -1)
+  {
+    CursorSetColumn(7);
+    printf("%F%s%F",CONSOLE_COLOR_RED,str,CONSOLE_COLOR_CYAN);
+  }
+  else{
+    CursorSetColumn(7);
+    printf("%F%s%F",CONSOLE_COLOR_GREEN,str,CONSOLE_COLOR_CYAN);
+
+  }
+
+}
+
+
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
@@ -258,6 +276,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       if (i == 0 || CarretIndex == 0)
         continue;
       BackSpaceHandle(string);
+      Syntax(string);
+
       // из за того что я еблан и у меня в консоли 2 системы
       // координат и после того как я мувнулся влево и
       // удалил до конца координаты шлют меня нахуй и печать
@@ -302,6 +322,8 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     ShiftRight(string);
     PrintChar(c);
     ResetCursorBlink(); // <--- сброс мигания при печати
+    Syntax(string);
+
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');
 

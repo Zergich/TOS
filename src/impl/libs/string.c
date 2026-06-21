@@ -141,3 +141,14 @@ int IsEmptyOrWhitespace(const char *str) {
 
   return 1;
 }
+
+// Функция принимает указатель на символ-пробел. Возвращает 1, если это пробельный символ.
+int is_space(char c) { // для Trim
+    return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+}
+
+char* Trim(char* str){ // с ним еще пдодождлать надо до аллокаторов
+  int len = string.Strlen(str);
+  if(len == 0) return str;
+  return 0;
+}

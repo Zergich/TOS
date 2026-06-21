@@ -14,3 +14,15 @@ extern TimePit Timepit;
 // void Sleep(u32);
 
 // void pit_init(int);
+
+
+struct DateTime {
+  u8 second;
+  u8 minute;
+  u8 hour;
+  u8 day;
+  u8 month;
+  u32 year;
+};
+
+struct DateTime GetTimeRTS();

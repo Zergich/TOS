@@ -3,10 +3,10 @@
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
-#include <System/rts.h>
 #include <System/sysinfo.h>
 #include <libs/string.h>
 #include <types.h>
+#include <ConsoleIO/Fetch/fetch.h>
 extern ConsoleInput Console;
 
 enum ShellCommand {
@@ -19,6 +19,7 @@ enum ShellCommand {
   PrintStatusCommand = 5,
   UpTimeWorkSystem = 6,
   GetTime = 7,
+  FetchProgram = 8,
 };
 
 int ParseCommnad(
@@ -59,6 +60,11 @@ int ParseCommnad(
     // now.hour,now.minute, now.second);
     return GetTime;
   }
+  if(string.Strcmp(str,"fetch") ==0)
+  {
+    // Fetch();
+    return FetchProgram;
+  }
   return NotACommand;
 }
 void ShellCommandEnding() { printf("Shell> "); }
@@ -79,7 +85,7 @@ void Shell() {
     break;
 
   case NotACommand:
-    printf("\"%s\" - Is not a command.\n", pede);
+    printf("\"%F%s%F\" - Is not a command.\n",CONSOLE_COLOR_YELLOW, pede,CONSOLE_COLOR_CYAN);
     break;
   case Pede:
     print("pede123\n");
@@ -105,6 +111,9 @@ void Shell() {
            now.minute, now.second);
     break;
   }
+    case FetchProgram:
+    Fetch();
+    break;
   }
   ShellCommandEnding();
 }
