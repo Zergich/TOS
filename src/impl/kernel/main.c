@@ -70,7 +70,7 @@ void kernel_main() {
   asm volatile("sti");
 
   vmm_init();
-  // test_vmm();
+
 
   static string15 pede;
   while (true) {

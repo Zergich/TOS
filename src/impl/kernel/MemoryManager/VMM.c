@@ -16,60 +16,59 @@ static void clear_page(u64 *virt_addr) {
 
 // ГЛАВНАЯ ФУНКЦИЯ: Мапирует виртуальный адрес на физический
 #define PTE_HUGE (1ULL << 7) // Бит размера страницы (2MB или 1GB)
+// Базовые маски флагов для x86_64
+#define x86_PTE_PRESENT  (1ULL << 0)
+#define x86_PTE_WRITABLE (1ULL << 1)
+#define x86_PTE_USER     (1ULL << 2)
+#define x86_PTE_NX       (1ULL << 63)
 
-void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys,
-                  uint64_t flags) {
-  uint64_t *pml4 = (uint64_t *)PHYS_TO_VIRT(space->pml4_phys);
+void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys, uint64_t flags) {
+    uint64_t *pml4 = (uint64_t *)PHYS_TO_VIRT(space->pml4_phys);
+    uint64_t new_table_phys;
 
-  // Уровень 4 -> 3
-  uint64_t pml4_entry = pml4[PML4_INDEX(virt)];
-  uint64_t *pdpt;
-  if (!(pml4_entry & PTE_PRESENT)) {
-    // ... выделение новой таблицы ...
-  } else {
-    pdpt = (uint64_t *)PHYS_TO_VIRT(pml4_entry & PTE_ADDR_MASK);
-  }
-
-  // Уровень 3 -> 2
-  uint64_t pdpt_entry = pdpt[PDPT_INDEX(virt)];
-  uint64_t *pd;
-  if (!(pdpt_entry & PTE_PRESENT)) {
-    // ... выделение новой таблицы ...
-  } else {
-    // ВАЖНАЯ ПРОВЕРКА: Не пытаемся ли мы разбить 1GB страницу?
-    if (pdpt_entry & PTE_HUGE) {
-      Panic("VMM: Tried to map inside a 1GB Huge Page!");
+    // --- 1. УРОВЕНЬ: PML4 ---> PDPT ---
+    uint64_t pml4_idx = PML4_INDEX(virt);
+    if (!(pml4[pml4_idx] & x86_PTE_PRESENT)) {
+        new_table_phys = pmm_alloc_frame();
+        if (new_table_phys == 0) return;
+        pml4[pml4_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
     }
-    pd = (uint64_t *)PHYS_TO_VIRT(pdpt_entry & PTE_ADDR_MASK);
-  }
+    uint64_t *pdpt = (uint64_t *)PHYS_TO_VIRT(pml4[pml4_idx] & PTE_ADDR_MASK);
 
-  // Уровень 2 -> 1
-  uint64_t pd_entry = pd[PD_INDEX(virt)];
-  uint64_t *pt;
-  if (!(pd_entry & PTE_PRESENT)) {
-    // ... выделение новой таблицы ...
-  } else {
-    // ВАЖНАЯ ПРОВЕРКА: Не пытаемся ли мы разбить 2MB страницу?
-    if (pd_entry & PTE_HUGE) {
-      Panic("VMM: Tried to map inside a 2MB Huge Page!");
+    // --- 2. УРОВЕНЬ: PDPT ---> PD ---
+    uint64_t pdpt_idx = PDPT_INDEX(virt);
+    if (!(pdpt[pdpt_idx] & x86_PTE_PRESENT)) {
+        new_table_phys = pmm_alloc_frame();
+        if (new_table_phys == 0) return;
+        pdpt[pdpt_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
+    } else {
+        if (pdpt[pdpt_idx] & (1ULL << 7)) return; 
     }
-    pt = (uint64_t *)PHYS_TO_VIRT(pd_entry & PTE_ADDR_MASK);
-  }
-  // --- ЛИСТ ДЕРЕВА: PT -> Физический фрейм ---
+    uint64_t *pd = (uint64_t *)PHYS_TO_VIRT(pdpt[pdpt_idx] & PTE_ADDR_MASK);
 
-  // Проверка на двойное мапирование (полезно для отлова багов)
-  if (pt[PT_INDEX(virt)] & PTE_PRESENT) {
-    // В реальном ядре здесь должен быть kernel panic или возврат ошибки
-    // Пока просто перезапишем
-  }
+    // --- 3. УРОВЕНЬ: PD ---> PT ---
+    uint64_t pd_idx = PD_INDEX(virt);
+    if (!(pd[pd_idx] & x86_PTE_PRESENT)) {
+        new_table_phys = pmm_alloc_frame();
+        if (new_table_phys == 0) return;
+        pd[pd_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
+    } else {
+        if (pd[pd_idx] & (1ULL << 7)) return;
+    }
+    uint64_t *pt = (uint64_t *)PHYS_TO_VIRT(pd[pd_idx] & PTE_ADDR_MASK);
 
-  // Записываем финальную связку: Физический адрес + Флаги
-  pt[PT_INDEX(virt)] = (phys & PTE_ADDR_MASK) | flags;
+    // --- 4. УРОВЕНЬ: Финальный лист (PT ---> Физический фрейм) ---
+    uint64_t pt_idx = PT_INDEX(virt);
 
-  // Сбрасываем кэш TLB для этого адреса!
-  // Без этого процессор продолжит использовать старый кэш
-  __asm__ volatile("invlpg (%0)" ::"r"(virt) : "memory");
+    // ИСПРАВЛЕНИЕ: Для финальной страницы мы применяем именно те flags, 
+    // которые пришли из теста, гарантируя только бит присутствия (x86_PTE_PRESENT).
+    // Если тест не передал PTE_WRITABLE, страница честно станет Read-Only.
+    pt[pt_idx] = (phys & PTE_ADDR_MASK) | flags | x86_PTE_PRESENT;
+
+    // Сбрасываем TLB
+    __asm__ volatile("invlpg (%0)" ::"r"(virt) : "memory");
 }
+
 
 // Функция переключения адресного пространства
 void vmm_switch_space(address_space_t *space) {

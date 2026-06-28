@@ -188,3 +188,159 @@ void pmm_free_frame(uintptr_t addr) {
 }
 
 u64 pmm_get_free_pages(void) { return pmm_state.free_pages; }
+
+
+
+
+#include <ConsoleIO/print.h>
+#include <System/MemoryManager/PMM.h>
+#include <System/rsod.h>
+
+// Макрос для проверок (используем тот же стиль, что и в VMM)
+#define PMM_ASSERT(cond, msg)                                                  \
+  do {                                                                         \
+    if (!(cond)) {                                                             \
+      Panic("PMM TEST FAILED: " msg);                                          \
+    }                                                                          \
+  } while (0)
+
+void test_pmm() {
+  print("Running PMM Tests...\n");
+
+  // Сохраняем исходное состояние счетчика свободных страниц
+  u64 initial_free = pmm_get_free_pages();
+  print("  [INFO] Initial free pages: ");
+  printf("%d", initial_free);
+  print("\n");
+
+  PMM_ASSERT(initial_free > 0, "No free pages available at start");
+
+  // ==================================================================
+  // ТЕСТ 1: Базовый цикл выделения и освобождения
+  // ==================================================================
+  print("  Test 1: Single Frame Alloc & Free... ");
+
+  uintptr_t frame1 = pmm_alloc_frame();
+  PMM_ASSERT(frame1 != 0, "Failed to allocate first frame");
+  PMM_ASSERT((frame1 % 4096) == 0, "Allocated frame is not 4KiB aligned");
+  PMM_ASSERT(pmm_get_free_pages() == initial_free - 1, "Free pages count mismatch after alloc");
+
+  // Освобождаем и проверяем счетчик
+  pmm_free_frame(frame1);
+  PMM_ASSERT(pmm_get_free_pages() == initial_free, "Free pages count mismatch after free");
+
+  print("PASSED\n");
+
+  // ==================================================================
+  // ТЕСТ 2: Защита зон памяти (Первый мегабайт)
+  // ==================================================================
+  print("  Test 2: Memory Zone Protection... ");
+
+  // Выделим пачку фреймов и убедимся, что они не лезут в Real Mode / BIOS зону
+  uintptr_t frames[10];
+  for (int i = 0; i < 10; i++) {
+    frames[i] = pmm_alloc_frame();
+    PMM_ASSERT(frames[i] >= 0x100000, "PMM allocated a frame below 1MB!");
+  }
+
+  // Чистим за собой
+  for (int i = 0; i < 10; i++) {
+    pmm_free_frame(frames[i]);
+  }
+
+  print("PASSED\n");
+
+  // ==================================================================
+  // ТЕСТ 3: Защита от Double Free (Повторное освобождение)
+  // ==================================================================
+  print("  Test 3: Double Free Protection... ");
+
+  uintptr_t df_frame = pmm_alloc_frame();
+  u64 free_before_df = pmm_get_free_pages();
+
+  pmm_free_frame(df_frame); 
+  PMM_ASSERT(pmm_get_free_pages() == free_before_df + 1, "First free failed");
+
+  // Вызываем освобождение той же страницы ЕЩЕ РАЗ
+  pmm_free_frame(df_frame);
+
+  // Счетчик свободных страниц НЕ должен увеличиться во второй раз!
+  PMM_ASSERT(pmm_get_free_pages() == free_before_df + 1, "Double free corrupted free_pages counter!");
+
+  print("PASSED\n");
+
+  // ==================================================================
+  // ТЕСТ 4: Стресс-тест на полное истощение памяти (OOM Simulation)
+  // ==================================================================
+  print("  Test 4: Out Of Memory Simulation... \n");
+
+  u64 allocated_count = 0;
+  u64 max_possible = pmm_get_free_pages();
+  
+  // Создаем временный массив для хранения адресов (выделим на стеке ядра)
+  // Внимание: если у тебя мало памяти в системе, этот тест отработает быстро.
+  // Если гигабайты — массив может переполнить стек. Для тестов в QEMU выделяй ~32-64MB.
+  print("    [DEBUG] Mass allocating frames... ");
+  
+  // Будем выделять порциями, пока память не кончится
+  while (1) {
+    uintptr_t f = pmm_alloc_frame();
+    if (f == 0) {
+      break; // Память успешно закончилась
+    }
+    allocated_count++;
+    
+    // Безопасный предохранитель, чтобы не зависнуть в бесконечном цикле,
+    // если Next-Fit/First-Fit где-то зациклился
+    if (allocated_count > max_possible + 1000) {
+      Panic("PMM OOM Test: Allocator is in infinite loop, ignoring bitmap status!");
+    }
+  }
+
+  print("DONE\n");
+  print("    [DEBUG] Allocated total: ");
+  printf("%d", allocated_count);
+  print(" frames. free_pages = ");
+  printf("%d", pmm_get_free_pages());
+  print("\n");
+
+  PMM_ASSERT(pmm_get_free_pages() == 0, "PMM returned 0, but free_pages count is not 0!");
+
+  // Пытаемся выделить еще один фрейм, когда всё забито
+  uintptr_t oom_frame = pmm_alloc_frame();
+  PMM_ASSERT(oom_frame == 0, "PMM managed to allocate frame from empty bitmap!");
+
+  print("    [DEBUG] Mass freeing frames... ");
+
+  // Теперь нам нужно вернуть память системе.
+  // Но как, если мы не сохраняли адреса? Очень просто!
+  // Пройдемся по всему битмапу ядра и освободим все валидные фреймы, которые были заняты.
+  // Для этого временно сломаем инкапсуляцию ради теста, либо освобождаем через поиск.
+  // Но правильнее — сделать сброс. Давай освободим память, зная, что мы можем перебрать индексы:
+  
+  // Так как мы знаем исходный free_pages, мы можем просто сэмулировать откат, 
+  // но надежнее — если бы у нас был массив. 
+  // Давай сделаем умнее: этот тест крутит аллокацию обратно.
+  // Чтобы не упасть по стеку, просто перезапустим систему или очистим битмап.
+  // Но раз мы пишем честный тест, давай переберем весь диапазон страниц:
+  
+  extern uint64_t pmm_state_total_pages(void); // если есть обертка, или сделаем напрямую:
+  
+  // Для простоты реализации освобождения без сохранения массива:
+  // Мы просто заново проинициализируем PMM (вызовем pmm_init), 
+  // либо очистим страницы. Но самый изящный способ в тесте OOM —
+  // освобождать страницы по ходу их поиска в битмапе.
+  
+  // Давай откатим систему назад, зная, что мы освобождаем фреймы:
+  // (В реальном тесте лучше сохранять адреса, но раз память в 0, 
+  // мы можем написать мини-хак для восстановления состояния):
+  
+  print("RECOVERY... ");
+  // Просто вызываем pmm_init() повторно — это сбросит битмап в исходное чистое состояние!
+  pmm_init(); 
+
+  PMM_ASSERT(pmm_get_free_pages() == initial_free, "PMM re-init failed to recover state");
+  print("PASSED\n");
+
+  print("All PMM Tests Passed Successfully!\n");
+}
