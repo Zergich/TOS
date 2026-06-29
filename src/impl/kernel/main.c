@@ -16,6 +16,8 @@
 #include <System/MemoryManager/PMM.h>
 #include <System/MemoryManager/VMM.h>
 
+#include <System/MemoryManager/kmalloc/kmalloc.h>
+
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
 extern StringStruct string;
@@ -70,7 +72,10 @@ void kernel_main() {
   asm volatile("sti");
 
   vmm_init();
+kmalloc_init(); // <--- ВОТ СЮДА!
 
+    // Дальше идет остальной код...
+    test_kernel_heap();
 
   static string15 pede;
   while (true) {

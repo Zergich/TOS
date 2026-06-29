@@ -154,6 +154,7 @@ __attribute__((interrupt)) void page_fault_handler(struct interrupt_frame *frame
     // =========================================================================
     // КРАШ-ДАННЫЕ (Если это честный, необработанный баг ядра или процесса)
     // =========================================================================
+  PageError();
     print("\n!!! UNHANDLED PAGE FAULT !!!\n");
     print("  Fault Address:  0x"); printf("%h", fault_addr); print("\n");
     print("  Error Code:     0x"); printf("%h", error_code); print("\n");
@@ -190,8 +191,25 @@ __attribute__((interrupt)) void page_fault_handler(struct interrupt_frame *frame
 
 __attribute__((interrupt)) void
 invalide_opcode_handler(struct interrupt_frame *frame) {
-  OpcodeError();
-  asm volatile("hlt");
+// Выключаем прерывания, чтобы никто не помешал нам напечатать краш-дамп
+    asm volatile("cli"); 
+
+    print("\n!!! KERNEL PANIC: INVALID OPCODE (#UD) !!!\n");
+    
+    // frame->rip содержит точный адрес инструкции, на которой процессор споткнулся!
+    print("  Failed at Instruction Pointer (RIP): 0x");
+    printf("%h", frame->rip); 
+    print("\n");
+
+    // Выводим указатель стека, чтобы проверить на срыв
+    print("  Stack Pointer (RSP):               0x");
+    printf("%h", frame->rsp);
+    print("\n");
+
+    // Намертво останавливаем процессор
+    while(1) {
+        asm volatile("hlt");
+    }
 }
 __attribute__((interrupt)) void
 double_fault_handler(struct interrupt_frame *frame) {

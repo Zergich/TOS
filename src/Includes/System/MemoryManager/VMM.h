@@ -22,10 +22,11 @@
 #define PTE_ADDR_MASK 0x000FFFFFFFFFF000ULL
 
 // Извлечение индексов из виртуального адреса (9 бит на каждый уровень)
-#define PML4_INDEX(addr) (((addr) >> 39) & 0x1FF)
-#define PDPT_INDEX(addr) (((addr) >> 30) & 0x1FF)
-#define PD_INDEX(addr) (((addr) >> 21) & 0x1FF)
-#define PT_INDEX(addr) (((addr) >> 12) & 0x1FF)
+#define PML5_INDEX(virt) (((virt) >> 39) & 0x1FF)
+#define PDPT_INDEX(virt) (((virt) >> 30) & 0x1FF)
+#define PD_INDEX(virt)   (((virt) >> 21) & 0x1FF)
+#define PT_INDEX(virt)   (((virt) >> 12) & 0x1FF)
+#define PML4_INDEX(virt) (((virt) >> 39) & 0x1FF)
 
 // Тот самый HHDM (Higher-Half Direct Map)
 // Загрузчик (Limine) мапирует физическую память начиная с этого виртуального

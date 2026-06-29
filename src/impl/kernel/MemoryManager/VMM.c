@@ -31,6 +31,10 @@ void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys, uint64_t
     if (!(pml4[pml4_idx] & x86_PTE_PRESENT)) {
         new_table_phys = pmm_alloc_frame();
         if (new_table_phys == 0) return;
+        
+        // ФИКС: Очищаем новую страницу, чтобы там не было мусора!
+        clear_page((u64 *)PHYS_TO_VIRT(new_table_phys));
+        
         pml4[pml4_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
     }
     uint64_t *pdpt = (uint64_t *)PHYS_TO_VIRT(pml4[pml4_idx] & PTE_ADDR_MASK);
@@ -40,6 +44,10 @@ void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys, uint64_t
     if (!(pdpt[pdpt_idx] & x86_PTE_PRESENT)) {
         new_table_phys = pmm_alloc_frame();
         if (new_table_phys == 0) return;
+        
+        // ФИКС: Очищаем новую страницу!
+        clear_page((u64 *)PHYS_TO_VIRT(new_table_phys));
+        
         pdpt[pdpt_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
     } else {
         if (pdpt[pdpt_idx] & (1ULL << 7)) return; 
@@ -51,6 +59,10 @@ void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys, uint64_t
     if (!(pd[pd_idx] & x86_PTE_PRESENT)) {
         new_table_phys = pmm_alloc_frame();
         if (new_table_phys == 0) return;
+        
+        // ФИКС: Очищаем новую страницу!
+        clear_page((u64 *)PHYS_TO_VIRT(new_table_phys));
+        
         pd[pd_idx] = new_table_phys | x86_PTE_PRESENT | x86_PTE_WRITABLE | x86_PTE_USER;
     } else {
         if (pd[pd_idx] & (1ULL << 7)) return;
@@ -60,15 +72,12 @@ void vmm_map_page(address_space_t *space, uint64_t virt, uint64_t phys, uint64_t
     // --- 4. УРОВЕНЬ: Финальный лист (PT ---> Физический фрейм) ---
     uint64_t pt_idx = PT_INDEX(virt);
 
-    // ИСПРАВЛЕНИЕ: Для финальной страницы мы применяем именно те flags, 
-    // которые пришли из теста, гарантируя только бит присутствия (x86_PTE_PRESENT).
-    // Если тест не передал PTE_WRITABLE, страница честно станет Read-Only.
+    // Применяем флаги
     pt[pt_idx] = (phys & PTE_ADDR_MASK) | flags | x86_PTE_PRESENT;
 
     // Сбрасываем TLB
     __asm__ volatile("invlpg (%0)" ::"r"(virt) : "memory");
 }
-
 
 // Функция переключения адресного пространства
 void vmm_switch_space(address_space_t *space) {
