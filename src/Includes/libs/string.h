@@ -13,6 +13,8 @@ typedef struct {
   IntConvertResult (*Atoi)(char *string);
   char (*IsDigit)(char *string);
   int (*IsEmptyOrWhitespace)(const char *str);
+  int (*Split)(char *str, char delimiter, char **argv);
+
 } StringStruct;
 
 extern StringStruct string;

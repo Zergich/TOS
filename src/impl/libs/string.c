@@ -15,6 +15,7 @@ IntConvertResult
 StringToInt(char *string); // коспилятор сука не дает из за того что Atoi
                            // название функции зарезервированно
 char IsDigit(char *string);
+int SplitStr(char *str, char delimiter, char **argv);
 
 StringStruct string = {
     .ToLower = to_lowercase,
@@ -23,6 +24,7 @@ StringStruct string = {
     .Atoi = StringToInt,
     .IsDigit = IsDigit,
     .IsEmptyOrWhitespace = IsEmptyOrWhitespace,
+    .Split = SplitStr,
 };
 
 unsigned int strlen(char *string) {
@@ -151,4 +153,22 @@ char* Trim(char* str){ // с ним еще пдодождлать надо до 
   int len = string.Strlen(str);
   if(len == 0) return str;
   return 0;
+}
+
+int SplitStr(char *str, char delimiter, char **argv) {
+    int argc = 0;
+    int in_token = 0; // Флаг: находимся ли мы внутри слова
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == delimiter) {
+            str[i] = '\0'; // "Разрезаем" строку, ставя конец строки
+            in_token = 0;
+        } else {
+            if (!in_token) {
+                argv[argc++] = &str[i]; // Запоминаем начало слова
+                in_token = 1;
+            }
+        }
+    }
+    return argc; // Возвращаем количество найденных аргументов
 }
