@@ -1,3 +1,4 @@
+#include "VGA/vgacursor.h"
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
@@ -236,23 +237,22 @@ void ShiftRight(char *buffer) {
   // Затираем крайний символ пробелом, так как текст стал на 1 символ длиннее
   PutChar(drawX, drawY, ' ');
 }
-
 void Syntax(char *str)
 {
   int result = ParseCommnad(str);
   if(result == -1)
   {
-    CursorSetColumn(7);
+    // кароче ShellStartRow спасает от лесенки тоесть захардкоженное число 4 спасает от лесенки на 40 50 строках (был как приммер) и ведь жестко прописанно что я перемещаюсь на 7 колонку 4 строки но нет происходит ровно то что я хочу все начинается с начало послденей строки и вывод правильный и красивый. Я В АХУЕ.
+    ConsoleSetCarretPos(LimitXRow,ShellStartRow);
     printf("%F%s%F",CONSOLE_COLOR_RED,str,CONSOLE_COLOR_CYAN);
   }
   else{
-    CursorSetColumn(7);
+    ConsoleSetCarretPos(LimitXRow,ShellStartRow);
     printf("%F%s%F",CONSOLE_COLOR_GREEN,str,CONSOLE_COLOR_CYAN);
-
+  
   }
 
 }
-
 
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
                                 // аски соответственно.
@@ -301,7 +301,6 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       CarretIndex = 0;
       TextSize = 0;
       ShellStartRow = CursorPosRow;
-
       // ResetCursorBlink();
 
       break;

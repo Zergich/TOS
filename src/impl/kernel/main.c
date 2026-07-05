@@ -72,10 +72,8 @@ void kernel_main() {
   asm volatile("sti");
 
   vmm_init();
-kmalloc_init(); // <--- ВОТ СЮДА!
-
-    // Дальше идет остальной код...
-    test_kernel_heap();
+  kmalloc_init();
+  cpu_init(&CPUInfo);
 
   static string15 pede;
   while (true) {

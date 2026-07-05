@@ -20,6 +20,7 @@ enum ShellCommand {
   UpTimeWorkSystem = 6,
   GetTime = 7,
   FetchProgram = 8,
+  CPUPrintInfo = 9,
 };
 
 int ParseCommnad(
@@ -59,6 +60,11 @@ int ParseCommnad(
     // printf("Time: %u-%u-%u %u:%u:%u\n", now.day, now.month, now.year,
     // now.hour,now.minute, now.second);
     return GetTime;
+  }
+  if(string.Strcmp(str,"cpuinfo") == 0)
+  {
+    // PintInfoCPU();
+    return  CPUPrintInfo;
   }
   if(string.Strcmp(str,"fetch") ==0)
   {
@@ -113,6 +119,9 @@ void Shell() {
   }
     case FetchProgram:
     Fetch();
+    break;
+    case CPUPrintInfo:
+    PintInfoCPU();
     break;
   }
   ShellCommandEnding();

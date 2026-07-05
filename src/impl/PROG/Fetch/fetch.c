@@ -42,7 +42,18 @@ void PrintInfo()
   CursorSetColumn(LeftPadding);
   printf("%FShell%F: Cuper %s\n",CONSOLE_COLOR_GREEN,CONSOLE_COLOR_WHITE,ShellVersion);
   CursorSetColumn(LeftPadding);
-  printf("%FCPU%F: pede %s\n",CONSOLE_COLOR_GREEN,CONSOLE_COLOR_WHITE,ShellVersion);
+printf("%FCPU%F: %s \n", 
+       CONSOLE_COLOR_GREEN, // Цвет префикса "CPU:"
+       CONSOLE_COLOR_WHITE, // Возврат к обычному цвету
+       CPUInfo.brand); 
+  CursorSetColumn(LeftPadding);
+  printf("%FScreen resolution%F: %ux%u\n", CONSOLE_COLOR_GREEN,CONSOLE_COLOR_WHITE,  WidthDisplay,
+         HeightDisplay);
+    CursorSetColumn(LeftPadding);
+
+  printf("%FConsole resolution%F: %ux%u\n", CONSOLE_COLOR_GREEN,CONSOLE_COLOR_WHITE,  NUM_COLUMS,
+         NUM_ROWS);
+
   CursorSetColumn(LeftPadding);
   struct MemoryType MemInfo =  ReturnMemoryMap();
   printf("%FMemory%F: Usable %uMiB / Reserved %uMiB / Total %uMiB\n",CONSOLE_COLOR_GREEN,CONSOLE_COLOR_WHITE,MemInfo.UsableMemory,MemInfo.ReservedMemory,MemInfo.UsableMemory+MemInfo.ReservedMemory);
