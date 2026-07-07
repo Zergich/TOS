@@ -1,5 +1,7 @@
 #include <libs/string.h>
 #include <stdint.h>
+#include <stddef.h>
+#include <System/MemoryManager/kmalloc/kmalloc.h>
 
 typedef enum {
   ERROR_CONVERT = -1,
@@ -15,7 +17,7 @@ IntConvertResult
 StringToInt(char *string); // коспилятор сука не дает из за того что Atoi
                            // название функции зарезервированно
 char IsDigit(char *string);
-int SplitStr(char *str, char delimiter, char **argv);
+char** SplitStr(char *str, char delimiter, int *out_argc);
 
 StringStruct string = {
     .ToLower = to_lowercase,
@@ -155,20 +157,42 @@ char* Trim(char* str){ // с ним еще пдодождлать надо до 
   return 0;
 }
 
-int SplitStr(char *str, char delimiter, char **argv) {
-    int argc = 0;
-    int in_token = 0; // Флаг: находимся ли мы внутри слова
-
+// Функция возвращает массив указателей (char**) 
+// и записывает количество слов в переменную argc
+char** SplitStr(char *str, char delimiter, int *out_argc) {
+    int count = 0;
+    int in_token = 0;
+    
+    // 1. Первый проход: считаем количество слов
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == delimiter) {
-            str[i] = '\0'; // "Разрезаем" строку, ставя конец строки
             in_token = 0;
-        } else {
-            if (!in_token) {
-                argv[argc++] = &str[i]; // Запоминаем начало слова
-                in_token = 1;
-            }
+        } else if (!in_token) {
+            count++;
+            in_token = 1;
         }
     }
-    return argc; // Возвращаем количество найденных аргументов
+
+    *out_argc = count;
+    if (count == 0) return NULL;
+
+    // 2. Выделяем память под массив указателей через твой аллокатор
+    // Размер: count + 1 (последний NULL для удобства перебора)
+    char **argv = (char**)kmalloc(sizeof(char*) * (count + 1));
+    if (!argv) return NULL; // Ошибка аллокации
+
+    // 3. Второй проход: записываем указатели
+    int argc = 0;
+    in_token = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == delimiter) {
+            str[i] = '\0';
+            in_token = 0;
+        } else if (!in_token) {
+            argv[argc++] = &str[i];
+            in_token = 1;
+        }
+    }
+    argv[argc] = NULL; // Терминатор
+    return argv;
 }

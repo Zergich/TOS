@@ -1,4 +1,3 @@
-#include "VGA/vgacursor.h"
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/font.h>
 #include <ConsoleIO/graphics.h>
@@ -237,21 +236,72 @@ void ShiftRight(char *buffer) {
   // Затираем крайний символ пробелом, так как текст стал на 1 символ длиннее
   PutChar(drawX, drawY, ' ');
 }
-void Syntax(char *str)
+
+bool IsValideCommand(char *str)
 {
   int result = ParseCommnad(str);
+        // кароче ShellStartRow спасает от лесенки тоесть захардкоженное число 4 спасает от лесенки на 40 50 строках (был как приммер) и ведь жестко прописанно что я перемещаюсь на 7 колонку 4 строки но нет происходит ровно то что я хочу все начинается с начало послденей строки и вывод правильный и красивый. Я В АХУЕ.
+    // ConsoleSetCarretPos(LimitXRow, ShellStartRow);
   if(result == -1)
   {
-    // кароче ShellStartRow спасает от лесенки тоесть захардкоженное число 4 спасает от лесенки на 40 50 строках (был как приммер) и ведь жестко прописанно что я перемещаюсь на 7 колонку 4 строки но нет происходит ровно то что я хочу все начинается с начало послденей строки и вывод правильный и красивый. Я В АХУЕ.
-    ConsoleSetCarretPos(LimitXRow,ShellStartRow);
-    printf("%F%s%F",CONSOLE_COLOR_RED,str,CONSOLE_COLOR_CYAN);
+    return true;
+    // printf("%F%s%F",CONSOLE_COLOR_RED,str,CONSOLE_COLOR_CYAN);
   }
   else{
-    ConsoleSetCarretPos(LimitXRow,ShellStartRow);
-    printf("%F%s%F",CONSOLE_COLOR_GREEN,str,CONSOLE_COLOR_CYAN);
+    return false;
+    // printf("%F%s%F",CONSOLE_COLOR_GREEN,str,CONSOLE_COLOR_CYAN);
   
   }
 
+}
+void Syntax(char *str) {
+    char cmd_buf[32];
+    int cmd_len = 0;
+    while(str[cmd_len] != ' ' && str[cmd_len] != '\0' && cmd_len < 31) {
+        cmd_buf[cmd_len] = str[cmd_len];
+        cmd_len++;
+    }
+    cmd_buf[cmd_len] = '\0';
+    
+    // Проверяем команду ОДИН раз для всей строки
+    bool is_valid = IsValideCommand(cmd_buf);
+
+    bool in_quotes = false;
+    bool is_command = true; 
+
+    // ЛОКАЛЬНЫЕ координаты отрисовки (не ломают твой реальный курсор!)
+    u16 render_col = LimitXRow;
+    u16 render_row = ShellStartRow;
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        u32 color = CONSOLE_COLOR_CYAN; // По умолчанию белый
+
+        // 1. Определение цвета
+        if (str[i] == '\"') {
+        in_quotes = !in_quotes; // Если была true — станет false (и наоборот)
+        color = CONSOLE_COLOR_YELLOW; 
+        } 
+        // 2. Если это НЕ кавычка, но мы внутри кавычек — красим в желтый
+        else if (in_quotes) {
+        color = 0x07D9A6; 
+
+        } else if (str[i] == '-') {
+          if (i == 0 || str[i - 1] == ' ') color = CONSOLE_COLOR_MAGENTA; // Мангета
+        } else if (is_command) {
+            color = is_valid ? CONSOLE_COLOR_RED : CONSOLE_COLOR_GREEN; 
+        }
+
+        if (str[i] == ' ') is_command = false;
+
+        DrawChar(render_col, render_row, str[i], color, CONSOLE_COLOR_BLACK);
+        
+        // 3. Сдвигаем локальный курсор отрисовки
+        render_col++;
+        if (render_col >= NUM_COLUMS) {
+            render_col = 0;
+            render_row++;
+        }
+    }
 }
 
 int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
@@ -301,6 +351,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       CarretIndex = 0;
       TextSize = 0;
       ShellStartRow = CursorPosRow;
+      ConsoleResetColor(); // сбросить цвет после подстветки синтаксиса
       // ResetCursorBlink();
 
       break;
@@ -317,11 +368,15 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     }
     TextSize++;
     IndexInsertC(string, &i, max_len, CarretIndex++, c);
-    // string[i++] = c;
     ShiftRight(string);
-    PrintChar(c);
-    ResetCursorBlink(); // <--- сброс мигания при печати
+    // PrintChar(c);
     Syntax(string);
+    // корды для курсора чтоб не убегал в конец строки потому что PrintChar теперь закоменчена
+    u16 total_pos = CarretIndex + LimitXRow;
+    CursorPosCol = total_pos % NUM_COLUMS;
+    CursorPosRow = ShellStartRow + (total_pos / NUM_COLUMS);
+
+    ResetCursorBlink(); // <--- сброс мигания при печати
 
   }
   // IndexInsertC(string, &TextSize, max_len, i, '\0');

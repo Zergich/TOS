@@ -7,6 +7,8 @@
 #include <libs/string.h>
 #include <types.h>
 #include <ConsoleIO/Fetch/fetch.h>
+#include <System/MemoryManager/kmalloc/kmalloc.h>
+
 extern ConsoleInput Console;
 
 enum ShellCommand {
@@ -84,8 +86,17 @@ void PrintMemoryMap(struct MemoryType mem) {
 void Shell() {
   static string15 pede;
   Console.ReadLine(pede);
+  int argc = 0;
+  char **argv = string.Split(pede, ' ', &argc);
 
-  int result = ParseCommnad(pede);
+  if (argv == NULL) // значит был ентер
+  {
+    ShellCommandEnding();
+    return;
+  }
+    
+
+  int result = ParseCommnad(argv[0]);
   switch (result) {
   case WhiteSpace:
     break;
@@ -124,5 +135,7 @@ void Shell() {
     PintInfoCPU();
     break;
   }
+  kfree(argv); 
   ShellCommandEnding();
+
 }

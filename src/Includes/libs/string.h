@@ -13,10 +13,9 @@ typedef struct {
   IntConvertResult (*Atoi)(char *string);
   char (*IsDigit)(char *string);
   int (*IsEmptyOrWhitespace)(const char *str);
-  int (*Split)(char *str, char delimiter, char **argv);
+  char** (*Split)(char *str, char delimiter, int *argv);
 
 } StringStruct;
-
 extern StringStruct string;
 // void to_lowercase(char *str);
 // int strcmp(const char *s1, const char *s2);

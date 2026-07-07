@@ -282,7 +282,7 @@ void PrintINT(int value) {
   }
 }
 void ConsoleResetColor() {
-  Foreground = CONSOLE_COLOR_WHITE; // синхронизация цвета
+  Foreground = CONSOLE_COLOR_CYAN; // синхронизация цвета
   Background = CONSOLE_COLOR_BLACK;
 }
 
