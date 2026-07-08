@@ -50,8 +50,24 @@ __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
 // для карты памяти
 volatile struct limine_memmap_request *MemMapStructPtr;
 volatile struct limine_hhdm_request *HHDMRequest; // для страниц
-void kernel_main() {
 
+void enable_sse() {
+  uint64_t cr0, cr4;
+
+  // Читаем CR0, настраиваем биты, пишем обратно
+  asm volatile("mov %%cr0, %0" : "=r"(cr0));
+  cr0 &= ~(1 << 2); // Сброс EM
+  cr0 |= (1 << 1);  // Установка MP
+  asm volatile("mov %0, %%cr0" ::"r"(cr0));
+
+  // Читаем CR4, включаем биты 9 и 10 для SSE
+  asm volatile("mov %%cr4, %0" : "=r"(cr4));
+  cr4 |= (1 << 9) | (1 << 10);
+  asm volatile("mov %0, %%cr4" ::"r"(cr4));
+}
+
+void kernel_main() {
+  enable_sse();
   if (framebuffer_request.response == NULL ||
       framebuffer_request.response->framebuffer_count < 1) {
   }

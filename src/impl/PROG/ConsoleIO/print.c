@@ -102,11 +102,44 @@ void PrintChar(char character) {
   CursorPos(CursorPosCol, CursorPosRow);
 }
 void print_int(int value) { printf("%i", value); }
+void print_float(float number) { print_double((double)number); }
+void print_double(double number) {
+  if (number < 0) {
+    print_char('-');
+    number = -number;
+  }
+
+  // Получаем целую часть простым приведением типов (оно отсекает хвост)
+  uint64_t integer_part = (uint64_t)number;
+
+  // Получаем дробную часть (например, из 125.53 вычитаем 125.0 -> получаем
+  // 0.53)
+  double fraction = number - (double)integer_part;
+
+  // Выделяем нужное количество знаков после запятой (например, 1 знак для
+  // памяти: 0.53 * 10 = 5.3 -> 5)
+  uint64_t fractional_part =
+      (uint64_t)(fraction * 10.0 + 0.5); // +0.5 для правильного округления
+
+  // Если округление округлило дробь до 10 (например, было 125.96 -> стало .10),
+  // корректируем целую часть.
+  if (fractional_part >= 10) {
+    integer_part += 1;
+    fractional_part = 0;
+  }
+
+  // Выводим через твои базовые функции (чтобы не завязываться на логику самого
+  // printf)
+  print_unsigned(integer_part);
+  print_char('.');
+  print_unsigned(fractional_part);
+}
+
 void print_unsigned(u64 value) { printf("%u", value); }
 void print_char(char value) { PrintChar(value); }
-void print_str(char *string) { // это для базового ввода
+void print_str(char *StringData) { // это для базового ввода
   for (size_t i = 0; 1; i++) {
-    char character = (uint8_t)string[i];
+    char character = (uint8_t)StringData[i];
     if (character == '\0')
       return;
 
@@ -160,6 +193,11 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         ConsoleBackground(background);
         break;
       }
+      case 'f':
+        double NumberDouble = va_arg(args, double);
+
+        print_double(NumberDouble);
+        break;
       // Можно добавить другие спецификаторы, например 's', 'c' и т.д.
       default:
         PrintChar('%');

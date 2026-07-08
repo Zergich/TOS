@@ -26,6 +26,7 @@ enum {
 #define print(x)                                                               \
   _Generic((x),                                                                \
       int: print_int,                                                          \
+      double: print_double,                                                    \
       u64: print_unsigned,                                                     \
       char: print_char,                                                        \
       char *: print_str)(x)
@@ -38,6 +39,8 @@ void print_int(int value);
 void print_unsigned(u64 value);
 void print_char(char value);
 void print_str(char *string); // с маленькой буквы для удобствa
+void print_double(double number);
+void print_float(float number);
 
 void printf(char *string, ...);
 void PrintDEC(uint64_t value);

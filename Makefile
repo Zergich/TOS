@@ -15,7 +15,7 @@ CFLAGS_COMMON := -I src/Includes \
                  -I src/Includes/Drivers \
                  -I src/Includes/libs \
                  -I src/Includes/arch \
-                 -ffreestanding -mcmodel=kernel -mno-red-zone -m64  -mcmodel=kernel -mno-sse -mno-sse2 -march=x86-64
+                 -ffreestanding -mcmodel=kernel -mno-red-zone -m64  -mcmodel=kernel -msse -msse2 -march=x86-64
 # Флаги для релизной сборки (с оптимизацией)
 GCC_RELEASE := $(CFLAGS_COMMON) -O2 -c
 

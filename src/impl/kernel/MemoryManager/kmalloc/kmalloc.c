@@ -69,6 +69,31 @@ void kfree(void* ptr) {
     tlsf_free(main_tlsf_instance, ptr);
 }
 
+typedef struct {
+    size_t used_bytes;
+    size_t free_bytes;
+} my_mem_stats_t;
+
+static void my_stats_walker(void* ptr, size_t size, int used, void* user) {
+    my_mem_stats_t* stats = (my_mem_stats_t*)user;
+    
+    if (used) {
+        stats->used_bytes += size;
+    } else {
+        stats->free_bytes += size;
+    }
+}
+
+tlsf_stats_t MemHeapInfo()
+{
+ tlsf_stats_t KernelHeapStatus = {0,0};
+  pool_t pool = tlsf_get_pool(main_tlsf_instance);
+
+    tlsf_walk_pool(pool, my_stats_walker, (void*)&KernelHeapStatus);
+
+    return KernelHeapStatus;
+}
+
 void test_kernel_heap() {
     print("Running Kernel Heap Stress Test... \n");
 

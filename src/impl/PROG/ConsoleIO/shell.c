@@ -1,13 +1,14 @@
 #include "System/OSInit.h"
 #include "libs/time.h"
+#include <ConsoleIO/Fetch/fetch.h>
 #include <ConsoleIO/console.h>
 #include <ConsoleIO/print.h>
 #include <ConsoleIO/shell.h>
+#include <System/MemoryManager/kmalloc/kmalloc.h>
 #include <System/sysinfo.h>
+#include <libs/format.h>
 #include <libs/string.h>
 #include <types.h>
-#include <ConsoleIO/Fetch/fetch.h>
-#include <System/MemoryManager/kmalloc/kmalloc.h>
 
 extern ConsoleInput Console;
 
@@ -63,13 +64,11 @@ int ParseCommnad(
     // now.hour,now.minute, now.second);
     return GetTime;
   }
-  if(string.Strcmp(str,"cpuinfo") == 0)
-  {
+  if (string.Strcmp(str, "cpuinfo") == 0) {
     // PintInfoCPU();
-    return  CPUPrintInfo;
+    return CPUPrintInfo;
   }
-  if(string.Strcmp(str,"fetch") ==0)
-  {
+  if (string.Strcmp(str, "fetch") == 0) {
     // Fetch();
     return FetchProgram;
   }
@@ -81,6 +80,14 @@ void PrintMemoryMap(struct MemoryType mem) {
   printf("Usable Memory - %u MB\n", mem.UsableMemory);
   printf("Reserved Memory - %u MB\n", mem.ReservedMemory);
   printf("Total - %u MB\n", mem.ReservedMemory + mem.UsableMemory);
+
+  tlsf_stats_t MemHeapStatusInfo = MemHeapInfo();
+  print("Mem Usage (K_Heap): ");
+  print_memory_size(MemHeapStatusInfo.free_bytes);
+  print(" / ");
+  print_memory_size(MemHeapStatusInfo.used_bytes);
+  print("\n");
+  ConsoleForeground(CONSOLE_COLOR_CYAN);
 }
 
 void Shell() {
@@ -94,7 +101,6 @@ void Shell() {
     ShellCommandEnding();
     return;
   }
-    
 
   int result = ParseCommnad(argv[0]);
   switch (result) {
@@ -102,7 +108,8 @@ void Shell() {
     break;
 
   case NotACommand:
-    printf("\"%F%s%F\" - Is not a command.\n",CONSOLE_COLOR_YELLOW, pede,CONSOLE_COLOR_CYAN);
+    printf("\"%F%s%F\" - Is not a command.\n", CONSOLE_COLOR_YELLOW, pede,
+           CONSOLE_COLOR_CYAN);
     break;
   case Pede:
     print("pede123\n");
@@ -128,14 +135,13 @@ void Shell() {
            now.minute, now.second);
     break;
   }
-    case FetchProgram:
+  case FetchProgram:
     Fetch();
     break;
-    case CPUPrintInfo:
+  case CPUPrintInfo:
     PintInfoCPU();
     break;
   }
-  kfree(argv); 
+  kfree(argv);
   ShellCommandEnding();
-
 }
