@@ -1,7 +1,7 @@
-#include <libs/string.h>
-#include <stdint.h>
-#include <stddef.h>
 #include <System/MemoryManager/kmalloc/kmalloc.h>
+#include <libs/string.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef enum {
   ERROR_CONVERT = -1,
@@ -17,7 +17,8 @@ IntConvertResult
 StringToInt(char *string); // коспилятор сука не дает из за того что Atoi
                            // название функции зарезервированно
 char IsDigit(char *string);
-char** SplitStr(char *str, char delimiter, int *out_argc);
+char **SplitStr(char *str, char delimiter, int *out_argc);
+void strcpy(char *source, char *dest);
 
 StringStruct string = {
     .ToLower = to_lowercase,
@@ -27,6 +28,7 @@ StringStruct string = {
     .IsDigit = IsDigit,
     .IsEmptyOrWhitespace = IsEmptyOrWhitespace,
     .Split = SplitStr,
+    .Strcpy = strcpy,
 };
 
 unsigned int strlen(char *string) {
@@ -146,53 +148,59 @@ int IsEmptyOrWhitespace(const char *str) {
   return 1;
 }
 
-// Функция принимает указатель на символ-пробел. Возвращает 1, если это пробельный символ.
+// Функция принимает указатель на символ-пробел. Возвращает 1, если это
+// пробельный символ.
 int is_space(char c) { // для Trim
-    return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+  return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
 }
 
-char* Trim(char* str){ // с ним еще пдодождлать надо до аллокаторов
-  int len = string.Strlen(str);
-  if(len == 0) return str;
-  return 0;
+void strcpy(char *source, char *dest) {
+  int i = 0;
+  while (source[i] != '\0') {
+    dest[i] = source[i];
+    i++;
+  }
+  dest[i] = '\0';
 }
 
-// Функция возвращает массив указателей (char**) 
+// Функция возвращает массив указателей (char**)
 // и записывает количество слов в переменную argc
-char** SplitStr(char *str, char delimiter, int *out_argc) {
-    int count = 0;
-    int in_token = 0;
-    
-    // 1. Первый проход: считаем количество слов
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == delimiter) {
-            in_token = 0;
-        } else if (!in_token) {
-            count++;
-            in_token = 1;
-        }
+char **SplitStr(char *str, char delimiter, int *out_argc) {
+  int count = 0;
+  int in_token = 0;
+
+  // 1. Первый проход: считаем количество слов
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] == delimiter) {
+      in_token = 0;
+    } else if (!in_token) {
+      count++;
+      in_token = 1;
     }
+  }
 
-    *out_argc = count;
-    if (count == 0) return NULL;
+  *out_argc = count;
+  if (count == 0)
+    return NULL;
 
-    // 2. Выделяем память под массив указателей через твой аллокатор
-    // Размер: count + 1 (последний NULL для удобства перебора)
-    char **argv = (char**)kmalloc(sizeof(char*) * (count + 1));
-    if (!argv) return NULL; // Ошибка аллокации
+  // 2. Выделяем память под массив указателей через твой аллокатор
+  // Размер: count + 1 (последний NULL для удобства перебора)
+  char **argv = (char **)kmalloc(sizeof(char *) * (count + 1));
+  if (!argv)
+    return NULL; // Ошибка аллокации
 
-    // 3. Второй проход: записываем указатели
-    int argc = 0;
-    in_token = 0;
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == delimiter) {
-            str[i] = '\0';
-            in_token = 0;
-        } else if (!in_token) {
-            argv[argc++] = &str[i];
-            in_token = 1;
-        }
+  // 3. Второй проход: записываем указатели
+  int argc = 0;
+  in_token = 0;
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] == delimiter) {
+      str[i] = '\0';
+      in_token = 0;
+    } else if (!in_token) {
+      argv[argc++] = &str[i];
+      in_token = 1;
     }
-    argv[argc] = NULL; // Терминатор
-    return argv;
+  }
+  argv[argc] = NULL; // Терминатор
+  return argv;
 }

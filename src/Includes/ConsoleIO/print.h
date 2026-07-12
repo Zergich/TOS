@@ -28,6 +28,7 @@ enum {
       int: print_int,                                                          \
       double: print_double,                                                    \
       u64: print_unsigned,                                                     \
+      u32: print_unsigned,                                                     \
       char: print_char,                                                        \
       char *: print_str)(x)
 
