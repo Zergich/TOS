@@ -148,7 +148,7 @@ void ResetCursorBlink() {
   CursorBlinkTicks = 0;
   DrawConsoleCursor();
 }
-u16 ShellStartRow = 4; // эта херня спасает от лесенки
+u16 ShellStartRow = 0; // эта херня спасает от лесенки
 
 void Syntax(char *str);
 void ClearAutoEndTail(char *str);

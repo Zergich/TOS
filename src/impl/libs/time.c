@@ -4,10 +4,8 @@
 #include <libs/time.h>
 #include <types.h>
 
-
 #include <arch/x86_64/io.h>
 #include <types.h>
-
 
 // пока временныый вариант. Надо чтоб возвращала значение в виде строки!!!!!
 void UpTime() {
@@ -35,8 +33,6 @@ TimePit Timepit = {
     .Sleep = Sleep,
     .PitTimerMiliSecondsUp = 0,
 };
-
-
 
 // Функция чтения одного регистра RTC
 u8 read_rtc_register(u8 reg) {

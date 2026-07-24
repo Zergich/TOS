@@ -18,6 +18,8 @@
 
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 
+#include <arch/x86_64/multitask.h>
+
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
 extern StringStruct string;
@@ -82,15 +84,16 @@ void kernel_main() {
   // передача указателся на структуру карты памяти
   MemMapStructPtr = &memmap_request;
   HHDMRequest = &hhdm_request;
-  WelcomeMessage();
   idt_init();
   pmm_init();
   asm volatile("sti");
+  WelcomeMessage();
 
   vmm_init();
   kmalloc_init();
   cpu_init(&CPUInfo);
 
+  StartMultitasking();
   static string15 pede;
   while (true) {
     Shell();
