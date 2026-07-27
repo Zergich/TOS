@@ -489,7 +489,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
       CursorClear();
       if (i != 0)
         RegisterAutoEnd(string); // регистрация команд для истории
-
+      ClearAutoEndTail(string);
       PrintChar('\n');
 
       CarretIndex = 0;

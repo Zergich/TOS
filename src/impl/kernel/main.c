@@ -92,8 +92,8 @@ void kernel_main() {
   vmm_init();
   kmalloc_init();
   cpu_init(&CPUInfo);
-
-  StartMultitasking();
+  test_utf8_decoder();
+  // StartMultitasking();
   static string15 pede;
   while (true) {
     Shell();
