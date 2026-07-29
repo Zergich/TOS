@@ -33,6 +33,7 @@ void ConsoleClear() {
   }
 }
 
+// старая функция для uft не годится но она по прежнему используется
 void PutChar(u64 x, u64 y, char character) {
 
   PixelGrapchics.DrawChar(x, y, character, Foreground, Background);
@@ -64,7 +65,7 @@ void ConsoleScroll() {
   }
 }
 
-void PrintChar(char character) {
+void PrintChar(u32 character) {
   // 1. Обработка переноса строки (Enter)
 
   if (CursorPosCol == NUM_COLUMS && CursorPosRow == NUM_ROWS)
@@ -137,13 +138,13 @@ void print_double(double number) {
 
 void print_unsigned(u64 value) { printf("%u", value); }
 void print_char(char value) { PrintChar(value); }
-void print_str(char *StringData) { // это для базового ввода
-  for (size_t i = 0; 1; i++) {
-    char character = (uint8_t)StringData[i];
-    if (character == '\0')
+void print_str(char *StringData) {
+  while (1) {
+    u32 characterNumber = Uft8Decoder(&StringData);
+    if (characterNumber == '\0')
       return;
 
-    PrintChar(character);
+    PrintChar(characterNumber);
   }
 }
 void printf(char *string, ...) { // а это уже тяжелая артилерия

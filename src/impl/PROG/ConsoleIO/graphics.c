@@ -26,11 +26,32 @@ void DrawPixel(u64 x, u64 y, u32 color) {
     BuffPtr[x] = color;
   }
 }
-void DrawChar(u64 x, u64 y, char c, u32 fg_color, u32 bg_color) {
+
+void DrawChar(u64 x, u64 y, u32 c, u32 fg_color, u32 bg_color) {
+  if (current_font == NULL)
+    return;
+
   x *= FONT_WIDTH;
   y *= FONT_HEIGHT;
-  uint32_t char_index = (uint8_t)c;
-  const u8 *glyph = &vga_font[(char_index * 16)];
+  u32 glyph_index = c;
+
+  if (glyph_index >= current_font->numglyph) {
+
+    glyph_index = 0;
+  }
+  // эти ебанные дауны не могли разобраться в 3 переменных и в итоге проебал
+  // почти день когда надо было просто переставить пару переменных в старую
+  // функцию
+
+  // Вычисляем, сколько байт занимает ОДНА строка пикселей символа
+  // (например, для шрифта шириной 8 это 1 байт, для 16 - 2 байта)
+  u32 bytes_per_line = current_font->bytesperglyph / current_font->height;
+  // Высчитываем адрес нужного символа
+  u8 *glyph = (u8 *)current_font + current_font->headersize +
+
+              (glyph_index * current_font->bytesperglyph);
+
+  // const u8 *glyph = &vga_font[(c * 16)];
 
   u8 Bold = 1;     // стандарт 1
   u8 Interval = 7; // стандарт 7
@@ -48,13 +69,7 @@ void DrawChar(u64 x, u64 y, char c, u32 fg_color, u32 bg_color) {
   }
 }
 
-typedef struct {
-  uint32_t CodePoint; // Номер символа Unicode (например, 0x0410 для 'А')
-  uint32_t FgColor;   // Цвет текста
-  uint32_t BgColor;   // Цвет фона
-} TerminalCell;
-
-u32 Uft8Decoder(const char **string) // берем символ из строки
+u32 Uft8Decoder(char **string) // берем символ из строки
 {
   const u8 *code = (const u8 *)*string; // конвертер в u8 символ
   u32 CodePoint = 0;
@@ -98,55 +113,4 @@ u32 Uft8Decoder(const char **string) // берем символ из строк�
   // 4. Двигаем оригинальный указатель вперед
   *string += BytesToRead;
   return CodePoint;
-}
-// Заменяешь printf на свой kprintf (только ASCII-символы!)
-void test_utf8_decoder(void) {
-  // Строка из байт:
-  // '\x41'             -> 'A' (1 байт)
-  // '\xD0\x9F'         -> 'П' (2 байта)
-  // '\xE2\x95\x8C'     -> '┌' (3 байта)
-  // '\xF0\x9F\x9A\x80' -> эмодзи (4 байта)
-  const char test_bytes[] = "\x41"
-                            "\xD0\x9F"
-                            "\xE2\x94\x8C"
-                            "\xF0\x9F\x9A\x80";
-  const char *ptr = test_bytes;
-  const char *prev_ptr;
-
-  // Ожидаемые значения (Code Point и байтовый сдвиг)
-  uint32_t expected_cp[] = {0x0041, 0x041F, 0x250C, 0x1F680};
-  int expected_bytes[] = {1, 2, 3, 4};
-
-  print("\n=== UTF8 DECODER TEST ===\n");
-
-  for (int i = 0; i < 4; i++) {
-    prev_ptr = ptr;
-    uint32_t cp = Uft8Decoder(&ptr);
-    int advanced = (int)(ptr - prev_ptr);
-
-    printf("Test %u: CP=0x%h (exp 0x%h), ADV=%u (exp %u) -> ", i + 1, cp,
-           expected_cp[i], advanced, expected_bytes[i]);
-
-    if (cp == expected_cp[i] && advanced == expected_bytes[i]) {
-      print("OK\n");
-    } else {
-      print("FAIL!\n");
-      return;
-    }
-  }
-
-  // Тест на битый байт (0xFF)
-  const char bad_byte[] = "\xFF";
-  ptr = bad_byte;
-  uint32_t bad_cp = Uft8Decoder(&ptr);
-
-  printf("Test 5 (Bad byte): CP=0x%h -> ", bad_cp);
-  if (bad_cp == 0xFFFD) {
-    print("OK\n");
-  } else {
-    print("FAIL!\n");
-    return;
-  }
-
-  print("=== ALL TESTS PASSED ===\n\n");
 }

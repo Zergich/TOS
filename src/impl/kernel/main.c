@@ -16,9 +16,9 @@
 #include <System/MemoryManager/PMM.h>
 #include <System/MemoryManager/VMM.h>
 
-#include <System/MemoryManager/kmalloc/kmalloc.h>
+#include <ConsoleIO/font.h>
 
-#include <arch/x86_64/multitask.h>
+#include <System/MemoryManager/kmalloc/kmalloc.h>
 
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
@@ -29,12 +29,23 @@ __attribute__((used,
                section(".limine_requests_start"))) static volatile uint64_t
     limine_requests_start_marker[] = LIMINE_REQUESTS_START_MARKER;
 
+// ЗАПРОС БАЗОВОЙ РЕВИЗИИ (если Limine будет ругаться, раскомментируй)
+// __attribute__((used,
+//                section(".limine_requests"))) static volatile uint64_t
+//     base_revision[] = LIMINE_BASE_REVISION(2);
+
 // САМ ЗАПРОС ФРЕЙМБУФЕРА
 __attribute__((
     used,
     section(
         ".limine_requests"))) static volatile struct limine_framebuffer_request
     framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST_ID, .revision = 0};
+
+// ЗАПРОС МОДУЛЕЙ (ИСПРАВЛЕНА СЕКЦИЯ НА .limine_requests)
+__attribute__((
+    used,
+    section(".limine_requests"))) static volatile struct limine_module_request
+    module_request = {.id = LIMINE_MODULE_REQUEST_ID, .revision = 0};
 
 __attribute__((
     used,
@@ -45,6 +56,7 @@ __attribute__((
     used,
     section(".limine_requests"))) static volatile struct limine_hhdm_request
     hhdm_request = {.id = LIMINE_HHDM_REQUEST_ID, .revision = 0};
+
 // Маркер конца запросов (обязателен)
 __attribute__((used, section(".limine_requests_end"))) static volatile uint64_t
     limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
@@ -67,7 +79,29 @@ void enable_sse() {
   cr4 |= (1 << 9) | (1 << 10);
   asm volatile("mov %0, %%cr4" ::"r"(cr4));
 }
+void init_font() {
 
+  if (module_request.response == NULL ||
+      module_request.response->module_count == 0) {
+    PixelGrapchics.Draw(0, 1024 * 500, 0x2731F5); // Зеленый
+    // Ошибка: Limine не нашел модули
+    return;
+  }
+
+  // Перебираем все модули (вдруг у тебя их будет несколько)
+  for (u64 i = 0; i < module_request.response->module_count; i++) {
+    struct limine_file *module = module_request.response->modules[i];
+
+    // Читаем первые 4 байта файла
+    u32 *magic = (u32 *)module->address;
+
+    // Если это PSF2 шрифт, сохраняем указатель
+    if (*magic == PSF2_MAGIC) {
+      current_font = (psf2_header_t *)module->address;
+      break; // Шрифт найден!
+    }
+  }
+}
 void kernel_main() {
   enable_sse();
   if (framebuffer_request.response == NULL ||
@@ -85,15 +119,17 @@ void kernel_main() {
   MemMapStructPtr = &memmap_request;
   HHDMRequest = &hhdm_request;
   idt_init();
+  init_font();
   pmm_init();
   asm volatile("sti");
   WelcomeMessage();
+  for (int i = 0; i < 1000; i++) {
+    PrintChar((u32)i);
+  }
 
   vmm_init();
   kmalloc_init();
   cpu_init(&CPUInfo);
-  test_utf8_decoder();
-  // StartMultitasking();
   static string15 pede;
   while (true) {
     Shell();

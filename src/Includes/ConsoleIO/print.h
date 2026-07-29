@@ -34,7 +34,7 @@ enum {
 
 void ConsoleClear();
 // Вывод
-void PrintChar(char character);
+void PrintChar(u32 character);
 // для удобства и тчоб каждый раз не писать printf
 void print_int(int value);
 void print_unsigned(u64 value);
@@ -48,7 +48,6 @@ void PrintDEC(uint64_t value);
 void PrintHex64(uint64_t value);
 void Print64Bin(uint64_t value);
 void PrintINT(int value);
-void PrintChar(char character);
 void ConsoleScroll();
 
 void PutChar(u64 x, u64 y, char character);

@@ -1,6 +1,8 @@
+#include <ConsoleIO/font.h>
+#include <stddef.h>
 #include <types.h>
-
-u8 FONT_WIDTH = 9; // на самом деле 8 прочто отступ друг от друга
+psf2_header_t *current_font = NULL;
+u8 FONT_WIDTH = 8; // на самом деле 8 прочто отступ друг от друга
 u8 FONT_HEIGHT = 16;
 
 u8 vga_font[256 * 16] = {
