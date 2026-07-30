@@ -19,3 +19,4 @@ u32 *InitDraw(u32 *framebuffer_ptr);
 void DrawChar(u64 x, u64 y, u32 c, u32 fg_color, u32 bg_color);
 void DrawPixel(u64 x, u64 y, u32 color);
 u32 Uft8Decoder(char **string);
+u32 FindGlyphIndex(u32 target_codepoint);

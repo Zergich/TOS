@@ -13,7 +13,7 @@ typedef struct {
   u32 height;        // Высота в пикселях (например, 16)
   u32 width;         // Ширина в пикселях (например, 8)
 } psf2_header_t;
-
+void TestFont();
 // Глобальный указатель на наш активный шрифт
 extern psf2_header_t *current_font;
 

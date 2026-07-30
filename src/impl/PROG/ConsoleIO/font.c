@@ -1,9 +1,44 @@
 #include <ConsoleIO/font.h>
+#include <ConsoleIO/print.h>
 #include <stddef.h>
 #include <types.h>
 psf2_header_t *current_font = NULL;
 u8 FONT_WIDTH = 8; // на самом деле 8 прочто отступ друг от друга
 u8 FONT_HEIGHT = 16;
+
+void TestFont() {
+  if (current_font == NULL)
+    return;
+
+  printf("=== PSF2 FONT HEADER INFO ===\n");
+  printf("Magic: %h\n", current_font->magic);
+  printf("Version: %u\n", current_font->version);
+  printf("Header size: %u bytes\n", current_font->headersize);
+  printf("Flags: %h (0 = no unicode table, 1 = has unicode table)\n",
+         current_font->flags);
+  printf("Num glyphs: %u\n", current_font->numglyph);
+  printf("Bytes per glyph: %u\n", current_font->bytesperglyph);
+  printf("Height: %u px\n", current_font->height);
+  printf("Width: %u px\n", current_font->width);
+  printf("=============================\n");
+
+  u32 start_x = 50;
+  u32 start_y = 10; // Отступ сверху, чтобы не перекрыть логи ядра
+  u32 columns = 32; // По 32 символа в ряд
+  ConsoleSetCarretPos(0, 10);
+  for (u32 i = 0; i < current_font->numglyph; i++) {
+    // Рисуем каждый символ белым цветом на черном фоне
+    printf(" %c", i);
+
+    // ПРИМЕЧАНИЕ: Если твоя DrawChar уже умножает x и y на ширину/высоту внутри
+    // себя, то вызов должен быть таким: DrawChar((start_x/8) + (i % columns),
+    // (start_y/16) + (i / columns), i, 0xFFFFFFFF, 0x00000000);
+  }
+  ConsoleSetCarretPos(0, 20);
+  for (int i = 0; i < 1000; i++) {
+    PrintChar((u32)i);
+  }
+}
 
 u8 vga_font[256 * 16] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

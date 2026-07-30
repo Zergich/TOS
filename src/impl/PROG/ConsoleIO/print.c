@@ -143,8 +143,8 @@ void print_str(char *StringData) {
     u32 characterNumber = Uft8Decoder(&StringData);
     if (characterNumber == '\0')
       return;
-
-    PrintChar(characterNumber);
+    u32 glyph_idx = FindGlyphIndex(characterNumber);
+    PrintChar(glyph_idx);
   }
 }
 void printf(char *string, ...) { // а это уже тяжелая артилерия

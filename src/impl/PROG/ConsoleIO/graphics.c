@@ -68,6 +68,55 @@ void DrawChar(u64 x, u64 y, u32 c, u32 fg_color, u32 bg_color) {
     }
   }
 }
+u32 FindGlyphIndex(u32 target_codepoint) {
+  if (current_font == NULL)
+    return 0;
+
+  // Если в шрифте нет таблицы Unicode, возвращаем сам код как индекс (как было
+  // раньше)
+  if ((current_font->flags & 1) == 0) {
+    return target_codepoint < current_font->numglyph ? target_codepoint : 0;
+  }
+
+  // Высчитываем адрес начала таблицы Unicode.
+  // Она начинается ровно там, где заканчиваются графические данные всех глифов.
+  u8 *unicode_table = (u8 *)current_font + current_font->headersize +
+                      (current_font->numglyph * current_font->bytesperglyph);
+
+  u32 current_glyph_index = 0;
+  char *ptr = (char *)unicode_table; // Указатель для бега по таблице
+
+  while (current_glyph_index < current_font->numglyph) {
+    // Байт 0xFF в PSF2 означает: "Коды для текущего глифа закончились,
+    // переходим к следующему"
+    if ((u8)(*ptr) == 0xFF) {
+      current_glyph_index++;
+      ptr++;
+      continue;
+    }
+
+    // Байт 0xFE в PSF2 используется для составных символов (например, буква +
+    // ударение). В рамках базового текста мы просто пропускаем этот управляющий
+    // байт.
+    if ((u8)(*ptr) == 0xFE) {
+      ptr++;
+      continue;
+    }
+
+    // Читаем код из таблицы шрифта с помощью ТВОЕГО декодера
+    // Обрати внимание: Uft8Decoder сам сдвинет указатель ptr вперед!
+    u32 table_codepoint = Uft8Decoder(&ptr);
+
+    // Сравниваем то, что прочитали из таблицы, с тем, что мы ищем
+    if (table_codepoint == target_codepoint) {
+      return current_glyph_index; // Бинго! Нашли нужный индекс картинки.
+    }
+  }
+
+  // Если мы прочесали всю таблицу и не нашли совпадений,
+  // возвращаем 0 (в твоем шрифте это глиф пустого квадрата или домика)
+  return 0;
+}
 
 u32 Uft8Decoder(char **string) // берем символ из строки
 {

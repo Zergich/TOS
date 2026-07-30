@@ -102,6 +102,7 @@ void init_font() {
     }
   }
 }
+
 void kernel_main() {
   enable_sse();
   if (framebuffer_request.response == NULL ||
@@ -123,9 +124,12 @@ void kernel_main() {
   pmm_init();
   asm volatile("sti");
   WelcomeMessage();
-  for (int i = 0; i < 1000; i++) {
-    PrintChar((u32)i);
-  }
+  printf("%s", "Привет\n");
+  print("pede\n");
+
+  // for (int i = 0; i < 1000; i++) {
+  //   PrintChar((u32)i);
+  // }
 
   vmm_init();
   kmalloc_init();
