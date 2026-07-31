@@ -8,7 +8,7 @@ struct WindowInfo {
   u16 PosX;
   u16 PosY;
 
-  char *Title;
+  u32 *Title;
 
   u32 Color;
 };

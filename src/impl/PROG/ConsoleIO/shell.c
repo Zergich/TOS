@@ -26,49 +26,48 @@ enum ShellCommand {
   CPUPrintInfo = 9,
 };
 
-int ParseCommnad(
-    char *str) { // очевидная проблема в том что пока эта херь не сплитает
-                 // строки и команды с флагами не сработают
+int ParseCommnad(u32 *str) { // очевидная проблема в том что пока эта херь не
+                             // сплитает строки и команды с флагами не сработают
   // закомментированные функции нужны потому что мб через if сделаю
   if (string.IsEmptyOrWhitespace(str)) {
     return WhiteSpace;
   }
-  if (string.Strcmp(str, "pede") == 0) {
+  if (string.Strcmp(str, U"pede") == 0) {
     // print("pede123");
     return Pede;
   }
-  if (string.Strcmp(str, "mem") == 0) {
+  if (string.Strcmp(str, U"mem") == 0) {
     // PrintMem();
     return Mem;
   }
-  if (string.Strcmp(str, "echo") == 0) {
+  if (string.Strcmp(str, U"echo") == 0) {
     // print(str);
     return Echo;
   }
-  if (string.Strcmp(str, "clear") == 0) {
+  if (string.Strcmp(str, U"clear") == 0) {
     // ConsoleClear();
     return ConsoleClearCommand;
   }
-  if (string.Strcmp(str, "status") == 0) {
+  if (string.Strcmp(str, U"status") == 0) {
     // SystemStatus();
     return PrintStatusCommand;
   }
-  if (string.Strcmp(str, "uptime") == 0) {
+  if (string.Strcmp(str, U"uptime") == 0) {
     // Timepit.UpTime();
     return UpTimeWorkSystem;
   }
-  if (string.Strcmp(str, "time") == 0) {
+  if (string.Strcmp(str, U"time") == 0) {
     // return GetTime    struct DateTime now = GetTimeRTS();
     //
     // printf("Time: %u-%u-%u %u:%u:%u\n", now.day, now.month, now.year,
     // now.hour,now.minute, now.second);
     return GetTime;
   }
-  if (string.Strcmp(str, "cpuinfo") == 0) {
+  if (string.Strcmp(str, U"cpuinfo") == 0) {
     // PintInfoCPU();
     return CPUPrintInfo;
   }
-  if (string.Strcmp(str, "fetch") == 0) {
+  if (string.Strcmp(str, U"fetch") == 0) {
     // Fetch();
     return FetchProgram;
   }
@@ -94,7 +93,7 @@ void Shell() {
   static string15 pede;
   Console.ReadLine(pede);
   int argc = 0;
-  char **argv = string.Split(pede, ' ', &argc);
+  u32 **argv = string.Split(pede, ' ', &argc);
 
   if (argv == NULL) // значит был ентер
   {

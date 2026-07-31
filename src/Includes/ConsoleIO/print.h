@@ -30,7 +30,8 @@ enum {
       u64: print_unsigned,                                                     \
       u32: print_unsigned,                                                     \
       char: print_char,                                                        \
-      char *: print_str)(x)
+      char *: print_str,                                                       \
+      u32 *: print_str_u32_native)(x)
 
 void ConsoleClear();
 // Вывод
@@ -38,10 +39,11 @@ void PrintChar(u32 character);
 // для удобства и тчоб каждый раз не писать printf
 void print_int(int value);
 void print_unsigned(u64 value);
-void print_char(u32 value);
+void print_char(char value);
 void print_str(char *string); // с маленькой буквы для удобствa
 void print_double(double number);
 void print_float(float number);
+void print_str_u32_native(u32 *str);
 
 void printf(char *string, ...);
 void PrintDEC(uint64_t value);

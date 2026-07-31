@@ -14,7 +14,7 @@ typedef uintptr_t uptr; // для указателей (в зависимост�
                         // подстраивается разрядноть)
 
 #define StringLenght 32768
-typedef char string15[StringLenght];
+typedef u32 string15[StringLenght];
 
 // вычисление длины статического массива
 #define statlen(arr) (sizeof(arr) / sizeof((arr)[0]))

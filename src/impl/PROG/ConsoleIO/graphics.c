@@ -33,7 +33,7 @@ void DrawChar(u64 x, u64 y, u32 c, u32 fg_color, u32 bg_color) {
 
   x *= FONT_WIDTH;
   y *= FONT_HEIGHT;
-  u32 glyph_index = c;
+  u32 glyph_index = FindGlyphIndex(c);
 
   if (glyph_index >= current_font->numglyph) {
 

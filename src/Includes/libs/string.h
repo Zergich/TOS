@@ -1,5 +1,6 @@
 #pragma once
 
+#include <types.h>
 // Структура-результат для типа int
 typedef struct {
   int value;
@@ -7,14 +8,14 @@ typedef struct {
 } IntConvertResult;
 
 typedef struct {
-  void (*ToLower)(char *str);
-  int (*Strcmp)(const char *s1, const char *s2);
-  unsigned int (*Strlen)(char *string);
-  IntConvertResult (*Atoi)(char *string);
-  char (*IsDigit)(char *string);
-  int (*IsEmptyOrWhitespace)(const char *str);
-  char **(*Split)(char *str, char delimiter, int *argv);
-  void (*Strcpy)(char *source, char *dest);
+  void (*ToLower)(u32 *str);
+  int (*Strcmp)(const u32 *s1, const u32 *s2);
+  unsigned int (*Strlen)(const u32 *string);
+  IntConvertResult (*Atoi)(const u32 *string);
+  int (*IsDigit)(const u32 *string);
+  int (*IsEmptyOrWhitespace)(const u32 *str);
+  u32 **(*Split)(u32 *str, u32 delimiter, int *out_argc);
+  void (*Strcpy)(const u32 *source, u32 *dest);
 
 } StringStruct;
 extern StringStruct string;

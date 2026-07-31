@@ -11,15 +11,15 @@ extern u32 CursorBlinkTicks;
 // Скорость моргания
 extern u16 CURSOR_BLINK_RATE;
 
-extern char *ActiveInputBuffer;
+extern u32 *ActiveInputBuffer;
 typedef struct {
-  int (*ReadLine)(char *string);
-  char (*ReadKey)(void);
+  int (*ReadLine)(u32 *string);
+  u32 (*ReadKey)(void);
 } ConsoleInput;
 
 extern u16 ShellStartRow; //  хрень нужна для обновления позиции при перемотке
                           //  для стрелок
-int ConsoleRead(char *string);
-char ReadKey();
+int ConsoleRead(u32 *string);
+u32 ReadKey();
 void DrawConsoleCursor();
 void ConsoleBufferReadString(u8 Start, u8 End, u8 MaxColumn, u8 Line);

@@ -20,14 +20,14 @@ extern u16 CursorPosRow;
 
 typedef struct ShellHistoryCommnad { // надо потом как нибудб решить вопрос со
                                      // статической длинной
-  char NameComand[32];
-  char *FullCommand;
+  u32 NameComand[32];
+  u32 *FullCommand;
   bool Status;
   struct ShellHistoryCommnad *Next;
 } ShellHistory;
 
 ShellHistory *global_commands_head;
-ShellHistory *FindeAutoEnd(char *UserInput);
+ShellHistory *FindeAutoEnd(u32 *UserInput);
 
 extern Pixeling PixelGrapchics;
 ConsoleInput Console = {.ReadLine = ConsoleRead, .ReadKey = ReadKey
@@ -40,7 +40,7 @@ static int max_len =
     StringLenght; // ну что могу сказать зеленый еще я и без статика все хуева
                   // нужны аллокаторы но где ты их блять возьмешь
 
-void ShiftLeft(char *buffer) {
+void ShiftLeft(u32 *buffer) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
 
@@ -76,7 +76,7 @@ void ShiftLeft(char *buffer) {
   PutChar(drawX, drawY, ' ');
 }
 
-void BackSpaceHandle(char *string) {
+void BackSpaceHandle(u32 *string) {
   if (CarretIndex <= 0 || TextSize <= 0)
     return;
 
@@ -101,7 +101,7 @@ u32 CursorBlinkTicks = 0;
 // Скорость моргания
 u16 CURSOR_BLINK_RATE = 250;
 
-char *ActiveInputBuffer;
+u32 *ActiveInputBuffer;
 
 struct CursorLastPos {
   u16 Column;
@@ -150,10 +150,10 @@ void ResetCursorBlink() {
 }
 u16 ShellStartRow = 0; // эта херня спасает от лесенки
 
-void Syntax(char *str);
-void ClearAutoEndTail(char *str);
+void Syntax(u32 *str);
+void ClearAutoEndTail(u32 *str);
 
-void ApplyAutoEnd(char *Getstring) {
+void ApplyAutoEnd(u32 *Getstring) {
   ShellHistory *his = FindeAutoEnd(Getstring);
   if (his == NULL)
     return;
@@ -164,7 +164,7 @@ void ApplyAutoEnd(char *Getstring) {
   for (u32 i = user_len; i < hist_len; i++) {
     if (TextSize >= max_len - 1)
       break;
-    char c = his->NameComand[i];
+    u32 c = his->NameComand[i];
     // IndexInsertC(string, &i, max_len, CarretIndex++, c);
     IndexInsertC(Getstring, &TextSize, max_len, CarretIndex++, c);
   }
@@ -179,7 +179,7 @@ void ApplyAutoEnd(char *Getstring) {
   CursorPosCol = total_pos % NUM_COLUMS;
   CursorPosRow = ShellStartRow + (total_pos / NUM_COLUMS);
 }
-void ArrowHandleRL(u8 ArrowType, char *string) {
+void ArrowHandleRL(u8 ArrowType, u32 *string) {
   u16 lineralpos = LimitXRow + CarretIndex;
   u16 next_carret = CarretIndex;
 
@@ -214,7 +214,7 @@ void ArrowHandleRL(u8 ArrowType, char *string) {
 }
 
 bool SpecCodeConsoleRead = false;
-bool CheckSpecKeys(u8 SpecKey, char *string) {
+bool CheckSpecKeys(u8 SpecKey, u32 *string) {
   switch (SpecKey) { // enter обрабатывается отдельно в функции ниже
   case Key_Tab:
 
@@ -239,7 +239,7 @@ bool CheckSpecKeys(u8 SpecKey, char *string) {
   return false;
 }
 
-void ShiftRight(char *buffer) {
+void ShiftRight(u32 *buffer) {
   // Защита: если мы печатаем в самый конец строки,
   // визуально сдвигать нечего (CursorPosCol уже там, где нужно).
   // CarretIndex здесь уже увеличен на 1 в ConsoleRead, поэтому сравниваем с
@@ -279,7 +279,7 @@ void ShiftRight(char *buffer) {
   PutChar(drawX, drawY, ' ');
 }
 
-void GetFirstCommandStatic(char *str, char *buff) {
+void GetFirstCommandStatic(u32 *str, u32 *buff) {
   int cmd_len = 0;
   while (str[cmd_len] != ' ' && str[cmd_len] != '\0' && cmd_len < 31) {
     buff[cmd_len] = str[cmd_len];
@@ -287,7 +287,7 @@ void GetFirstCommandStatic(char *str, char *buff) {
   }
   buff[cmd_len] = '\0';
 }
-bool IsValideCommand(char *str) {
+bool IsValideCommand(u32 *str) {
   int result = ParseCommnad(str);
   // кароче ShellStartRow спасает от лесенки тоесть захардкоженное число 4
   // спасает от лесенки на 40 50 строках (был как приммер) и ведь жестко
@@ -303,8 +303,8 @@ bool IsValideCommand(char *str) {
     // printf("%F%s%F",CONSOLE_COLOR_GREEN,str,CONSOLE_COLOR_CYAN);
   }
 }
-void Syntax(char *str) {
-  char cmd_buf[32];
+void Syntax(u32 *str) {
+  u32 cmd_buf[32];
   GetFirstCommandStatic(str, cmd_buf);
 
   bool is_valid = IsValideCommand(cmd_buf);
@@ -339,10 +339,8 @@ void Syntax(char *str) {
       is_command = false;
     // подсказку что это такое смотри в printf
     // Если ты обрабатываешь символ напрямую из буфера клавиатуры:
-    u32 code =
-        (u32)str[i]; // Это уже готовый u32 код (например, 0x0444 или 'a')
-    u32 Symbol = FindGlyphIndex(code); // Переводим код в индекс глифа шрифта
-    DrawChar(render_col, render_row, Symbol, color, CONSOLE_COLOR_BLACK);
+
+    DrawChar(render_col, render_row, str[i], color, CONSOLE_COLOR_BLACK);
 
     // 3. Сдвигаем локальный курсор отрисовки
     render_col++;
@@ -353,7 +351,7 @@ void Syntax(char *str) {
   }
 }
 
-void RegisterAutoEnd(char *GetCommnad) {
+void RegisterAutoEnd(u32 *GetCommnad) {
   ShellHistory *new_node = (ShellHistory *)kmalloc(sizeof(ShellHistory));
   if (new_node == NULL)
     return;
@@ -364,7 +362,7 @@ void RegisterAutoEnd(char *GetCommnad) {
   new_node->Next = global_commands_head;
   global_commands_head = new_node;
 }
-ShellHistory *FindeAutoEnd(char *UserInput) {
+ShellHistory *FindeAutoEnd(u32 *UserInput) {
   u16 Len = string.Strlen(UserInput);
   if (Len == 0)
     return NULL;
@@ -395,7 +393,7 @@ ShellHistory *FindeAutoEnd(char *UserInput) {
 
   return NULL;
 }
-void ClearAutoEndTail(char *str) {
+void ClearAutoEndTail(u32 *str) {
   u16 user_len = string.Strlen(str);
   u16 render_col = LimitXRow + user_len;
   u16 render_row = ShellStartRow;
@@ -420,7 +418,7 @@ void ClearAutoEndTail(char *str) {
     }
   }
 }
-void PrintAutoEnd(ShellHistory *his, char *str) {
+void PrintAutoEnd(ShellHistory *his, u32 *str) {
   if (his == NULL || str == NULL)
     return;
 
@@ -451,8 +449,8 @@ void PrintAutoEnd(ShellHistory *his, char *str) {
   }
 }
 
-int ConsoleRead(char *string) { // мб спипать спец коды и отсавлять только
-                                // аски соответственно.
+int ConsoleRead(u32 *string) { // мб спипать спец коды и отсавлять только
+                               // аски соответственно.
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
   u32 i = 0;
@@ -543,7 +541,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   return 0;
 }
 
-char ReadKey() {
+u32 ReadKey() {
   u32 GetChar;
   RoundBuff.get(&GetChar);
   if (GetChar) {

@@ -137,7 +137,12 @@ void print_double(double number) {
 }
 
 void print_unsigned(u64 value) { printf("%u", value); }
-void print_char(u32 value) { PrintChar(value); }
+void print_char(char value) { PrintChar(value); }
+void print_str_u32_native(u32 *str) {
+  for (int i = 0; str[i] != 0; i++) {
+    PrintChar(str[i]); // Всё! Никаких поисков глифов перед вызовом.
+  }
+}
 void print_str(char *StringData) {
   while (1) {
     u32 characterNumber = Uft8Decoder(&StringData);
@@ -147,8 +152,7 @@ void print_str(char *StringData) {
       PrintChar('\n');
       continue;
     }
-    u32 glyph_idx = FindGlyphIndex(characterNumber);
-    PrintChar(glyph_idx);
+    PrintChar(characterNumber);
   }
 }
 void printf(char *string, ...) { // а это уже тяжелая артилерия
@@ -170,9 +174,8 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         break;
       } // ИСПРАВЛЕНО: здесь не хватало закрывающей скобки для блока case 'u'
       case 's':
-        char *str = va_arg(args, char *);
-        // ВАЖНО: Если внутри print() тоже есть посимвольный вывод,
-        // его в будущем тоже нужно будет адаптировать под UTF-8!
+        u32 *str = va_arg(args, u32 *);
+
         print(str);
         break;
       case 'i':
@@ -231,8 +234,7 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         // Пропускаем возврат каретки
       } else {
         // Ищем индекс картинки в шрифте и рисуем
-        u32 Symbol = FindGlyphIndex(code);
-        PrintChar(Symbol);
+        PrintChar(code);
       }
 
       // МАГИЯ СДВИГА:
