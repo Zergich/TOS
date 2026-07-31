@@ -7,31 +7,31 @@
 
 u8 LeftPadding = 50;
 
-const char *vga_logo[] = {
-    "                            XXXXXXX\n",
-    "                           XXX      XX\n",
-    "                              XXX      XX\n",
-    "                           XXXXX         XX\n",
-    "                        XXX        X      XX\n",
-    "               XXXX  XXX        XXXXXXX    XXXX\n",
-    "               X   XXXX      XXXXXXXXXXXXXX   X\n",
-    "               X      XXX  XXXXXXXXXXXXXX      X\n",
-    "               X         XXXXXXXXXXXXX        XX\n",
-    "               X    XX      XXXXXXX      XXXXXXX\n",
-    "               X    XXXXX      XX     XXXXX    X\n",
-    "               X    XXXXXXX    X    XXXX       X\n",
-    "               X    XXXXXXX    X               X\n",
-    "               X    XXXXXXX    X       XXXX    X\n",
-    "               X     XXXXXX    X    XXXXXX     X\n",
-    "               XXX      XXX    XXXXXXX      XXX\n",
-    "                  XXX          XX        XX\n",
-    "                    XXXXX      X      XX\n",
-    "                        XXXX   X   XX\n",
-    "                         XXXXXXXXXX\n",
+const u32 *vga_logo[] = {
+    U"                            XXXXXXX\n",
+    U"                           XXX      XX\n",
+    U"                              XXX      XX\n",
+    U"                           XXXXX         XX\n",
+    U"                        XXX        X      XX\n",
+    U"               XXXX  XXX        XXXXXXX    XXXX\n",
+    U"               X   XXXX      XXXXXXXXXXXXXX   X\n",
+    U"               X      XXX  XXXXXXXXXXXXXX      X\n",
+    U"               X         XXXXXXXXXXXXX        XX\n",
+    U"               X    XX      XXXXXXX      XXXXXXX\n",
+    U"               X    XXXXX      XX     XXXXX    X\n",
+    U"               X    XXXXXXX    X    XXXX       X\n",
+    U"               X    XXXXXXX    X               X\n",
+    U"               X    XXXXXXX    X       XXXX    X\n",
+    U"               X     XXXXXX    X    XXXXXX     X\n",
+    U"               XXX      XXX    XXXXXXX      XXX\n",
+    U"                  XXX          XX        XX\n",
+    U"                    XXXXX      X      XX\n",
+    U"                        XXXX   X   XX\n",
+    U"                         XXXXXXXXXX\n",
 };
 void PrintInfo() {
   ConsoleSetCarretPos(LeftPadding, CursorPosRow + 5);
-  printf("%FOS%F: TOS %s\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,
+  printf("%FOS%F: TOS %S\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,
          VersionOS);
   CursorSetColumn(LeftPadding);
   printf("%FUptime%F: %u minute\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,

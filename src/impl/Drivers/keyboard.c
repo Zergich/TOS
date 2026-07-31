@@ -2,6 +2,7 @@
 #include <ConsoleIO/print.h>
 #include <drivers/keyboard.h>
 #include <libs/datastruct.h>
+#include <libs/string.h>
 #include <stdint.h>
 #include <types.h>
 // стартовые позиции курсора
@@ -10,13 +11,23 @@
 // Простой маппинг кода клавиши на ASCII для букв и цифр
 bool ShiftEnabled = false;
 bool CapsEnabled = false;
+bool AltEnabled = false;
 bool SpecCode = false;
 bool magic = false;
+u32 *Layout = U"EN";
 
 u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стрелки отдельно
   switch (ScanCode) { // обработка шифта капса альта и других клавищь не
                       // трубующих магического байта
   case Key_Alt:
+    if (AltEnabled)
+      AltEnabled = false;
+    else
+      AltEnabled = true;
+    if (ShiftEnabled)
+      Layout = (string.Strcmp(Layout, U"EN") == 0) ? U"RU" : U"EN";
+    return ScanCode;
+
   case Key_Tab:
   case UpArrow:
   case RightArrow:
@@ -43,6 +54,8 @@ u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стре
         (ScanCode == (Key_LShift | Key_Realising))
             ? (Key_LShift | Key_Realising)
             : (Key_RShift | Key_Realising); // задел на будущие для хуков
+    if (AltEnabled)
+      Layout = (string.Strcmp(Layout, U"EN") == 0) ? U"RU" : U"EN";
     return ReturnCodeUnPress;
   }
 
@@ -59,8 +72,10 @@ u8 LastKeyCode = 0;
 // событие отпускания. Это и есть ваша "небольшая задержка". Для обычных клавиш
 // (букв) все происходит сразу: MapLow[sc] -> возврат -> запись в буфер. Поэтому
 // они работают мгновенно.
-static u32 *MapLow;
-static u32 *MapShift;
+
+static const u32 *MapLow;
+static const u32 *MapShift;
+void LayoutSwitcher(u32 *layout);
 u32 ReturnCharKeyboard(u8 sc) {
   // эта пиздагрязь просто так не работает чтоб без этих
   // костылей
@@ -80,28 +95,50 @@ u32 ReturnCharKeyboard(u8 sc) {
     RoundBuff.put(GetSpecKeyCode);
     return 0;
   }
+  LayoutSwitcher(Layout);
+  u32 ch = ShiftEnabled ? MapShift[sc] : MapLow[sc];
 
-  u32 ch = MapRusLowRU[sc];
-  u32 ShiftKey = MapRusShiftRU[sc];
-  // если зажат шифт то Заглавные. Если активирован капс то заглавнае. Если
-  // активирован капс И зажат шифт то маленькие или спец.
+  // ШАГ 2: Если Caps включен — он ТУПО инвертирует регистр БУКВ.
+  // Ему плевать на Shift, он просто делает большую букву маленькой, а маленькую
+  // — большой.
+  if (CapsEnabled) {
+    // --- АНГЛИЙСКИЙ ---
+    if (ch >= 'A' && ch <= 'Z') {
+      ch += 32; // Заглавную (пришедшую из MapShift) превращает в МАЛЕНЬКУЮ
+    } else if (ch >= 'a' && ch <= 'z') {
+      ch -= 32; // Строчную (пришедшую из MapNormal) превращает в БОЛЬШУЮ
+    }
 
-  // if ((CapsEnabled && !ShiftEnabled) || (!CapsEnabled && ShiftEnabled)) {
-  //   if ((ShiftEnabled || CapsEnabled) && ch >= 'a' && ch <= 'z') {
-  //     ch = ch - ('a' - 'A'); // переводим в верхний регистр
-  //   }
-  // }
+    // --- РУССКИЙ ---
+    else if (ch >= 0x0410 && ch <= 0x042F) { // 'А' .. 'Я'
+      ch += 32; // Заглавную превращает в МАЛЕНЬКУЮ 'а' .. 'я'
+    } else if (ch >= 0x0430 && ch <= 0x044F) { // 'а' .. 'я'
+      ch -= 32; // Строчную превращает в БОЛЬШУЮ 'А' .. 'Я'
+    }
 
+    // --- БУКВА Ё ---
+    else if (ch == 0x0401) { // 'Ё' -> 'ё'
+      ch = 0x0451;
+    } else if (ch == 0x0451) { // 'ё' -> 'Ё'
+      ch = 0x0401;
+    }
+  }
   if (sc & Key_Realising)
     return 0; // отпускание клавиши - игнорируем
-  if (ShiftEnabled && ShiftKey != 0) {
-    return ShiftKey;
-  }
 
   return ch;
 }
 
-void LayoutSwitcher(char *layout) {}
+void LayoutSwitcher(u32 *layout) {
+  if (string.Strcmp(layout, U"RU") == 0) {
+    MapLow = MapRusLowRU;
+    MapShift = MapRusShiftRU;
+  }
+  if (string.Strcmp(layout, U"EN") == 0) {
+    MapLow = MapLowEN;
+    MapShift = MapShiftEN;
+  }
+}
 
 const u32 MapLowEN[256] = {
     [0x1E] = 'a', [0x30] = 'b',  [0x2E] = 'c',  [0x20] = 'd', [0x12] = 'e',
