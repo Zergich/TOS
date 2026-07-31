@@ -8,7 +8,7 @@
  * =====================
  */
 
-u8 RoundBuffChar[8192];
+u32 RoundBuffChar[8192];
 
 RoundBufferObgect RoundBuff = {
     .put = PutIntoBuffer,
@@ -20,7 +20,7 @@ volatile int tail = 0;
 
 enum ExitCode { BUFFER_ROUNDED = 1, ERROR = -1, OK = 0 };
 
-int PutIntoBuffer(u8 character) {
+int PutIntoBuffer(u32 character) {
   int ExitCode = OK;
   RoundBuff.buffer[head] = character;
   int next_pos =
@@ -35,7 +35,7 @@ int PutIntoBuffer(u8 character) {
   return ExitCode;
 }
 
-int GetgFromBuffer(u8 *linkchar) {
+int GetgFromBuffer(u32 *linkchar) {
 
   if (head == tail) {
     return ERROR; // Буффер пуст

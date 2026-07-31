@@ -34,7 +34,7 @@ void ConsoleClear() {
 }
 
 // старая функция для uft не годится но она по прежнему используется
-void PutChar(u64 x, u64 y, char character) {
+void PutChar(u64 x, u64 y, u32 character) {
 
   PixelGrapchics.DrawChar(x, y, character, Foreground, Background);
 }
@@ -137,12 +137,16 @@ void print_double(double number) {
 }
 
 void print_unsigned(u64 value) { printf("%u", value); }
-void print_char(char value) { PrintChar(value); }
+void print_char(u32 value) { PrintChar(value); }
 void print_str(char *StringData) {
   while (1) {
     u32 characterNumber = Uft8Decoder(&StringData);
     if (characterNumber == '\0')
       return;
+    if (characterNumber == '\n') {
+      PrintChar('\n');
+      continue;
+    }
     u32 glyph_idx = FindGlyphIndex(characterNumber);
     PrintChar(glyph_idx);
   }
@@ -164,8 +168,11 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         }
         PrintDEC((uint64_t)val); // Выводим через printDEC
         break;
+      } // ИСПРАВЛЕНО: здесь не хватало закрывающей скобки для блока case 'u'
       case 's':
         char *str = va_arg(args, char *);
+        // ВАЖНО: Если внутри print() тоже есть посимвольный вывод,
+        // его в будущем тоже нужно будет адаптировать под UTF-8!
         print(str);
         break;
       case 'i':
@@ -179,7 +186,7 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
       case 'c':
         char character = va_arg(
             args, int); // char преобразуется в int при переводе с параметрами
-                        // ... так char нежелательно использлвать на прямуюх
+                        // ... так char нежелательно использлвать на прямую
         PrintChar(character);
         break;
       case 'F': // так же если убрать break и добавить следом парметр ансигнед
@@ -193,10 +200,9 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         uint64_t background = va_arg(args, uint64_t);
         ConsoleBackground(background);
         break;
-      }
+      // ИСПРАВЛЕНО: здесь стояла лишняя скобка '}', которая ломала switch
       case 'f':
         double NumberDouble = va_arg(args, double);
-
         print_double(NumberDouble);
         break;
       // Можно добавить другие спецификаторы, например 's', 'c' и т.д.
@@ -206,13 +212,39 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         break;
       }
     } else {
-      PrintChar(string[i]); // Просто печатаем символ
+      // --- ИНТЕГРАЦИЯ UTF-8 ---
+
+      // Берем адрес текущего символа в памяти
+      char *ptr = (char *)&string[i];
+      char *old_ptr = ptr; // Запоминаем, где мы были
+
+      // Твой декодер прочитает 1, 2, 3 или 4 байта и сам сдвинет ptr вперед
+      u32 code = Uft8Decoder(&ptr);
+
+      // Жестко перехватываем перенос строки, чтобы избежать глифа 'î' (индекс
+      // 10)
+      if (code == '\n') {
+        // Замени на свою функцию перевода строки, если PrintChar это не умеет
+        // Например: CursorPosRow += 16; CursorPosCol = LeftPadding;
+        PrintChar('\n');
+      } else if (code == '\r') {
+        // Пропускаем возврат каретки
+      } else {
+        // Ищем индекс картинки в шрифте и рисуем
+        u32 Symbol = FindGlyphIndex(code);
+        PrintChar(Symbol);
+      }
+
+      // МАГИЯ СДВИГА:
+      // Допустим, была русская буква (2 байта). ptr сдвинулся на 2 шага.
+      // Нам нужно прибавить к индексу 'i' эту разницу минус 1.
+      // Почему минус 1? Потому что сам цикл for сделает i++ в конце итерации!
+      i += (ptr - old_ptr) - 1;
     }
   }
 
   va_end(args);
 }
-
 void ConsoleColor(u32 foreground, u32 background) {
   Foreground = foreground;
   Background = background;

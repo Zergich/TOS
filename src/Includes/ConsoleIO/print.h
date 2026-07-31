@@ -38,7 +38,7 @@ void PrintChar(u32 character);
 // для удобства и тчоб каждый раз не писать printf
 void print_int(int value);
 void print_unsigned(u64 value);
-void print_char(char value);
+void print_char(u32 value);
 void print_str(char *string); // с маленькой буквы для удобствa
 void print_double(double number);
 void print_float(float number);
@@ -50,7 +50,7 @@ void Print64Bin(uint64_t value);
 void PrintINT(int value);
 void ConsoleScroll();
 
-void PutChar(u64 x, u64 y, char character);
+void PutChar(u64 x, u64 y, u32 character);
 
 // Цвет
 void ConsoleColor(u32 foreground, u32 background);

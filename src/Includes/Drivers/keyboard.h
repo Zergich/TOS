@@ -23,4 +23,11 @@ enum SpecKodes {
 
 };
 
-u8 ReturnCharKeyboard(u8 sc);
+u32 ReturnCharKeyboard(u8 sc);
+
+extern const u32 MapLowEN[256];
+extern const u32 MapShiftEN[256];
+
+extern const u32 MapRusLowRU[256];
+
+extern const u32 MapRusShiftRU[256];

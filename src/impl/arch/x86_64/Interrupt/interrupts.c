@@ -83,133 +83,146 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
   DivideZero();
   asm volatile("hlt");
 }
-static inline int is_lazy_allocation_allowed(uint64_t fault_addr, uintptr_t error_code) {
-    // Бит 2 в error_code: 1 - ошибка из user-mode, 0 - из kernel-mode
-    int is_user = error_code & (1 << 2);
+static inline int is_lazy_allocation_allowed(uint64_t fault_addr,
+                                             uintptr_t error_code) {
+  // Бит 2 в error_code: 1 - ошибка из user-mode, 0 - из kernel-mode
+  int is_user = error_code & (1 << 2);
 
-    // 1. ПРАВИЛО: Если ошибка произошла из-за нарушения прав (например, запись в Read-Only),
-    // это не ленивая аллокация, это баг защиты!
-    if (error_code & (1 << 0)) {
-        return 0;
-    }
+  // 1. ПРАВИЛО: Если ошибка произошла из-за нарушения прав (например, запись в
+  // Read-Only), это не ленивая аллокация, это баг защиты!
+  if (error_code & (1 << 0)) {
+    return 0;
+  }
 
-    // 2. ПРАВИЛО: Пользовательское пространство (Lower Half)
-    // В будущем здесь будет проверка по структурам процесса: if (vma_find(current_process, fault_addr))
-    // Сейчас разрешаем ленивую аллокацию для пользовательской памяти (например, ниже 0x00007FFFFFFFFFFF)
-    if (is_user && fault_addr < 0x0000800000000000ULL) {
-        return 1;
-    }
+  // 2. ПРАВИЛО: Пользовательское пространство (Lower Half)
+  // В будущем здесь будет проверка по структурам процесса: if
+  // (vma_find(current_process, fault_addr)) Сейчас разрешаем ленивую аллокацию
+  // для пользовательской памяти (например, ниже 0x00007FFFFFFFFFFF)
+  if (is_user && fault_addr < 0x0000800000000000ULL) {
+    return 1;
+  }
 
-    // 3. ПРАВИЛО: Пространство ядра (Higher Half)
-    // Разрешаем ленивую аллокацию только для региона динамической кучи ядра (Kernel Heap).
-    // Замени KERNEL_HEAP_START и KERNEL_HEAP_END на свои реальные границы кучи ядра, когда напишешь kmalloc.
-    /*
-    extern uint64_t KERNEL_HEAP_START;
-    extern uint64_t KERNEL_HEAP_END;
-    if (!is_user && fault_addr >= KERNEL_HEAP_START && fault_addr < KERNEL_HEAP_END) {
-        return 1;
-    }
-    */
+  // 3. ПРАВИЛО: Пространство ядра (Higher Half)
+  // Разрешаем ленивую аллокацию только для региона динамической кучи ядра
+  // (Kernel Heap). Замени KERNEL_HEAP_START и KERNEL_HEAP_END на свои реальные
+  // границы кучи ядра, когда напишешь kmalloc.
+  /*
+  extern uint64_t KERNEL_HEAP_START;
+  extern uint64_t KERNEL_HEAP_END;
+  if (!is_user && fault_addr >= KERNEL_HEAP_START && fault_addr <
+  KERNEL_HEAP_END) { return 1;
+  }
+  */
 
-    return 0; // Для всех остальных адресов ленивая аллокация запрещена
+  return 0; // Для всех остальных адресов ленивая аллокация запрещена
 }
 
-__attribute__((interrupt)) void page_fault_handler(struct interrupt_frame *frame, uintptr_t error_code) {
-    uint64_t fault_addr;
-    // Извлекаем адрес, вызвавший исключение, из управляющего регистра CR2
-    __asm__ volatile("mov %%cr2, %0" : "=r"(fault_addr));
+__attribute__((interrupt)) void
+page_fault_handler(struct interrupt_frame *frame, uintptr_t error_code) {
+  uint64_t fault_addr;
+  // Извлекаем адрес, вызвавший исключение, из управляющего регистра CR2
+  __asm__ volatile("mov %%cr2, %0" : "=r"(fault_addr));
 
-    // Выравниваем адрес вниз до ближайшей границы 4-килобайтной страницы
-    uint64_t aligned_fault_addr = fault_addr & ~(PAGE_SIZE - 1);
+  // Выравниваем адрес вниз до ближайшей границы 4-килобайтной страницы
+  uint64_t aligned_fault_addr = fault_addr & ~(PAGE_SIZE - 1);
 
-    // Проверяем, имеем ли мы право обработать этот fault лениво
-    if (is_lazy_allocation_allowed(fault_addr, error_code)) {
-        
-        // Запрашиваем физический фрейм у PMM
-        uintptr_t phys = pmm_alloc_frame();
-        if (phys == 0) {
-            // Если физическая память физически кончилась — это системная паника
-            Panic("Page Fault Handler: Out of physical memory during lazy allocation!");
-        }
+  // Проверяем, имеем ли мы право обработать этот fault лениво
+  if (is_lazy_allocation_allowed(fault_addr, error_code)) {
 
-        // Определяем текущее адресное пространство.
-        // Если упал пользовательский процесс, тут должен быть его space.
-        // Пока мы в ядре — берем глобальный kernel_space.
-        extern address_space_t kernel_space; 
-        
-        // Набор флагов для ленивой страницы.
-        // Если упал юзер, добавляем флаг PTE_USER, чтобы процессор разрешил ему доступ.
-        uint64_t vmm_flags = PTE_PRESENT | PTE_WRITABLE;
-        if (error_code & (1 << 2)) {
-            vmm_flags |= PTE_USER;
-        }
-
-        // Мапируем физический фрейм на виртуальную страницу
-        vmm_map_page(&kernel_space, aligned_fault_addr, phys, vmm_flags);
-
-        // Возвращаем управление. Процессор перезапустит упавшую инструкцию.
-        return;
+    // Запрашиваем физический фрейм у PMM
+    uintptr_t phys = pmm_alloc_frame();
+    if (phys == 0) {
+      // Если физическая память физически кончилась — это системная паника
+      Panic(
+          "Page Fault Handler: Out of physical memory during lazy allocation!");
     }
 
-    // =========================================================================
-    // КРАШ-ДАННЫЕ (Если это честный, необработанный баг ядра или процесса)
-    // =========================================================================
-  PageError();
-    print("\n!!! UNHANDLED PAGE FAULT !!!\n");
-    print("  Fault Address:  0x"); printf("%h", fault_addr); print("\n");
-    print("  Error Code:     0x"); printf("%h", error_code); print("\n");
-    print("  RIP (Code Ptr): 0x"); printf("%h", frame->rip); print("\n");
+    // Определяем текущее адресное пространство.
+    // Если упал пользовательский процесс, тут должен быть его space.
+    // Пока мы в ядре — берем глобальный kernel_space.
+    extern address_space_t kernel_space;
 
-    // Расшифровка причин
-    if (error_code & (1 << 0)) {
-        print("  Reason: Access rights violation (Protection Fault)\n");
-    } else {
-        print("  Reason: Page not present\n");
-    }
-
-    if (error_code & (1 << 1)) {
-        print("  Operation: WRITE\n");
-    } else if (error_code & (1 << 4)) {
-        print("  Operation: INSTRUCTION FETCH (Execute)\n");
-    } else {
-        print("  Operation: READ\n");
-    }
-
+    // Набор флагов для ленивой страницы.
+    // Если упал юзер, добавляем флаг PTE_USER, чтобы процессор разрешил ему
+    // доступ.
+    uint64_t vmm_flags = PTE_PRESENT | PTE_WRITABLE;
     if (error_code & (1 << 2)) {
-        print("  Privilege: USER-MODE\n");
-    } else {
-        print("  Privilege: KERNEL-MODE\n");
+      vmm_flags |= PTE_USER;
     }
 
-    if (error_code & (1 << 3)) {
-        print("  Error: Reserved bits set in page directory entries!\n");
-    }
+    // Мапируем физический фрейм на виртуальную страницу
+    vmm_map_page(&kernel_space, aligned_fault_addr, phys, vmm_flags);
 
-    // Намертво вешаем процессор
-    asm volatile("cli; hlt");
+    // Возвращаем управление. Процессор перезапустит упавшую инструкцию.
+    return;
+  }
+
+  // =========================================================================
+  // КРАШ-ДАННЫЕ (Если это честный, необработанный баг ядра или процесса)
+  // =========================================================================
+  PageError();
+  print("\n!!! UNHANDLED PAGE FAULT !!!\n");
+  print("  Fault Address:  0x");
+  printf("%h", fault_addr);
+  print("\n");
+  print("  Error Code:     0x");
+  printf("%h", error_code);
+  print("\n");
+  print("  RIP (Code Ptr): 0x");
+  printf("%h", frame->rip);
+  print("\n");
+
+  // Расшифровка причин
+  if (error_code & (1 << 0)) {
+    print("  Reason: Access rights violation (Protection Fault)\n");
+  } else {
+    print("  Reason: Page not present\n");
+  }
+
+  if (error_code & (1 << 1)) {
+    print("  Operation: WRITE\n");
+  } else if (error_code & (1 << 4)) {
+    print("  Operation: INSTRUCTION FETCH (Execute)\n");
+  } else {
+    print("  Operation: READ\n");
+  }
+
+  if (error_code & (1 << 2)) {
+    print("  Privilege: USER-MODE\n");
+  } else {
+    print("  Privilege: KERNEL-MODE\n");
+  }
+
+  if (error_code & (1 << 3)) {
+    print("  Error: Reserved bits set in page directory entries!\n");
+  }
+
+  // Намертво вешаем процессор
+  asm volatile("cli; hlt");
 }
 
 __attribute__((interrupt)) void
 invalide_opcode_handler(struct interrupt_frame *frame) {
-// Выключаем прерывания, чтобы никто не помешал нам напечатать краш-дамп
-    asm volatile("cli"); 
+  // Выключаем прерывания, чтобы никто не помешал нам напечатать краш-дамп
+  asm volatile("cli");
 
-    print("\n!!! KERNEL PANIC: INVALID OPCODE (#UD) !!!\n");
-    
-    // frame->rip содержит точный адрес инструкции, на которой процессор споткнулся!
-    print("  Failed at Instruction Pointer (RIP): 0x");
-    printf("%h", frame->rip); 
-    print("\n");
+  print("\n!!! KERNEL PANIC: INVALID OPCODE (#UD) !!!\n");
 
-    // Выводим указатель стека, чтобы проверить на срыв
-    print("  Stack Pointer (RSP):               0x");
-    printf("%h", frame->rsp);
-    print("\n");
+  // frame->rip содержит точный адрес инструкции, на которой процессор
+  // споткнулся!
+  print("  Failed at Instruction Pointer (RIP): 0x");
+  printf("%h", frame->rip);
+  print("\n");
 
-    // Намертво останавливаем процессор
-    while(1) {
-        asm volatile("hlt");
-    }
+  // Выводим указатель стека, чтобы проверить на срыв
+  print("  Stack Pointer (RSP):               0x");
+  printf("%h", frame->rsp);
+  print("\n");
+
+  // Намертво останавливаем процессор
+  while (1) {
+    asm volatile("hlt");
+  }
 }
 __attribute__((interrupt)) void
 double_fault_handler(struct interrupt_frame *frame) {
@@ -228,7 +241,7 @@ volatile u8 last_char = 0;
 __attribute__((interrupt)) void
 keyboard_handler(struct interrupt_frame *frame) {
   uint8_t scancode = inb(KBD_DATA_PORT);
-  u8 c = ReturnCharKeyboard(scancode);
+  u32 c = ReturnCharKeyboard(scancode);
   if (c) {
     last_char = c;
     key_pressed = 1;

@@ -146,7 +146,7 @@ u32 Uft8Decoder(char **string) // берем символ из строки
   }
 
   for (int i = 1; i < BytesToRead; i++) {
-    uint8_t next_byte = code[i];
+    u8 next_byte = code[i];
 
     // Проверяем, что байт-продолжение действительно начинается с '10'
     if ((next_byte & 0xC0) != 0x80) {

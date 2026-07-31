@@ -3,7 +3,7 @@
 #include <types.h>
 
 int IndexInsertC(char *arr, u32 *size, int max_size, int index,
-                 char value) { // C - значит что для char
+                 u32 value) { // C - значит что для char
   // size + 1: нам нужно место для нового символа
   // size + 2: нам нужно место для нуль-терминатора в конце (\0)
   if (*size + 1 >= max_size || index < 0 || index > *size) {
@@ -12,7 +12,7 @@ int IndexInsertC(char *arr, u32 *size, int max_size, int index,
 
   // Сдвигаем ТОЛЬКО длину строки (size) минус текущий индекс.
   // Мы НЕ добавляем +1 к размеру, чтобы не копировать мусор из arr[size].
-  memmove(&arr[index + 1], &arr[index], (*size - index) * sizeof(char));
+  memmove(&arr[index + 1], &arr[index], (*size - index) * sizeof(u32));
 
   arr[index] = value;
 

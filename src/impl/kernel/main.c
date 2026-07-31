@@ -124,8 +124,6 @@ void kernel_main() {
   pmm_init();
   asm volatile("sti");
   WelcomeMessage();
-  printf("%s", "Привет\n");
-  print("pede\n");
 
   // for (int i = 0; i < 1000; i++) {
   //   PrintChar((u32)i);

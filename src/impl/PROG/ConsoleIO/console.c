@@ -230,6 +230,7 @@ bool CheckSpecKeys(u8 SpecKey, char *string) {
     ArrowHandleRL(SpecKey, string);
     break;
   case DownArrow:
+    print("фва фвфв фывывфыв");
   case UpArrow:
     return false;
   default:
@@ -336,8 +337,12 @@ void Syntax(char *str) {
 
     if (str[i] == ' ')
       is_command = false;
-
-    DrawChar(render_col, render_row, str[i], color, CONSOLE_COLOR_BLACK);
+    // подсказку что это такое смотри в printf
+    // Если ты обрабатываешь символ напрямую из буфера клавиатуры:
+    u32 code =
+        (u32)str[i]; // Это уже готовый u32 код (например, 0x0444 или 'a')
+    u32 Symbol = FindGlyphIndex(code); // Переводим код в индекс глифа шрифта
+    DrawChar(render_col, render_row, Symbol, color, CONSOLE_COLOR_BLACK);
 
     // 3. Сдвигаем локальный курсор отрисовки
     render_col++;
@@ -451,7 +456,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
   // это понадобится для чтении клавиши, ведь при текущей
   // реализации читает только ascii без спец кодовх
   u32 i = 0;
-  u8 c = 0;
+  u32 c = 0;
   ActiveInputBuffer = string;
   ResetCursorBlink();
   ShellStartRow = CursorPosRow;
@@ -518,7 +523,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
     IndexInsertC(string, &i, max_len, CarretIndex++, c);
     ShiftRight(string);
     // PrintChar(c);
-    Syntax(string);
+    Syntax(string); // вот эта зерня печатает текст
     ClearAutoEndTail(string);
     ShellHistory *current = FindeAutoEnd(string);
     if (current != NULL) {
@@ -539,7 +544,7 @@ int ConsoleRead(char *string) { // мб спипать спец коды и от
 }
 
 char ReadKey() {
-  u8 GetChar;
+  u32 GetChar;
   RoundBuff.get(&GetChar);
   if (GetChar) {
     return GetChar;
