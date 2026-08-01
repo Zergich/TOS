@@ -31,7 +31,7 @@ const u32 *vga_logo[] = {
 };
 void PrintInfo() {
   ConsoleSetCarretPos(LeftPadding, CursorPosRow + 5);
-  printf("%FOS%F: TOS %S\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,
+  printf("%FOS%F: TOS %s\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,
          VersionOS);
   CursorSetColumn(LeftPadding);
   printf("%FUptime%F: %u minute\n", CONSOLE_COLOR_GREEN, CONSOLE_COLOR_WHITE,
@@ -79,7 +79,7 @@ void DrawCubeLogo(u16 pos, u16 row) {
   ConsoleSetCarretPos(pos, row);
   for (int i = 0; i < rows; i++) {
     // Выводим i-ю строку, увеличивая координату Y на i
-    printf("%F%s%F", 0x5027F5, vga_logo[i], CONSOLE_COLOR_CYAN);
+    printf("%F%S%F", 0x5027F5, vga_logo[i], CONSOLE_COLOR_CYAN);
   }
 }
 

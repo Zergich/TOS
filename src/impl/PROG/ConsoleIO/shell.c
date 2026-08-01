@@ -107,7 +107,7 @@ void Shell() {
     break;
 
   case NotACommand:
-    printf("\"%F%s%F\" - Is not a command.\n", CONSOLE_COLOR_YELLOW, pede,
+    printf("\"%F%S%F\" - Is not a command.\n", CONSOLE_COLOR_YELLOW, pede,
            CONSOLE_COLOR_CYAN);
     break;
   case Pede:

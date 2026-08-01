@@ -31,7 +31,9 @@ enum {
       u32: print_unsigned,                                                     \
       char: print_char,                                                        \
       char *: print_str,                                                       \
-      u32 *: print_str_u32_native)(x)
+      const char *: print_str, /* <--- Добавлено для "строк" */                \
+      u32 *: print_str_u32_native,                                             \
+      const u32 *: print_str_u32_native)(x) /* <--- Добавлено для U"строк" */
 
 void ConsoleClear();
 // Вывод

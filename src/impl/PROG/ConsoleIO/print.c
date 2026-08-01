@@ -173,12 +173,12 @@ void printf(char *string, ...) { // а это уже тяжелая артиле
         PrintDEC((uint64_t)val); // Выводим через printDEC
         break;
       } // ИСПРАВЛЕНО: здесь не хватало закрывающей скобки для блока case 'u'
-      case 'S':
+      case 's':
         char *strC = va_arg(args, char *);
 
         print(strC);
         break;
-      case 's':
+      case 'S':
         u32 *str = va_arg(args, u32 *);
 
         print(str);
