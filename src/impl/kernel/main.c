@@ -20,6 +20,12 @@
 
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 
+#include <libs/rand.h>
+
+#include <ConsoleIO/LoadingScene/test1.h>
+
+#include <System/Sheduler/sheduler.h>
+
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
 extern StringStruct string;
@@ -102,6 +108,16 @@ void init_font() {
     }
   }
 }
+void task_a() {
+  int i = 0;
+  while (1) {
+    // Печатаем или делаем что-то видимое
+    // Например, вывод символа 'A'
+    ConsoleSetCarretPos(80, 0);
+    print(i++);
+    Timepit.Sleep(60);
+  }
+}
 
 void kernel_main() {
   enable_sse();
@@ -114,7 +130,6 @@ void kernel_main() {
   uint32_t *fb_ptr = (uint32_t *)fb->address;
   PixelGrapchics.Init(fb_ptr);
   InitConstantGraphics(fb->pitch / 4, fb->width, fb->height);
-
   // оберка передачи данных в функцию геморойней с графикой другое дело
   // передача указателся на структуру карты памяти
   MemMapStructPtr = &memmap_request;
@@ -125,16 +140,16 @@ void kernel_main() {
   asm volatile("sti");
   WelcomeMessage();
 
-  // for (int i = 0; i < 1000; i++) {
-  //   PrintChar((u32)i);
-  // }
-
   vmm_init();
   kmalloc_init();
   cpu_init(&CPUInfo);
-  static string15 pede;
-  while (true) {
-    Shell();
-    // Бесконечный цикл ядра
-  }
+
+  struct DateTime RandSeedDate = GetTimeRTS();
+  Random.init(RandSeedDate.day ^
+              RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
+
+  // Start();
+  CreateTask(task_a);
+
+  ShellWork();
 }

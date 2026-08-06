@@ -7,9 +7,9 @@
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 #include <System/sysinfo.h>
 #include <libs/format.h>
+#include <libs/rand.h>
 #include <libs/string.h>
 #include <types.h>
-
 extern ConsoleInput Console;
 
 enum ShellCommand {
@@ -24,6 +24,7 @@ enum ShellCommand {
   GetTime = 7,
   FetchProgram = 8,
   CPUPrintInfo = 9,
+  GetRandomNum = 10,
 };
 
 int ParseCommnad(u32 *str) { // очевидная проблема в том что пока эта херь не
@@ -70,6 +71,10 @@ int ParseCommnad(u32 *str) { // очевидная проблема в том ч
   if (string.Strcmp(str, U"fetch") == 0) {
     // Fetch();
     return FetchProgram;
+  }
+  if (string.Strcmp(str, U"rand") == 0) {
+    // printf("%i\n", Random.rand());
+    return GetRandomNum;
   }
   return NotACommand;
 }
@@ -140,7 +145,18 @@ void Shell() {
   case CPUPrintInfo:
     PintInfoCPU();
     break;
+  case GetRandomNum:
+    printf("%i\n", Random.rand());
+    break;
   }
   kfree(argv);
   ShellCommandEnding();
+}
+
+void ShellWork() {
+  static string15 pede;
+  while (true) {
+    Shell();
+    // Бесконечный цикл ядра
+  }
 }

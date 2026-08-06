@@ -27,6 +27,9 @@ u8 ReturnSpecCodes(u8 ScanCode) { // шифт альт капс и тд стре
     if (ShiftEnabled)
       Layout = (string.Strcmp(Layout, U"EN") == 0) ? U"RU" : U"EN";
     return ScanCode;
+  case (Key_Alt | Key_Realising): // Отпускание ALT
+    AltEnabled = false;
+    return ScanCode;
 
   case Key_Tab:
   case UpArrow:

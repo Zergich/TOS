@@ -5,11 +5,11 @@
 #include <arch/x86_64/io.h>
 #include <drivers/keyboard.h>
 #include <libs/datastruct.h>
-#include <libs/time.h>
 #include <stdint.h>
 
 #include <System/MemoryManager/PMM.h>
 #include <System/MemoryManager/VMM.h>
+#include <System/Sheduler/sheduler.h>
 
 #pragma GCC target("general-regs-only") // запрет на поддержку SSE/AVX
                                         // выключение регистров XMM/YMM
@@ -276,21 +276,74 @@ __attribute__((interrupt)) void empty_handler(struct interrupt_frame *frame) {
   asm volatile("iretq");
 }
 
-extern TimePit Timepit;
-volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
-__attribute__((interrupt)) void pit_hendler(struct interrupt_frame *frame) {
-  PitTicks++;
-  if (PitTicks % 1000 == 0) {
-    Timepit.PitTimerSecondsUp++;
-  }
-  CursorBlinkTicks++;
-  if (CursorBlinkTicks >= CURSOR_BLINK_RATE) {
-    CursorBlinkTicks = 0;
-    CursorVisible = !CursorVisible; // Инвертируем состояние (1->0, 0->1)
-    DrawConsoleCursor();            // Перерисовываем курсор
-  }
-  Timepit.PitTimerMiliSecondsUp++;
-  outb(PIC1_COMMAND, PIC_EOI);
+// extern TimePit Timepit;
+// volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
+// u64 pit_hendler(u64 CurrentRsp) {
+//   PitTicks++;
+//   if (PitTicks % 1000 == 0) {
+//     Timepit.PitTimerSecondsUp++;
+//   }
+//   CursorBlinkTicks++;
+//   if (CursorBlinkTicks >= CURSOR_BLINK_RATE) {
+//     CursorBlinkTicks = 0;
+//     CursorVisible = !CursorVisible; // Инвертируем состояние (1->0, 0->1)
+//     DrawConsoleCursor();            // Перерисовываем курсор
+//   }
+//   Timepit.PitTimerMiliSecondsUp++;
+//   outb(PIC1_COMMAND, PIC_EOI);
+//   return CurrentRsp;
+// }
+// Не забудь убрать __attribute__((interrupt)) у старой функции,
+// теперь мы используем naked!
+__attribute__((naked)) void timer_interrupt_handler(void) {
+  __asm__ volatile(
+      // 1. Сохраняем все регистры
+      "push %rax\n"
+      "push %rbx\n"
+      "push %rcx\n"
+      "push %rdx\n"
+      "push %rsi\n"
+      "push %rdi\n"
+      "push %rbp\n"
+      "push %r8\n"
+      "push %r9\n"
+      "push %r10\n"
+      "push %r11\n"
+      "push %r12\n"
+      "push %r13\n"
+      "push %r14\n"
+      "push %r15\n"
+
+      // 2. Кладем текущий RSP в RDI (это первый аргумент для C-функции)
+      "mov %rsp, %rdi\n"
+
+      // 3. Вызываем твою C-функцию schedule()
+      // Она выполнит инкремент тиков, мигание курсора, пошлет EOI
+      // и вернет новый RSP в регистре RAX
+      "call Schedule\n"
+
+      // 4. Подменяем стек на тот, что вернула функция schedule!
+      "mov %rax, %rsp\n"
+
+      // 5. Восстанавливаем регистры (уже из нового стека)
+      "pop %r15\n"
+      "pop %r14\n"
+      "pop %r13\n"
+      "pop %r12\n"
+      "pop %r11\n"
+      "pop %r10\n"
+      "pop %r9\n"
+      "pop %r8\n"
+      "pop %rbp\n"
+      "pop %rdi\n"
+      "pop %rsi\n"
+      "pop %rdx\n"
+      "pop %rcx\n"
+      "pop %rbx\n"
+      "pop %rax\n"
+
+      // 6. Возвращаемся туда, откуда нас прервали
+      "iretq\n");
 }
 
 // Инициализация IDT – назначаем обработчики
@@ -317,7 +370,7 @@ void idt_init() {
   pit_init(1000);
   // Устанавливаем обработчик деления на ноль в вектор 0
   set_idt_gate(33, (void *)keyboard_handler);
-  set_idt_gate(32, (void *)pit_hendler);
+  set_idt_gate(32, (void *)timer_interrupt_handler);
 
   set_idt_gate(0, (void *)divide_by_zero_handler);
   set_idt_gate(6, (void *)invalide_opcode_handler);

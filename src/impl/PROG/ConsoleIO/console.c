@@ -230,7 +230,6 @@ bool CheckSpecKeys(u8 SpecKey, u32 *string) {
     ArrowHandleRL(SpecKey, string);
     break;
   case DownArrow:
-    print("фва фвфв фывывфыв");
   case UpArrow:
     return false;
   default:

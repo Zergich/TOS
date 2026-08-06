@@ -6,6 +6,13 @@
 CC := x86_64-elf-gcc
 LD := x86_64-elf-ld
 
+
+# --- Изолированная сборка Lua по команде 'make lua' ---
+
+# Находим все файлы Lua в папке Lua в корне проекта
+lua_source_files := $(shell find Lua -type f -name "*.c")
+lua_object_files := $(patsubst Lua/%.c, build-lua/%.o, $(lua_source_files))
+
 # --- Флаги компиляции ---
 # -I подключает папки заголовков, чтобы не писать длинные пути в #include
 CFLAGS_COMMON := -I src/Includes \
@@ -112,6 +119,17 @@ build-x86_64: $(ALL_RELEASE_OBJECTS) $(ALL_DEBUG_OBJECTS)
 		targets/x86_64/iso -o dist/x86_64/kernel.iso
 
 	@echo "✨ Сборка успешно завершена! Образ: dist/x86_64/kernel.iso"
+
+
+# Цель: вызывать как 'make lua'
+lua: $(lua_object_files)
+	@echo "✨ Lua успешно скомпилирован отдельно в папку build-lua/!"
+
+# Правило компиляции файлов Lua с использованием папки с заглушками (libc_stubs)
+build-lua/%.o: Lua/%.c
+	@mkdir -p "$(dir $@)"
+	$(CC) $(CFLAGS_COMMON) -I. -ILua -I./Lua/libc_stubs -O2 -fno-stack-protector -fno-common -c "$<" -o "$@"
+
 
 # --- Очистка проекта ---
 clean:
