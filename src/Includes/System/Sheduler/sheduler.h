@@ -10,6 +10,8 @@ typedef struct taskinfo {
   u64 rsp;            // указатель на стек (там где регистры)
   void *stack_bottom; // Указатель на выделенную память стека
                       // (для free())
+  u64 stack_base;     // Самый верх стека (откуда он начинает расти вниз)
+  u64 stack_limit;    // Максимальная нижняя граница (например, 2 МБ)
   TaskState state;
 
   struct taskinfo *next;
@@ -42,3 +44,7 @@ Task FindeTask(u32 id);
 Task *CreateTask(void (*entry_point)());
 
 u64 Schedule(u64 current_rsp);
+
+Task *CreateHideTask(void (*entry_point)());
+void IdleTask();
+extern Task *PID0_Prt;

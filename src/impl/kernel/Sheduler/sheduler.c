@@ -1,3 +1,5 @@
+#include <System/MemoryManager/PMM.h>
+#include <System/MemoryManager/VMM.h>
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 #include <System/Sheduler/sheduler.h>
 #include <arch/x86_64/interrupts.h>
@@ -7,19 +9,21 @@
 
 Task *CurrentTask = NULL;
 Task *HeadTask = NULL;
+Task *PID0_Prt = NULL;
+
+static u64 next_stack_vaddr = 0xFFFFFF0000000000;
+volatile u16 PitTicks = 0;
+static bool IsFirstTask = true;
 
 void AddTask(Task *NewTask) {
   if (HeadTask == NULL) {
     HeadTask = NewTask;
     CurrentTask = NewTask;
-
-    // кольцо из одного элемента укахывает само на себя
     NewTask->next = HeadTask;
     NewTask->back = HeadTask;
     return;
   }
-  Task *LastTask =
-      HeadTask->back; // Последний элемент это просто предыдущий у головы
+  Task *LastTask = HeadTask->back;
 
   LastTask->next = NewTask;
   NewTask->back = LastTask;
@@ -29,123 +33,143 @@ void AddTask(Task *NewTask) {
 }
 
 void RemoveTask(Task *task) {
+  if (task == NULL)
+    return;
+
+  // 1. Если это был единственный элемент в кольце
   if (task->next == task) {
     HeadTask = NULL;
     CurrentTask = NULL;
+    task->next = NULL;
+    task->back = NULL;
+    return;
   }
-  // Замыкаем соседей между собой, вычеркивая текущую задачу
+
+  // 2. Вычеркиваем задачу из кольца
   task->back->next = task->next;
   task->next->back = task->back;
 
-  // Если удаляемая задача была головой списка — сдвигаем голову
   if (HeadTask == task) {
     HeadTask = task->next;
   }
 
-  // Если удаляем текущую исполняемую задачу — сдвигаем current_task
   if (CurrentTask == task) {
     CurrentTask = task->next;
   }
 
-  // Зачищаем указатели удаленного элемента
   task->next = NULL;
   task->back = NULL;
 }
 
-static u32 next_pid = 1;
+void IdleTask() {
+  while (true) {
+    asm volatile("hlt");
+  }
+}
 
-Task *CreateTask(void (*entry_point)()) {
-  // 1. Выделяем память под структуру задачи
-  Task *t = (Task *)kmalloc(sizeof(Task));
-  t->id = next_pid++;
-  t->state = TASK_READY;
+void TaskExit() {
+  asm volatile("cli");
+  CurrentTask->state = TASK_DEAD;
+  asm volatile("int $0x20");
+  while (true) {
+    asm volatile("hlt");
+  }
+}
 
-  // 2. Выделяем 16 КБ под стек задачи
-  u64 stack_size = 4096 * 4;
-  void *stack_mem = kmalloc(stack_size);
-  t->stack_bottom = stack_mem;
+Task *CreateHideTask(void (*entry_point)()) {
+  Task *t = kmalloc(sizeof(Task));
 
-  // 3. Вычисляем ВЕРШИНУ стека (так как стек в x86_64 растёт СВЕРХУ ВНИЗ)
-  u64 stack_top = (u64)stack_mem + stack_size;
+  u64 max_stack_size = 2 * 1024 * 1024;
+  t->stack_base = next_stack_vaddr;
+  t->stack_limit = t->stack_base - max_stack_size;
+  next_stack_vaddr -= max_stack_size;
 
-  // Выравниваем верхушку стека по 16 байт (требование System V ABI)
+  u64 first_page_vaddr = t->stack_base - PAGE_SIZE;
+  uintptr_t phys = pmm_alloc_frame();
+  vmm_map_page(&kernel_space, first_page_vaddr, phys,
+               PTE_PRESENT | PTE_WRITABLE);
+
+  u64 stack_top = t->stack_base;
   stack_top &= ~0xF;
+  stack_top -= 8;
 
-  // 4. Размещаем фальшивый кадр на самой вершине стека
+  u64 *return_ptr = (u64 *)stack_top;
+  *return_ptr = (u64)TaskExit;
+
   trap_frame_t *frame = (trap_frame_t *)(stack_top - sizeof(trap_frame_t));
 
-  // 5. Заполняем аппаратную часть кадра
-  frame->rip = (u64)entry_point; // Куда прыгнет процессор при iretq
-  // Читаем текущие рабочие CS и SS, на которых сейчас работает ядро
   u16 current_cs, current_ss;
   __asm__ volatile("mov %%cs, %0" : "=r"(current_cs));
   __asm__ volatile("mov %%ss, %0" : "=r"(current_ss));
 
-  // 5. Заполняем аппаратную часть кадра
   frame->rip = (u64)entry_point;
-  frame->cs = current_cs; // Берем реальный CS!
-  frame->ss = current_ss; // Берем реальный SS!
+  frame->cs =
+      (u64)current_cs; // Важно: каст к u64 для правильного размера на стеке
+  frame->ss = (u64)current_ss;
   frame->rsp = stack_top;
   frame->rflags = 0x202;
 
-  // 5. Заполняем аппаратную часть кадра
-  frame->rip = (u64)entry_point;
-  frame->cs = current_cs; // Берем реальный CS!
-  frame->ss = current_ss; // Берем реальный SS!
-  frame->rsp = stack_top;
-  frame->rflags = 0x202; // 6. Обнуляем регистры общего назначения
-  frame->rax = 0;
-  frame->rbx = 0;
-  frame->rcx = 0;
-  frame->rdx = 0;
-  frame->rsi = 0;
-  frame->rdi = 0;
-  frame->rbp = 0;
-  frame->r8 = 0;
-  frame->r9 = 0;
-  frame->r10 = 0;
-  frame->r11 = 0;
-  frame->r12 = 0;
-  frame->r13 = 0;
-  frame->r14 = 0;
-  frame->r15 = 0;
+  // Обнуляем регистры
+  frame->rax = frame->rbx = frame->rcx = frame->rdx = 0;
+  frame->rsi = frame->rdi = frame->rbp = 0;
+  frame->r8 = frame->r9 = frame->r10 = frame->r11 = 0;
+  frame->r12 = frame->r13 = frame->r14 = frame->r15 = 0;
 
-  // 7. Сохраняем текущую верхушку стека (с кадра) в структуру задачи
   t->rsp = (u64)frame;
-
-  // 8. Вставляем задачу в твой кольцевой список
-  AddTask(t);
+  t->state = TASK_READY; // Инициализируем статус!
 
   return t;
 }
-volatile u16 PitTicks = 0; // тики и так сбрасываются переполнением
-static bool IsFirstTask = true;
+
+// Избавились от дублирования кода!
+Task *CreateTask(void (*entry_point)()) {
+  Task *t = CreateHideTask(entry_point);
+  AddTask(t);
+  return t;
+}
+
 u64 Schedule(u64 current_rsp) {
-  //  старый код для работы таймера
   PitTicks++;
   if (PitTicks % 1000 == 0)
     Timepit.PitTimerSecondsUp++;
   Timepit.PitTimerMiliSecondsUp++;
   outb(PIC1_COMMAND, PIC_EOI);
 
-  //------------------------------
-
-  if (CurrentTask == NULL) {
-    return current_rsp;
-  }
-
-  // --- ФИКС: При первом запуске НЕ сохраняем старый стек! ---
+  // 1. Первый запуск системы
   if (IsFirstTask) {
     IsFirstTask = false;
-    return CurrentTask->rsp; // Сразу отдаём стек новой задачи!
+    if (HeadTask != NULL) {
+      return CurrentTask->rsp;
+    }
+    return PID0_Prt->rsp;
   }
 
-  // 1. Сохраняем RSP текущей задачи
-  CurrentTask->rsp = current_rsp;
+  // 2. Если очередь пуста — мы работаем в контексте PID0
+  if (HeadTask == NULL || CurrentTask == NULL) {
+    PID0_Prt->rsp = current_rsp; // ОБЯЗАТЕЛЬНО сохраняем текущий стек PID0!
+    return PID0_Prt->rsp;
+  }
 
-  // 2. Переходим к следующей задаче по кольцу
+  // 3. Если текущая задача завершилась (TASK_DEAD)
+  if (CurrentTask->state == TASK_DEAD) {
+    Task *dead_task = CurrentTask;
+
+    // Перемещаемся на следующую перед удалением
+    CurrentTask = CurrentTask->next;
+    RemoveTask(dead_task);
+
+    // Если задач не осталось — переключаемся на PID0
+    if (HeadTask == NULL || CurrentTask == NULL) {
+      return PID0_Prt->rsp;
+    }
+
+    // Возвращаем стек новой задачи (стек умершей НЕ сохраняем)
+    return CurrentTask->rsp;
+  }
+
+  // 4. Обычная ротация живых задач
+  CurrentTask->rsp = current_rsp;
   CurrentTask = CurrentTask->next;
 
-  // 3. Возвращаем RSP новой задачи
   return CurrentTask->rsp;
 }

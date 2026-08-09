@@ -154,7 +154,6 @@ void Shell() {
 }
 
 void ShellWork() {
-  static string15 pede;
   while (true) {
     Shell();
     // Бесконечный цикл ядра

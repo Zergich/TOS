@@ -1,5 +1,6 @@
 
 #include <ConsoleIO/console.h>
+#include <System/Sheduler/sheduler.h>
 #include <System/rsod.h>
 #include <arch/x86_64/interrupts.h>
 #include <arch/x86_64/io.h>
@@ -83,29 +84,53 @@ divide_by_zero_handler(struct interrupt_frame *frame) {
   DivideZero();
   asm volatile("hlt");
 }
+// Не забудь подключить заголовок, где объявлен CurrentTask и Task
+// #include "task.h"
+
 static inline int is_lazy_allocation_allowed(uint64_t fault_addr,
-                                             uintptr_t error_code) {
+                                             uintptr_t error_code,
+                                             struct interrupt_frame *frame) {
   // Бит 2 в error_code: 1 - ошибка из user-mode, 0 - из kernel-mode
   int is_user = error_code & (1 << 2);
+  if (CurrentTask == NULL) {
+    print("\n[!] EARLY KERNEL PANIC: Page Fault before scheduler start!\n");
 
-  // 1. ПРАВИЛО: Если ошибка произошла из-за нарушения прав (например, запись в
-  // Read-Only), это не ленивая аллокация, это баг защиты!
+    print("Fault Address (CR2): 0x");
+    printf("%h", fault_addr);
+    print("\n");
+
+    print("frame rip: 0x");
+    printf("%h", frame->rip);
+    print("\n");
+
+    asm volatile("cli; hlt");
+  }
+  // 1. ПРАВИЛО: Нарушение прав (Protection Fault)
+  // Если страница есть (Present), но мы нарушили права (например, пишем в
+  // Read-Only), это не ленивая аллокация, это баг.
   if (error_code & (1 << 0)) {
     return 0;
   }
 
+  // --- НОВОЕ: ПРАВИЛО ДЛЯ ДИНАМИЧЕСКОГО СТЕКА ЗАДАЧ (Пока мы в Ring 0) ---
+  if (CurrentTask != NULL) {
+    // Проверяем, попадает ли адрес сбоя в разрешенный диапазон стека текущей
+    // задачи. Стек растет ВНИЗ: от stack_base к stack_limit. fault_addr должен
+    // быть МЕНЬШЕ базы (уже выделенной верхушки) и БОЛЬШЕ ИЛИ РАВЕН лимиту
+    // (самой глубокой разрешенной точке).
+    if (fault_addr < CurrentTask->stack_base &&
+        fault_addr >= CurrentTask->stack_limit) {
+      return 1; // Это наш стек! Разрешаем ленивое выделение физической
+                // страницы.
+    }
+  }
+
   // 2. ПРАВИЛО: Пользовательское пространство (Lower Half)
-  // В будущем здесь будет проверка по структурам процесса: if
-  // (vma_find(current_process, fault_addr)) Сейчас разрешаем ленивую аллокацию
-  // для пользовательской памяти (например, ниже 0x00007FFFFFFFFFFF)
   if (is_user && fault_addr < 0x0000800000000000ULL) {
     return 1;
   }
 
-  // 3. ПРАВИЛО: Пространство ядра (Higher Half)
-  // Разрешаем ленивую аллокацию только для региона динамической кучи ядра
-  // (Kernel Heap). Замени KERNEL_HEAP_START и KERNEL_HEAP_END на свои реальные
-  // границы кучи ядра, когда напишешь kmalloc.
+  // 3. ПРАВИЛО: Пространство ядра (Dynamic Heap)
   /*
   extern uint64_t KERNEL_HEAP_START;
   extern uint64_t KERNEL_HEAP_END;
@@ -114,9 +139,8 @@ static inline int is_lazy_allocation_allowed(uint64_t fault_addr,
   }
   */
 
-  return 0; // Для всех остальных адресов ленивая аллокация запрещена
+  return 0; // Для всех остальных адресов ленивая аллокация запрещена -> КРАШ.
 }
-
 __attribute__((interrupt)) void
 page_fault_handler(struct interrupt_frame *frame, uintptr_t error_code) {
   uint64_t fault_addr;
@@ -127,7 +151,7 @@ page_fault_handler(struct interrupt_frame *frame, uintptr_t error_code) {
   uint64_t aligned_fault_addr = fault_addr & ~(PAGE_SIZE - 1);
 
   // Проверяем, имеем ли мы право обработать этот fault лениво
-  if (is_lazy_allocation_allowed(fault_addr, error_code)) {
+  if (is_lazy_allocation_allowed(fault_addr, error_code, frame)) {
 
     // Запрашиваем физический фрейм у PMM
     uintptr_t phys = pmm_alloc_frame();

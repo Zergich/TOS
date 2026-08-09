@@ -24,6 +24,7 @@
 
 #include <ConsoleIO/LoadingScene/test1.h>
 
+#include <ConsoleIO/Fetch/fetch.h>
 #include <System/Sheduler/sheduler.h>
 
 extern Pixeling PixelGrapchics;
@@ -137,9 +138,7 @@ void kernel_main() {
   idt_init();
   init_font();
   pmm_init();
-  asm volatile("sti");
   WelcomeMessage();
-
   vmm_init();
   kmalloc_init();
   cpu_init(&CPUInfo);
@@ -149,7 +148,13 @@ void kernel_main() {
               RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
 
   // Start();
-  CreateTask(task_a);
+  PID0_Prt = CreateHideTask(IdleTask);
+  CreateTask(ShellWork);
+  CreateTask(Fetch);
 
-  ShellWork();
+  asm volatile("sti");
+
+  while (true) {
+    __asm__ volatile("hlt");
+  }
 }
