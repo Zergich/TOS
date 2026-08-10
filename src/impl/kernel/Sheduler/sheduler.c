@@ -127,7 +127,8 @@ Task *CreateTask(void (*entry_point)()) {
   AddTask(t);
   return t;
 }
-
+void DeadTaskReaper(Task *DeadTask);
+static Task *TaskToFree = NULL;
 u64 Schedule(u64 current_rsp) {
   PitTicks++;
   if (PitTicks % 1000 == 0)
@@ -143,6 +144,10 @@ u64 Schedule(u64 current_rsp) {
     }
     return PID0_Prt->rsp;
   }
+  if (TaskToFree != NULL) {
+    DeadTaskReaper(TaskToFree);
+    TaskToFree = NULL;
+  }
 
   // 2. Если очередь пуста — мы работаем в контексте PID0
   if (HeadTask == NULL || CurrentTask == NULL) {
@@ -157,7 +162,7 @@ u64 Schedule(u64 current_rsp) {
     // Перемещаемся на следующую перед удалением
     CurrentTask = CurrentTask->next;
     RemoveTask(dead_task);
-
+    TaskToFree = dead_task;
     // Если задач не осталось — переключаемся на PID0
     if (HeadTask == NULL || CurrentTask == NULL) {
       return PID0_Prt->rsp;
@@ -172,4 +177,15 @@ u64 Schedule(u64 current_rsp) {
   CurrentTask = CurrentTask->next;
 
   return CurrentTask->rsp;
+}
+
+void DeadTaskReaper(Task *DeadTask) {
+  if (DeadTask == NULL)
+    return;
+  u64 FirstPage = DeadTask->stack_base -
+                  PAGE_SIZE; // для поиска виртуального адреса первой страницы
+  u64 PhysAddr = vmm_virt_to_phys(&kernel_space, FirstPage);
+  vmm_unmap_page(&kernel_space, FirstPage);
+  pmm_free_frame(PhysAddr);
+  kfree(DeadTask);
 }

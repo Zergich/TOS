@@ -147,10 +147,9 @@ void kernel_main() {
   Random.init(RandSeedDate.day ^
               RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
 
-  // Start();
+  Start();
   PID0_Prt = CreateHideTask(IdleTask);
   CreateTask(ShellWork);
-  CreateTask(Fetch);
 
   asm volatile("sti");
 

@@ -96,6 +96,60 @@ void ChaoticTentaclesAnimation(void) {
     }
   }
 }
+// Глобальный массив для хранения позиции "капли" в каждой колонке.
+// Предположим, NUM_COLUMS у тебя около 80.
+int drop_y[80];
+
+// Простейший генератор случайных чисел (Linear Congruential Generator),
+// если у тебя его еще нет в ядре.
+static unsigned long int next = 1;
+int rand(void) {
+  next = next * 1103515245 + 12345;
+  return (unsigned int)(next / 65536) % 32768;
+}
+
+void InitSplashMatrix() {
+  // Инициализируем капли случайными позициями ВЫШЕ экрана,
+  // чтобы они падали не одновременно
+  for (int i = 0; i < NUM_COLUMS; i++) {
+    drop_y[i] = -(rand() % NUM_ROWS);
+  }
+}
+
+void DrawMatrixFrame() {
+  for (int x = 0; x < NUM_COLUMS; x++) {
+    int y = drop_y[x];
+
+    // 1. Закрашиваем хвост (стираем символ высоко над текущей каплей)
+    int tail_y = y - 5; // Длина хвоста капли (например, 5 символов)
+    if (tail_y >= 0 && tail_y < NUM_ROWS) {
+      ConsoleSetCarretPos(x, tail_y);
+      // Тут нужно вызвать твою функцию вывода символа, например:
+      // ConsolePutChar(' ');
+    }
+
+    // 2. Рисуем "голову" капли
+    if (y >= 0 && y < NUM_ROWS) {
+      ConsoleSetCarretPos(x, y);
+
+      // Выбираем случайный ASCII символ от 33 ('!') до 126 ('~')
+      char random_char = 33 + (rand() % 94);
+
+      // Устанавливаем зеленый цвет и печатаем символ
+      // SetColor(VGA_COLOR_LIGHT_GREEN);
+      // ConsolePutChar(random_char);
+    }
+
+    // 3. Двигаем каплю вниз
+    drop_y[x]++;
+
+    // 4. Если капля улетела за нижний край с учетом хвоста — сбрасываем ее
+    // наверх
+    if (drop_y[x] - 5 > NUM_ROWS) {
+      drop_y[x] = 0; // или снова -(rand() % 10)
+    }
+  }
+}
 void Start() {
   ChaoticTentaclesAnimation();
   // for (int i = 0; i < 30; i++) {
