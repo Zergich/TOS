@@ -70,7 +70,14 @@ void PMMBitMapPlaceNotfound() {
   print("PMM Error: There was no place for bitmap");
 }
 
-void Panic(char *str) {
+void PanicC(char *str) {
+  print(str);
+  while (1) {
+    __asm__ volatile("cli; hlt"); // Отключаем прерывания и останавливаем CPU
+  }
+}
+
+void PanicU(u32 *str) {
   // ErrorFone();
   print(str);
   while (1) {

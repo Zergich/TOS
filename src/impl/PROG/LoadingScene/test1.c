@@ -150,8 +150,27 @@ void DrawMatrixFrame() {
     }
   }
 }
+#include <ConsoleIO/LoadingScene/frames.h>
+void PlaySplashScreen() {
+  for (int frame = 0; frame < FRAME_COUNT; frame++) {
+    for (int y = 0; y < FRAME_HEIGHT; y++) {
+
+      // Ставим каретку в начало строки
+      ConsoleSetCarretPos(0, y);
+
+      for (int x = 0; x < FRAME_WIDTH; x++) {
+        char symbol = splash_frames[frame][y][x];
+
+        // Твоя функция вывода одного символа (например):
+        print(symbol);
+      }
+    }
+
+    Timepit.Sleep(50);
+  }
+}
 void Start() {
-  ChaoticTentaclesAnimation();
+  PlaySplashScreen();
   // for (int i = 0; i < 30; i++) {
   //   u16 random_x = (u16)((u32)Random.rand() % (u32)NUM_COLUMS);
   //   u16 random_y = (u16)((u32)Random.rand() % (u32)NUM_ROWS);

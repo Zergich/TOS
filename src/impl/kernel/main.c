@@ -25,7 +25,7 @@
 #include <ConsoleIO/LoadingScene/test1.h>
 
 #include <ConsoleIO/Fetch/fetch.h>
-#include <System/Sheduler/sheduler.h>
+#include <System/Process/Process.h>
 
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
@@ -147,9 +147,9 @@ void kernel_main() {
   Random.init(RandSeedDate.day ^
               RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
 
-  Start();
   PID0_Prt = CreateHideTask(IdleTask);
   CreateTask(ShellWork);
+  CreateTask(Start);
 
   asm volatile("sti");
 
