@@ -3,6 +3,7 @@
 #include <System/rsod.h>
 #include <libs/MemoryUtils.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <types.h>
 
 VNode *VfsAllocNode(VNodeType type) {
@@ -42,4 +43,12 @@ void VfsUnrefNode(VNode *node) {
       kfree(node);
     }
   }
+}
+
+int64_t VfsWrite(struct VNode *node, u64 offset, const void *buf, u64 count) {
+  return -1;
+}
+
+int64_t VfsRead(struct VNode *node, u64 offset, void *buf, u64 count) {
+  return -1;
 }

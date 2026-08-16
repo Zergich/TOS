@@ -1,23 +1,29 @@
 #include <System/Process/FdTable.h>
-#include <libs/MemoryUtils.h> // Для memset или аналогов
-
+#include <System/rsod.h>
+#include <libs/MemoryUtils.h>
 // fd - Файловый Дескриптор
 
 void FdTableInit(FdTable *table) {
-  // TODO: Guard clause: проверка table на NULL
-  // TODO: Очисти массив table->Entries с помощью memset
+  if (table == NULL)
+    Panic(U"Указатель на страницу файловых дескрипторов не действителен");
+  memset(table->Entries, 0, sizeof(table->Entries));
 }
 
 int FdTableAllocFd(FdTable *table, File *file) {
-  // TODO: Guard clause: проверь table и file
-  // TODO: Цикл от 0 до MAX_PROC_FILES - 1
-  // TODO: Запиши file в первый свободный слот (NULL) и верни его индекс
-  // TODO: Если слотов нет — верни -1
-  return -1;
+  if (table == NULL || file == NULL)
+    return -2; // условная егорка что херню передал в качестве параметров
+  for (int i = 0; i < MAX_PROC_FILES; i++) {
+    if (table->Entries[i] == NULL) {
+      table->Entries[i] = file;
+      return i;
+    }
+  }
+
+  return -1; // значит нет мест
 }
 
 File *FdTableGet(FdTable *table, int fd) {
-  if (table != NULL)
+  if (table == NULL)
     return NULL;
   if (fd < 0 || fd >= MAX_PROC_FILES)
     return NULL;
@@ -26,26 +32,33 @@ File *FdTableGet(FdTable *table, int fd) {
 }
 
 int FdTableClose(FdTable *table, int fd) {
-  // TODO: Получи file через FdTableGet(table, fd)
-  // TODO: Если file == NULL — верни -1
-  // TODO: Занули слот table->Entries[fd] = NULL
-  // TODO: Уменьши RefCount файла через VfsUnrefFile(file)
-  // TODO: Верни 0
-  return -1;
+  File *file = FdTableGet(table, fd);
+  if (file == NULL)
+    return -1;
+  table->Entries[fd] = NULL;
+
+  VfsUnrefFile(file);
+
+  return 0;
 }
 
 int FdTableDup(FdTable *table, int old_fd) {
-  // TODO: Получи file через FdTableGet(table, old_fd)
-  // TODO: Если file == NULL — верни -1
-  // TODO: Выдели новый слот: new_fd = FdTableAllocFd(table, file)
-  // TODO: Если new_fd < 0 — верни -1
-  // TODO: Инкрементируй RefCount файла через VfsRefFile(file)
-  // TODO: Верни new_fd
-  return -1;
+  File *file = FdTableGet(table, old_fd);
+  if (file == NULL)
+    return -1;
+  int new_fd = FdTableAllocFd(table, file);
+  if (new_fd < 0)
+    return -1;
+  VfsRefFile(file);
+  return new_fd;
 }
 
 void FdTableDestroy(FdTable *table) {
-  // TODO: Guard clause: проверка table на NULL
-  // TODO: Цикл от 0 до MAX_PROC_FILES - 1
-  // TODO: Если слот не NULL — вызови FdTableClose(table, i)
+  if (table == NULL)
+    Panic(U"Указатель на страницу файловых дескрипторов не действителен");
+  for (int i = 0; i < MAX_PROC_FILES; i++) {
+    if (table->Entries[i] != NULL) {
+      FdTableClose(table, i);
+    }
+  }
 }
