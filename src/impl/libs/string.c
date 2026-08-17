@@ -5,7 +5,6 @@
 #include <types.h>
 typedef enum {
   ERROR_CONVERT = -1,
-  OK = 0,
 } StringOPError;
 
 // Обновленные прототипы функций

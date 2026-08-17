@@ -1,5 +1,6 @@
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 #include <System/VFS/VfsFile.h>
+#include <System/VFS/VfsNode.h>
 #include <System/rsod.h>
 #include <libs/MemoryUtils.h>
 

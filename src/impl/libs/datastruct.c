@@ -17,8 +17,7 @@ RoundBufferObgect RoundBuff = {
 };
 volatile int head = 0;
 volatile int tail = 0;
-
-enum ExitCode { BUFFER_ROUNDED = 1, ERROR = -1, OK = 0 };
+enum ExitCode { BUFFER_ROUNDED = 1, ERROR = -1 };
 
 int PutIntoBuffer(u32 character) {
   int ExitCode = OK;
