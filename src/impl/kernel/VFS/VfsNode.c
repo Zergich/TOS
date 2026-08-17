@@ -1,7 +1,10 @@
 #include <System/MemoryManager/kmalloc/kmalloc.h>
+#include <System/VFS/Vfs.h>
+#include <System/VFS/VfsFile.h>
 #include <System/VFS/VfsNode.h>
 #include <System/rsod.h>
 #include <libs/MemoryUtils.h>
+#include <libs/string.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <types.h>
@@ -45,10 +48,60 @@ void VfsUnrefNode(VNode *node) {
   }
 }
 
-int64_t VfsWrite(struct VNode *node, u64 offset, const void *buf, u64 count) {
-  return -1;
+int64_t VfsWriteNode(struct VNode *node, u64 offset, const void *buf,
+                     u64 count) {
+  if (node == NULL || node->Ops == NULL || node->Ops->Write == NULL ||
+      buf == NULL)
+    return NULL_POINTER;
+  return node->Ops->Write(node, offset, buf, count);
 }
 
-int64_t VfsRead(struct VNode *node, u64 offset, void *buf, u64 count) {
-  return -1;
+int64_t VfsReadNode(struct VNode *node, u64 offset, void *buf, u64 count) {
+  if (node == NULL || node->Ops == NULL || node->Ops->Read == NULL ||
+      buf == NULL)
+    return NULL_POINTER;
+  return node->Ops->Read(node, offset, buf, count);
+}
+
+// да я знаю что путь должен быть константным но слит заточен под дрругое так
+// что пока что анлак
+int LookUp(struct VNode *parent, u32 *path, struct VNode **out_node) {
+  if (parent == NULL || parent->Ops == NULL || parent->Ops->Lookup == NULL)
+    return NULL_POINTER;
+
+  // кароче залупа шерстит по папкам рекурсивно вниз в поисках файла на открытие
+  // и так далее если начало строки пути из / значит корень и берем корневую
+  // ноду если же нет берем ту которая была передана в качестве параметра parent
+  int argc = 0;
+  u32 **argv = string.Split(path, '/', &argc);
+
+  struct VNode *CurrentNode = VfsRoot;
+  if (path[0] != U'/')
+    CurrentNode = parent;
+  struct VNode *NextNode = NULL;
+
+  VfsRefNode(CurrentNode);
+  for (int i = 0; i < argc; i++) {
+    // кароче все говорят что она не стригерритс на последний файл типа ранше
+    // счетчик выйдет. че та жесткий затуп словил с этого
+    if (CurrentNode->Type != VNODE_DIR) {
+      VfsUnrefNode(CurrentNode);
+      kfree(argv);
+      return NOT_A_DIR;
+    }
+
+    int Status = CurrentNode->Ops->Lookup(CurrentNode, argv[i], &NextNode);
+    if (Status != 0) {
+      kfree(argv);
+      VfsUnrefNode(CurrentNode);
+      return Status;
+    }
+    VfsUnrefNode(CurrentNode);
+    CurrentNode = NextNode;
+    VfsRefNode(CurrentNode);
+  }
+
+  kfree(argv);
+  *out_node = CurrentNode;
+  return OK;
 }

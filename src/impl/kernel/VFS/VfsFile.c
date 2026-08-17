@@ -41,3 +41,28 @@ void VfsUnrefFile(File *file) {
     kfree(file);
   }
 }
+
+int64_t VfsWriteFile(File *file, const void *buf, u64 count) {
+  if (file == NULL)
+    return NULL_POINTER;
+  if ((file->Flags & FILE_WRITE) == 0)
+    return ACESS_DENIED;
+
+  int64_t bytes = VfsWriteNode(file->Node, file->Offset, buf, count);
+
+  if (bytes > 0)
+    file->Offset += bytes;
+  return bytes;
+}
+
+int64_t VfsReadFile(File *file, void *buf, u64 count) {
+  if (file == NULL)
+    return NULL_POINTER;
+  if ((file->Flags & FILE_READ) == 0)
+    return ACESS_DENIED;
+
+  int64_t bytes = VfsReadNode(file->Node, file->Offset, buf, count);
+  if (bytes > 0)
+    file->Offset += bytes;
+  return bytes;
+}

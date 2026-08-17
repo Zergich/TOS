@@ -18,3 +18,10 @@ typedef u32 string15[StringLenght];
 
 // вычисление длины статического массива
 #define statlen(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+enum ErorCode {
+  OK = 0,
+  NULL_POINTER = -1,
+  ACESS_DENIED = -2,
+  NOT_A_DIR = -3,
+};

@@ -9,12 +9,11 @@ struct File;
 
 // Таблица операций над узлом VFS (Полиморфизм)
 typedef struct VNodeOps {
-  int64_t (*read)(struct VNode *node, u64 offset, void *buf, u64 count);
-  int64_t (*write)(struct VNode *node, u64 offset, const void *buf, u64 count);
-  int (*open)(struct VNode *node, struct File *file);
-  int (*close)(struct VNode *node, struct File *file);
-  int (*lookup)(struct VNode *parent, const char *name,
-                struct VNode **out_node);
+  int64_t (*Read)(struct VNode *node, u64 offset, void *buf, u64 count);
+  int64_t (*Write)(struct VNode *node, u64 offset, const void *buf, u64 count);
+  int (*Lookup)(struct VNode *parent, u32 *name, struct VNode **out_node);
+
+  int (*Destroy)(struct VNode *node);
 } VNodeOps;
 
 // Физический узел VFS
@@ -34,3 +33,5 @@ typedef struct File {
   u32 Flags;
   u32 RefCount;
 } File;
+
+extern struct VNode *VfsRoot;
