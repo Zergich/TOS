@@ -1,5 +1,7 @@
 #include <ConsoleIO/font.h>
+#include <ConsoleIO/graphics.h>
 #include <ConsoleIO/print.h>
+#include <limine.h>
 #include <stddef.h>
 #include <types.h>
 psf2_header_t *current_font = NULL;
@@ -37,6 +39,30 @@ void TestFont() {
   ConsoleSetCarretPos(0, 20);
   for (int i = 0; i < 1000; i++) {
     PrintChar((u32)i);
+  }
+}
+
+void init_font(volatile struct limine_module_request module_request) {
+
+  if (module_request.response == NULL ||
+      module_request.response->module_count == 0) {
+    PixelGrapchics.Draw(0, 1024 * 500, 0x2731F5); // Зеленый
+    // Ошибка: Limine не нашел модули
+    return;
+  }
+
+  // Перебираем все модули (вдруг у тебя их будет несколько)
+  for (u64 i = 0; i < module_request.response->module_count; i++) {
+    struct limine_file *module = module_request.response->modules[i];
+
+    // Читаем первые 4 байта файла
+    u32 *magic = (u32 *)module->address;
+
+    // Если это PSF2 шрифт, сохраняем указатель
+    if (*magic == PSF2_MAGIC) {
+      current_font = (psf2_header_t *)module->address;
+      break; // Шрифт найден!
+    }
   }
 }
 

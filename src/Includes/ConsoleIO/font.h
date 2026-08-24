@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limine.h>
 #include <types.h>
 
 #define PSF2_MAGIC 0x864AB572
@@ -16,7 +17,7 @@ typedef struct {
 void TestFont();
 // Глобальный указатель на наш активный шрифт
 extern psf2_header_t *current_font;
-
+void init_font(volatile struct limine_module_request module_request);
 extern u8 FONT_HEIGHT;
 extern u8 FONT_WIDTH;
 extern u8 vga_font[256 * 16];

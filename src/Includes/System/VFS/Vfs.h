@@ -11,7 +11,10 @@ struct File;
 typedef struct VNodeOps {
   int64_t (*Read)(struct VNode *node, u64 offset, void *buf, u64 count);
   int64_t (*Write)(struct VNode *node, u64 offset, const void *buf, u64 count);
-  int (*Lookup)(struct VNode *parent, u32 *name, struct VNode **out_node);
+  int (*Lookup)(struct VNode *parent, char *name, struct VNode **out_node);
+
+  int (*Open)(struct VNode *node, struct File *file);
+  int (*Close)(struct VNode *node, struct File *file);
 
   int (*Destroy)(struct VNode *node);
 } VNodeOps;

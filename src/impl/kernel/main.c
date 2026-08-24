@@ -86,39 +86,6 @@ void enable_sse() {
   cr4 |= (1 << 9) | (1 << 10);
   asm volatile("mov %0, %%cr4" ::"r"(cr4));
 }
-void init_font() {
-
-  if (module_request.response == NULL ||
-      module_request.response->module_count == 0) {
-    PixelGrapchics.Draw(0, 1024 * 500, 0x2731F5); // Зеленый
-    // Ошибка: Limine не нашел модули
-    return;
-  }
-
-  // Перебираем все модули (вдруг у тебя их будет несколько)
-  for (u64 i = 0; i < module_request.response->module_count; i++) {
-    struct limine_file *module = module_request.response->modules[i];
-
-    // Читаем первые 4 байта файла
-    u32 *magic = (u32 *)module->address;
-
-    // Если это PSF2 шрифт, сохраняем указатель
-    if (*magic == PSF2_MAGIC) {
-      current_font = (psf2_header_t *)module->address;
-      break; // Шрифт найден!
-    }
-  }
-}
-void task_a() {
-  int i = 0;
-  while (1) {
-    // Печатаем или делаем что-то видимое
-    // Например, вывод символа 'A'
-    ConsoleSetCarretPos(80, 0);
-    print(i++);
-    Timepit.Sleep(60);
-  }
-}
 
 void kernel_main() {
   enable_sse();
@@ -136,7 +103,7 @@ void kernel_main() {
   MemMapStructPtr = &memmap_request;
   HHDMRequest = &hhdm_request;
   idt_init();
-  init_font();
+  init_font(module_request);
   pmm_init();
   WelcomeMessage();
   vmm_init();

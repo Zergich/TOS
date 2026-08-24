@@ -65,7 +65,7 @@ int64_t VfsReadNode(struct VNode *node, u64 offset, void *buf, u64 count) {
 
 // да я знаю что путь должен быть константным но слит заточен под дрругое так
 // что пока что анлак
-int LookUp(struct VNode *parent, u32 *path, struct VNode **out_node) {
+int LookUpPath(struct VNode *parent, char *path, struct VNode **out_node) {
   if (parent == NULL || parent->Ops == NULL || parent->Ops->Lookup == NULL)
     return NULL_POINTER;
 
@@ -73,10 +73,10 @@ int LookUp(struct VNode *parent, u32 *path, struct VNode **out_node) {
   // и так далее если начало строки пути из / значит корень и берем корневую
   // ноду если же нет берем ту которая была передана в качестве параметра parent
   int argc = 0;
-  u32 **argv = string.Split(path, '/', &argc);
+  char **argv = string.SplitCh(path, '/', &argc);
 
   struct VNode *CurrentNode = VfsRoot;
-  if (path[0] != U'/')
+  if (path[0] != '/')
     CurrentNode = parent;
   struct VNode *NextNode = NULL;
 
@@ -98,7 +98,6 @@ int LookUp(struct VNode *parent, u32 *path, struct VNode **out_node) {
     }
     VfsUnrefNode(CurrentNode);
     CurrentNode = NextNode;
-    VfsRefNode(CurrentNode);
   }
 
   kfree(argv);

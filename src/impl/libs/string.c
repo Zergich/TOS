@@ -16,6 +16,7 @@ IntConvertResult StringToInt(const u32 *string);
 int IsDigit(const u32 *string);
 u32 **SplitStr(u32 *str, u32 delimiter, int *out_argc);
 void strcpy(const u32 *source, u32 *dest);
+char **SplitStrChar(char *str, char delimiter, int *out_argc);
 
 // Инициализация структуры
 StringStruct string = {
@@ -27,6 +28,7 @@ StringStruct string = {
     .IsEmptyOrWhitespace = IsEmptyOrWhitespace,
     .Split = SplitStr,
     .Strcpy = strcpy,
+    .SplitCh = SplitStrChar,
 };
 
 unsigned int strlen(const u32 *string) {
@@ -145,6 +147,45 @@ void strcpy(const u32 *source, u32 *dest) {
     i++;
   }
   dest[i] = 0;
+}
+
+char **SplitStrChar(char *str, char delimiter, int *out_argc) {
+  int count = 0;
+  int in_token = 0;
+
+  // 1. Первый проход: считаем количество токенов
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] == delimiter) {
+      in_token = 0;
+    } else if (!in_token) {
+      count++;
+      in_token = 1;
+    }
+  }
+
+  *out_argc = count;
+  if (count == 0)
+    return NULL;
+
+  // 2. Выделяем память под массив указателей char*
+  char **argv = (char **)kmalloc(sizeof(char *) * (count + 1));
+  if (!argv)
+    return NULL;
+
+  // 3. Второй проход: заменяем разделители на '\0' и сохраняем указатели
+  int argc = 0;
+  in_token = 0;
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (str[i] == delimiter) {
+      str[i] = '\0';
+      in_token = 0;
+    } else if (!in_token) {
+      argv[argc++] = &str[i];
+      in_token = 1;
+    }
+  }
+  argv[argc] = NULL;
+  return argv;
 }
 
 // Функция возвращает массив указателей (u32**)

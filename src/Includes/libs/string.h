@@ -16,6 +16,7 @@ typedef struct {
   int (*IsEmptyOrWhitespace)(const u32 *str);
   u32 **(*Split)(u32 *str, u32 delimiter, int *out_argc);
   void (*Strcpy)(const u32 *source, u32 *dest);
+  char **(*SplitCh)(char *str, char delimiter, int *out_argc);
 
 } StringStruct;
 extern StringStruct string;

@@ -17,3 +17,4 @@ void VfsUnrefNode(VNode *node);
 int64_t VfsReadNode(struct VNode *node, u64 offset, void *buf, u64 count);
 int64_t VfsWriteNode(struct VNode *node, u64 offset, const void *buf,
                      u64 count);
+int LookUpPath(struct VNode *parent, char *path, struct VNode **out_node);
