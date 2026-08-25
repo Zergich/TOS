@@ -7,6 +7,11 @@ uint8_t inb(u16 port) {
   asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
   return ret;
 }
+u16 inw(u16 port) {
+  u16 ret;
+  asm volatile("inw &1, %0" : "=a"(ret) : "Nd"(port));
+  return ret;
+}
 
 // Функция записи в порт
 // для 8 бит

@@ -13,16 +13,16 @@ void VfsRootInit() {
 
 int VfsOpen(struct VNode *cwd, char *path, u32 flags, struct File **out_file) {
   if (cwd == NULL || path == NULL)
-    return NULL_POINTER;
+    return VFS_NULL_POINTER;
   struct VNode *OutNode;
   int Status = LookUpPath(cwd, path, &OutNode);
-  if (Status != OK)
+  if (Status != VFS_OK)
     return Status;
 
   struct File *file = kmalloc(sizeof(File));
   if (file == NULL) {
     VfsUnrefNode(OutNode);
-    return NULL_POINTER;
+    return VFS_NULL_POINTER;
   }
 
   file->Flags = flags;
@@ -32,7 +32,7 @@ int VfsOpen(struct VNode *cwd, char *path, u32 flags, struct File **out_file) {
 
   if (OutNode->Ops && OutNode->Ops->Open) {
     int Status = OutNode->Ops->Open(OutNode, file);
-    if (Status != OK) {
+    if (Status != VFS_OK) {
       kfree(file);
       VfsUnrefNode(OutNode);
       return Status;
@@ -41,5 +41,29 @@ int VfsOpen(struct VNode *cwd, char *path, u32 flags, struct File **out_file) {
 
   *out_file = file;
 
-  return OK;
+  return VFS_OK;
+}
+
+int VfsClose(struct File *file) {
+  if (file == NULL || file->Node == NULL)
+    return VFS_NULL_POINTER;
+  if (file->RefCount != 0) {
+    file->RefCount--;
+    if (file->RefCount > 0)
+      return VFS_OK;
+  }
+
+  if (file->Node->Ops && file->Node->Ops->Close) {
+    int Status = file->Node->Ops->Close(file->Node, file);
+    if (Status != VFS_OK) {
+      VfsUnrefNode(file->Node);
+      kfree(file);
+
+      return Status;
+    }
+  }
+  VfsUnrefNode(file->Node);
+  kfree(file);
+
+  return VFS_OK;
 }
