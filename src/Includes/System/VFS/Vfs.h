@@ -38,3 +38,5 @@ typedef struct File {
 } File;
 
 extern struct VNode *VfsRoot;
+
+void VfsRootInit(void);

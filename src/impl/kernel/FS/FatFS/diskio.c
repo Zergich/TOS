@@ -9,13 +9,16 @@
 #include "System/FS/FatFS/ff.h"
 
 #include "System/FS/FatFS/diskio.h"
+#include <Drivers/ATA.h>
+#include <libs/time.h>
 
 /* Example: Declarations of the platform and disk functions in the project */
 
 /* Example: Mapping of physical drive number for each drive */
-#define DEV_FLASH 0 /* Map FTL to physical drive 0 */
-#define DEV_MMC 1   /* Map MMC/SD card to physical drive 1 */
-#define DEV_USB 2   /* Map USB MSD to physical drive 2 */
+#define DEV_ATA 0 /* Map FTL to physical drive 0 */
+#define DEV_MMC 1 /* Map MMC/SD card to physical drive 1 */
+#define DEV_USB 2 /* Map USB MSD to physical drive 2 */
+#define DEV_RAM 3
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -28,25 +31,27 @@ DSTATUS disk_status(BYTE pdrv /* Physical drive nmuber to identify the drive */
 
   switch (pdrv) {
   case DEV_RAM:
-    result = RAM_disk_status();
+    // result = RAM_disk_status();
 
     // translate the reslut code here
 
     return stat;
 
   case DEV_MMC:
-    result = MMC_disk_status();
+    // result = MMC_disk_status();
 
     // translate the reslut code here
 
     return stat;
 
   case DEV_USB:
-    result = USB_disk_status();
+    // result = USB_disk_status();
 
     // translate the reslut code here
 
     return stat;
+  case DEV_ATA:
+    return 0;
   }
   return STA_NOINIT;
 }
@@ -63,25 +68,27 @@ disk_initialize(BYTE pdrv /* Physical drive nmuber to identify the drive */
 
   switch (pdrv) {
   case DEV_RAM:
-    result = RAM_disk_initialize();
+    // result = RAM_disk_initialize();
 
     // translate the reslut code here
 
     return stat;
 
   case DEV_MMC:
-    result = MMC_disk_initialize();
+    // result = MMC_disk_initialize();
 
     // translate the reslut code here
 
     return stat;
 
   case DEV_USB:
-    result = USB_disk_initialize();
+    // result = USB_disk_initialize();
 
     // translate the reslut code here
 
     return stat;
+  case DEV_ATA:
+    return 0;
   }
   return STA_NOINIT;
 }
@@ -102,7 +109,7 @@ DRESULT disk_read(BYTE pdrv,  /* Physical drive nmuber to identify the drive */
   case DEV_RAM:
     // translate the arguments here
 
-    result = RAM_disk_read(buff, sector, count);
+    // result = RAM_disk_read(buff, sector, count);
 
     // translate the reslut code here
 
@@ -111,7 +118,7 @@ DRESULT disk_read(BYTE pdrv,  /* Physical drive nmuber to identify the drive */
   case DEV_MMC:
     // translate the arguments here
 
-    result = MMC_disk_read(buff, sector, count);
+    // result = MMC_disk_read(buff, sector, count);
 
     // translate the reslut code here
 
@@ -120,9 +127,13 @@ DRESULT disk_read(BYTE pdrv,  /* Physical drive nmuber to identify the drive */
   case DEV_USB:
     // translate the arguments here
 
-    result = USB_disk_read(buff, sector, count);
+    // result = USB_disk_read(buff, sector, count);
 
     // translate the reslut code here
+
+    return res;
+  case DEV_ATA:
+    res = ATA_disk_read(pdrv, buff, sector, count);
 
     return res;
   }
@@ -148,7 +159,7 @@ DRESULT disk_write(BYTE pdrv, /* Physical drive nmuber to identify the drive */
   case DEV_RAM:
     // translate the arguments here
 
-    result = RAM_disk_write(buff, sector, count);
+    // result = RAM_disk_write(buff, sector, count);
 
     // translate the reslut code here
 
@@ -157,7 +168,7 @@ DRESULT disk_write(BYTE pdrv, /* Physical drive nmuber to identify the drive */
   case DEV_MMC:
     // translate the arguments here
 
-    result = MMC_disk_write(buff, sector, count);
+    // result = MMC_disk_write(buff, sector, count);
 
     // translate the reslut code here
 
@@ -166,11 +177,13 @@ DRESULT disk_write(BYTE pdrv, /* Physical drive nmuber to identify the drive */
   case DEV_USB:
     // translate the arguments here
 
-    result = USB_disk_write(buff, sector, count);
+    // result = USB_disk_write(buff, sector, count);
 
     // translate the reslut code here
 
     return res;
+  case DEV_ATA:
+    return 0;
   }
 
   return RES_PARERR;
@@ -207,7 +220,16 @@ DRESULT disk_ioctl(BYTE pdrv, /* Physical drive nmuber (0..) */
     // Process of the command the USB drive
 
     return res;
+  case DEV_ATA:
+    return 0;
   }
 
   return RES_PARERR;
+}
+DWORD get_fattime(void) {
+  struct DateTime dt = GetTimeRTS();
+
+  return ((DWORD)(dt.year - 1980) << 25) | ((DWORD)dt.month << 21) |
+         ((DWORD)dt.day << 16) | ((DWORD)dt.hour << 11) |
+         ((DWORD)dt.minute << 5) | ((DWORD)(dt.second / 2));
 }

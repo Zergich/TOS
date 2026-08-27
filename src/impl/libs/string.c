@@ -140,7 +140,7 @@ int is_space(u32 c) {
   return (c == ' ' || c == '\t' || c == '\n' || c == '\r');
 }
 
-void strcpy(const u32 *source, u32 *dest) {
+void strcpy(const char *source, char *dest) {
   int i = 0;
   while (source[i] != 0) {
     dest[i] = source[i];
@@ -226,4 +226,23 @@ u32 **SplitStr(u32 *str, u32 delimiter, int *out_argc) {
   }
   argv[argc] = NULL; // Терминатор массива указателей
   return argv;
+}
+
+char *strchr(const char *s, int c) {
+  // Приводим int к char, так как C передает символы как int
+  char ch = (char)c;
+
+  while (*s != '\0') {
+    if (*s == ch) {
+      return (char *)s; // Нашли символ, возвращаем указатель на него
+    }
+    s++;
+  }
+
+  // Проверяем случай, если искали сам нуль-терминатор '\0'
+  if (ch == '\0') {
+    return (char *)s;
+  }
+
+  return NULL; // Символ не найден
 }

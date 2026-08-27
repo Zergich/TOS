@@ -1,3 +1,7 @@
+#include "ConsoleIO/print.h"
+#include "System/rsod.h"
+#include <System/FS/FatFS/Driver/DriverFatFs.h>
+#include <System/FS/FatFS/ff.h>
 #include <System/MemoryManager/kmalloc/kmalloc.h>
 #include <System/VFS/Vfs.h>
 #include <System/VFS/VfsFile.h>
@@ -6,11 +10,30 @@
 #include <types.h>
 
 struct VNode *VfsRoot = NULL;
-void VfsRootInit() {
-  // тут должна вызываться функция самой файловой системы
-  // VfsRoot = RamfsCreateRoot();
-}
+static FATFS FatFsObject; // Объект монтирования диска
 
+void VfsRootInit(void) {
+  // 1. Смонтировать диск с помощью FatFs
+  FRESULT res = f_mount(&FatFsObject, "0:", 1);
+  if (res != FR_OK) {
+    printf("Ошибка монтирования: %u", res);
+    Panic("");
+    // Ошибка монтирования (например, нет диска или не FAT)
+    return;
+  }
+  // 2. Создаем корневой VNode для нашего VFS
+  VNode *root = kmalloc(sizeof(VNode));
+  root->Type = VNODE_DIR;
+  root->Size = 0;
+  root->RefCount = 1;
+  root->Ops = &FatFsOps;
+
+  // В PrivateData корневого узла можно положить сам объект FATFS
+  root->PrivateData = &FatFsObject;
+
+  // 3. Присваиваем глобальному указателю
+  VfsRoot = root;
+}
 int VfsOpen(struct VNode *cwd, char *path, u32 flags, struct File **out_file) {
   if (cwd == NULL || path == NULL)
     return VFS_NULL_POINTER;

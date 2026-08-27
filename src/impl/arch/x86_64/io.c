@@ -9,7 +9,7 @@ uint8_t inb(u16 port) {
 }
 u16 inw(u16 port) {
   u16 ret;
-  asm volatile("inw &1, %0" : "=a"(ret) : "Nd"(port));
+  asm volatile("inw %1, %0" : "=a"(ret) : "Nd"(port));
   return ret;
 }
 

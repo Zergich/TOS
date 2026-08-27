@@ -15,7 +15,7 @@ typedef struct {
   int (*IsDigit)(const u32 *string);
   int (*IsEmptyOrWhitespace)(const u32 *str);
   u32 **(*Split)(u32 *str, u32 delimiter, int *out_argc);
-  void (*Strcpy)(const u32 *source, u32 *dest);
+  void (*Strcpy)(const char *source, char *dest);
   char **(*SplitCh)(char *str, char delimiter, int *out_argc);
 
 } StringStruct;
@@ -25,3 +25,5 @@ extern StringStruct string;
 // unsigned int strlen(char *string);
 // IntResult Atoi(char *string);
 // char IsDigit(char *string);
+//
+char *strchr(const char *s, int c); // для fatFS

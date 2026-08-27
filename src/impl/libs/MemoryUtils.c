@@ -1,11 +1,15 @@
 #include <libs/MemoryUtils.h>
+#include <stddef.h>
 
-void memcpy(void *dst, void *src, int size) {
-  for (int i = 0; i < size; i++) {
-    char *src_byte = src + i;
-    char *dst_byte = dst + i;
-    *dst_byte = *src_byte;
+void *memcpy(void *dst, const void *src, size_t size) {
+  unsigned char *d = (unsigned char *)dst;
+  const unsigned char *s = (const unsigned char *)src;
+
+  for (size_t i = 0; i < size; i++) {
+    d[i] = s[i];
   }
+
+  return dst; // Стандартный memcpy возвращает указатель на приемник
 }
 
 void memset(void *dst, unsigned char value, int count) {
@@ -13,7 +17,18 @@ void memset(void *dst, unsigned char value, int count) {
     ((unsigned char *)dst)[i] = value;
   }
 }
+int memcmp(const void *s1, const void *s2, size_t n) {
+  const unsigned char *p1 = (const unsigned char *)s1;
+  const unsigned char *p2 = (const unsigned char *)s2;
 
+  for (size_t i = 0; i < n; i++) {
+    if (p1[i] != p2[i]) {
+      return p1[i] - p2[i]; // Возвращаем разницу между байтами
+    }
+  }
+
+  return 0; // Все n байт совпали
+}
 /**
  * Копирует n байт из src в dest. Области памяти могут перекрываться.
  * Возвращает указатель на dest.

@@ -26,6 +26,7 @@
 
 #include <ConsoleIO/Fetch/fetch.h>
 #include <System/Process/Process.h>
+#include <System/VFS/Vfs.h>
 
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
@@ -114,9 +115,11 @@ void kernel_main() {
   Random.init(RandSeedDate.day ^
               RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
 
+  VfsRootInit(); // инициализация файловой системы
+
   PID0_Prt = CreateHideTask(IdleTask);
   CreateTask(ShellWork);
-  CreateTask(Start);
+  // CreateTask(Start);
 
   asm volatile("sti");
 

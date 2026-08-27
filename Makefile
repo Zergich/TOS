@@ -105,7 +105,7 @@ build-x86_64: $(ALL_RELEASE_OBJECTS) $(ALL_DEBUG_OBJECTS)
 	$(LD) $(LDFLAGS) -o dist/x86_64/kernel.elf -T targets/x86_64/linker.ld $(ALL_RELEASE_OBJECTS)
 	
 	@echo "🔗 Линковка дебаг ядра..."
-	$(LD) $(LDFLAGS) -o dist/x86_64/kernelD.elf -T targets/x86_64/linker.ld $(ALL_DEBUG_OBJECTS)
+	# $(LD) $(LDFLAGS) -o dist/x86_64/kernelD.elf -T targets/x86_64/linker.ld $(ALL_DEBUG_OBJECTS)
 	
 	@echo "📁 Подготовка папки ISO..."
 	@mkdir -p targets/x86_64/iso/boot

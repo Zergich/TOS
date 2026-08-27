@@ -87,7 +87,7 @@ int LookUpPath(struct VNode *parent, char *path, struct VNode **out_node) {
     if (CurrentNode->Type != VNODE_DIR) {
       VfsUnrefNode(CurrentNode);
       kfree(argv);
-      return NOT_A_DIR;
+      return VFS_NOT_A_DIR;
     }
 
     int Status = CurrentNode->Ops->Lookup(CurrentNode, argv[i], &NextNode);
