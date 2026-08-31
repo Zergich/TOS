@@ -41,14 +41,16 @@ int64_t FatFs_Write(VNode *node, u64 offset, const void *buf, u64 count) {
 }
 
 int FatFs_Lookup(VNode *parent, char *name, VNode **out_node);
-// Таблица операций для FatFs
+int FatFsOpen(VNode *node, File *file);
+int FatFsClose(VNode *node, File *file);
+int FatfsDestroy(VNode *node);
+
 VNodeOps FatFsOps = {.Read = FatFs_Read,
                      .Write = FatFs_Write,
                      .Lookup = FatFs_Lookup,
-                     .Open = NULL,  // Можно оставить NULL или добавить логику
-                     .Close = NULL, // f_close
-                     .Destroy = NULL};
-
+                     .Open = FatFsOpen,
+                     .Close = FatFsClose,
+                     .Destroy = FatfsDestroy};
 // Поиск внутри директории (Lookup)
 int FatFs_Lookup(VNode *parent, char *name, VNode **out_node) {
   FILINFO fno;
@@ -82,4 +84,42 @@ int FatFs_Lookup(VNode *parent, char *name, VNode **out_node) {
 
   *out_node = node;
   return 0; // Успех
+}
+int FatFsOpen(VNode *node, File *file) {
+  if (node == NULL || file == NULL || node->PrivateData == NULL)
+    return -1;
+
+  Fat32NodeContext *ctx = (Fat32NodeContext *)node->PrivateData;
+
+  // Переводим флаги VFS в флаги FatFs
+  BYTE mode = 0;
+  if (file->Flags == 0 || (file->Flags & 1))
+    mode |= FA_READ;
+  if (file->Flags & 2)
+    mode |= FA_WRITE;
+
+  FRESULT res = f_open(&ctx->FatFile, ctx->Name, mode); // <-- ВОТ чего не было
+  return (res == FR_OK) ? 0 : -1;
+}
+
+int FatFsClose(VNode *node, File *file) {
+  if (node == NULL || node->PrivateData == NULL)
+    return -1;
+  Fat32NodeContext *ctx = (Fat32NodeContext *)node->PrivateData;
+
+  if (node->Type == VNODE_FILE)
+    f_close(&ctx->FatFile);
+  return 0;
+}
+
+int FatfsDestroy(VNode *node) {
+  if (node == NULL)
+    return -1;
+  // ВАЖНО: сам node освобождает VfsUnrefNode (он делает kfree(node) после
+  // Destroy). Здесь чистим ТОЛЬКО PrivateData, иначе double free.
+  if (node->PrivateData != NULL) {
+    kfree(node->PrivateData);
+    node->PrivateData = NULL;
+  }
+  return 0;
 }

@@ -28,6 +28,8 @@
 #include <System/Process/Process.h>
 #include <System/VFS/Vfs.h>
 
+#include <System/FsFunc/FsOps.h>
+
 extern Pixeling PixelGrapchics;
 extern TimePit Timepit;
 extern StringStruct string;
@@ -87,7 +89,31 @@ void enable_sse() {
   cr4 |= (1 << 9) | (1 << 10);
   asm volatile("mov %0, %%cr4" ::"r"(cr4));
 }
+void test_file_system(void) {
+  char buffer[128];
+  for (int i = 0; i < 128; i++)
+    buffer[i] = 0;
 
+  int fd = sys_open(VfsRoot, "TEST.TXT", 0);
+
+  if (fd < 0) {
+    print(fd);
+    print(" ");
+    // В случае сбоя fd содержит отрицательный код этапа, на котором произошла
+    // ошибка. Например: -3, -4: Драйвер ФС не предоставил методы (защита от
+    // Page Fault). -5: Не хватило heap-памяти для копирования пути. -6: Ошибка
+    // внутри реализации Ops->Lookup.
+    return;
+  }
+
+  int bytes = sys_read(fd, buffer, 100);
+  if (bytes > 0) {
+    print(bytes);
+    // Успешно
+  }
+
+  sys_close(fd);
+}
 void kernel_main() {
   enable_sse();
   if (framebuffer_request.response == NULL ||
@@ -116,7 +142,7 @@ void kernel_main() {
               RandSeedDate.year >> RandSeedDate.second << RandSeedDate.month);
 
   VfsRootInit(); // инициализация файловой системы
-
+  test_file_system();
   PID0_Prt = CreateHideTask(IdleTask);
   CreateTask(ShellWork);
   // CreateTask(Start);

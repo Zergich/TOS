@@ -15,7 +15,7 @@ int IsEmptyOrWhitespace(const u32 *str);
 IntConvertResult StringToInt(const u32 *string);
 int IsDigit(const u32 *string);
 u32 **SplitStr(u32 *str, u32 delimiter, int *out_argc);
-void strcpy(const u32 *source, u32 *dest);
+void strcpy(const char *source, char *dest);
 char **SplitStrChar(char *str, char delimiter, int *out_argc);
 
 // Инициализация структуры
