@@ -13,3 +13,4 @@ typedef enum FileFlags {
 File *VfsAllocFile(VNode *node, u32 flags);
 void VfsRefFile(File *file);
 void VfsUnrefFile(File *file);
+int LookUpPath(struct VNode *parent, char *path, struct VNode **out_node);

@@ -95,25 +95,29 @@ void test_file_system(void) {
     buffer[i] = 0;
 
   int fd = sys_open(VfsRoot, "TEST.TXT", 0);
-
   if (fd < 0) {
     print(fd);
-    print(" ");
-    // В случае сбоя fd содержит отрицательный код этапа, на котором произошла
-    // ошибка. Например: -3, -4: Драйвер ФС не предоставил методы (защита от
-    // Page Fault). -5: Не хватило heap-памяти для копирования пути. -6: Ошибка
-    // внутри реализации Ops->Lookup.
+    print(" open failed\n");
     return;
   }
 
   int bytes = sys_read(fd, buffer, 100);
   if (bytes > 0) {
+    buffer[bytes] = '\0'; // страховка: терминируем конец прочитанного
+    print("Read ");
     print(bytes);
-    // Успешно
+    print(" bytes: ");
+    print(buffer);
+    print("\n");
+  } else {
+    print("read failed: ");
+    print(bytes);
+    print("\n");
   }
 
   sys_close(fd);
 }
+
 void kernel_main() {
   enable_sse();
   if (framebuffer_request.response == NULL ||
@@ -143,6 +147,7 @@ void kernel_main() {
 
   VfsRootInit(); // инициализация файловой системы
   test_file_system();
+  // test_fatfs_raw();
   PID0_Prt = CreateHideTask(IdleTask);
   CreateTask(ShellWork);
   // CreateTask(Start);

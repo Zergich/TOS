@@ -11,6 +11,7 @@ typedef struct {
   void (*ToLower)(u32 *str);
   int (*Strcmp)(const u32 *s1, const u32 *s2);
   unsigned int (*Strlen)(const u32 *string);
+  unsigned int (*StrlenC)(const char *string);
   IntConvertResult (*Atoi)(const u32 *string);
   int (*IsDigit)(const u32 *string);
   int (*IsEmptyOrWhitespace)(const u32 *str);

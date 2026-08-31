@@ -3,20 +3,12 @@
 
 #include <System/VFS/Vfs.h>
 #include <System/VFS/VfsFile.h>
+#include <libs/string.h>
 
 #define MAX_GLOBAL_FILES 64
 
 // Глобальная таблица дескрипторов
 static File *GlobalFileTable[MAX_GLOBAL_FILES] = {NULL};
-
-// Вспомогательная функция подсчета длины строки (на случай отсутствия
-// <string.h>)
-static int _kstrlen(const char *str) {
-  int len = 0;
-  while (str[len])
-    len++;
-  return len;
-}
 
 // ---------------------------------------------------------------------------
 // sys_open
@@ -39,7 +31,7 @@ int sys_open(VNode *root_node, const char *path, int flags) {
   // Если драйвер внутри Lookup попытается изменить строку (например, разделить
   // путь по '/'), а мы передали "TEST.TXT" из секции .rodata, ядро упадет.
   // Решение: делаем безопасную копию строки в куче.
-  int path_len = _kstrlen(path);
+  int path_len = string.StrlenC(path);
   char *mutable_path = (char *)kmalloc(path_len + 1);
   if (!mutable_path) {
     return -5; // NO_MEMORY_FOR_PATH

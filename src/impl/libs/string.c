@@ -17,6 +17,7 @@ int IsDigit(const u32 *string);
 u32 **SplitStr(u32 *str, u32 delimiter, int *out_argc);
 void strcpy(const char *source, char *dest);
 char **SplitStrChar(char *str, char delimiter, int *out_argc);
+unsigned int strlenC(const char *string);
 
 // Инициализация структуры
 StringStruct string = {
@@ -29,9 +30,16 @@ StringStruct string = {
     .Split = SplitStr,
     .Strcpy = strcpy,
     .SplitCh = SplitStrChar,
+    .StrlenC = strlenC,
 };
 
 unsigned int strlen(const u32 *string) {
+  uint32_t Length = 0;
+  while (string[Length] != 0) // '\0' это просто 0
+    Length++;
+  return Length;
+}
+unsigned int strlenC(const char *string) {
   uint32_t Length = 0;
   while (string[Length] != 0) // '\0' это просто 0
     Length++;

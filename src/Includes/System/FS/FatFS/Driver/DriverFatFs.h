@@ -7,10 +7,10 @@
 extern VNodeOps FatFsOps;
 
 typedef struct {
-  char
-      Name[64]; // пиздец на ножке     // Имя или относительный путь файла/папки
-  FIL FatFile;  // Структура открытого файла FatFs (для VNODE_FILE)
-  DIR FatDir;   // Структура открытой папки FatFs (для VNODE_DIR)
+  char Name[1024]; // пиздец на ножке     // Имя или относительный путь
+                   // файла/папки
+  FIL FatFile; // Структура открытого файла FatFs (для VNODE_FILE)
+  DIR FatDir;  // Структура открытой папки FatFs (для VNODE_DIR)
 } Fat32NodeContext;
 
 int64_t FatFs_Read(VNode *node, u64 offset, void *buf, u64 count);
